@@ -21,6 +21,7 @@ At the end of each push or pull request, include a **cursor log**:
 - File: query_handler.py
 - Line 104: Added similarity threshold logic (threshold = 0.9) to gate direct retrieval.
 - Reason: Align with RAG routing design approved by Fengli.
+```
 
 ## 3. 🚫 No Redundant Work
 
