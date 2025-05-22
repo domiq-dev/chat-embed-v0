@@ -16,6 +16,24 @@ Environment variables (or set in your shell / container):
     DSN            — your Postgres DSN, e.g.
                      postgresql+psycopg2://DB_USER@HOST:5432/leases?sslmode=require
 """
+# --------------------------------------------------------------------------------
+# NEXT STEPS:
+# Once the core leasing flows are in place, we’ll need to extend this agent to support:
+# 1) Multi‐property tenancy by routing queries to the correct Pinecone namespace,
+#    ingesting each property’s docs into a vector index and filtering by namespace;
+# 2) Retrieval‐Augmented Generation for open‐ended questions against the property KB,
+#    with RAG chains that pull from Pinecone and fall back to human escalation when confidence is low;
+# 3) Tools for user profile lookup and pre‐approval status—fetching from PostgreSQL via secure APIs,
+#    enforcing row‐level security and IAM authentication;
+# 4) Persistent session memory (across browser sessions) so returning users can resume
+#    incomplete tours or applications seamlessly;
+# 5) A human‐in‐the‐loop handoff channel and admin dashboard for real-time escalations,
+#    transcript review, and iterative KB improvement; and
+# 6) Observability, metrics, caching, and performance optimizations (token-streaming, tool
+#    parallelism, semantic caching) to ensure sub-second responses at scale.
+# See "Design of a Multi-Property Conversational Agent System with LangChain, LangGraph,
+# and Pinecone" for architecture details and component patterns :contentReference[oaicite:0]{index=0}.
+# --------------------------------------------------------------------------------
 
 import os
 import re
