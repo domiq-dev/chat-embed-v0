@@ -140,13 +140,27 @@ Build Process:
 ## Configuration Cleanup and __dirname Error Fix
 
 [Cursor Log]
-- File: next.config.js
-- Line ~35: Added esmExternals and consolidated security headers.
-- Reason: Fix __dirname undefined error and streamline configuration.
+- File: middleware.ts
+- Line ~20: Added middleware matcher and consolidated header handling.
+- Reason: Fix __dirname errors by properly configuring route handling and avoiding header conflicts.
 
-- File: next.config.ts, vercel.json
-- Line 1: Removed duplicate configuration files.
-- Reason: Avoid conflicting header settings and simplify deployment.
+- File: next.config.js
+- Line 1: Simplified configuration to only handle output mode.
+- Reason: Remove potential conflicts in route handling that were causing __dirname errors.
+
+[Cursor Log]
+- File: tsconfig.json
+- Line ~10: Updated moduleResolution to "node" and cleaned up configuration.
+- Reason: Fix __dirname errors by using Node.js-style module resolution.
+
+- File: next.config.js
+- Line ~40: Added webpack config and updated esmExternals settings.
+- Reason: Properly handle module resolution and polyfill Node.js modules in the browser.
+
+[Cursor Log]
+- File: src/app/embed/agent/page.tsx, src/app/embed/agent/layout.tsx
+- Line ~1: Moved revalidation config to layout file and switched to force-dynamic.
+- Reason: Fix build error by properly configuring dynamic rendering at the layout level.
 
 ### Previous Changes
 // ... existing code ...
