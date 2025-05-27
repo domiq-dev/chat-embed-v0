@@ -1,143 +1,178 @@
 "use client";
 import React from "react";
+import { motion } from 'framer-motion';
+
+// Types for different quick reply formats
+export type QuickReplyHint = {
+  type: QuickReplyType;
+  options?: string[];
+  placeholder: string;  // Make placeholder required
+  min?: number;
+  max?: number;
+  format?: string;
+};
+
+export enum QuickReplyType {
+  MULTIPLE_CHOICE = 'MULTIPLE_CHOICE',
+  DATE = 'DATE',
+  NUMBER = 'NUMBER',
+  BOOLEAN = 'BOOLEAN',
+  CONFIRMATION = 'CONFIRMATION'
+}
+
+// Placeholder data - in real app, this would come from backend
+const QUICK_REPLY_DATA = {
+  bedroom_size: {
+    type: QuickReplyType.MULTIPLE_CHOICE,
+    options: ['Studio', '1 Bedroom', '2 Bedrooms', '3+ Bedrooms'],
+    placeholder: 'What size apartment are you looking for?'
+  },
+  move_in_date: {
+    type: QuickReplyType.DATE,
+    placeholder: 'When would you like to move in?',
+    min: new Date().toISOString(),
+    max: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString() // 6 months from now
+  },
+  budget: {
+    type: QuickReplyType.NUMBER,
+    placeholder: 'What\'s your monthly budget?',
+    min: 1000,
+    max: 5000
+  },
+  pet_friendly: {
+    type: QuickReplyType.BOOLEAN,
+    options: ['Yes, I have pets', 'No pets'],
+    placeholder: 'Do you have any pets?'
+  },
+  confirm_details: {
+    type: QuickReplyType.CONFIRMATION,
+    options: ['Confirm', 'Start Over'],
+    placeholder: 'Would you like to proceed?'
+  }
+} as const;
 
 interface QuickReplyButtonsProps {
   currentQuestion: string | null;
+  hint?: QuickReplyHint;
   onSelect: (value: string) => void;
 }
 
-const QuickReplyButtons: React.FC<QuickReplyButtonsProps> = ({ currentQuestion, onSelect }) => {
-    if (!currentQuestion) return null;
+const QuickReplyButtons: React.FC<QuickReplyButtonsProps> = ({
+  currentQuestion,
+  hint,
+  onSelect
+}) => {
+  // If no hint is provided, don't render anything
+  if (!hint && !currentQuestion) return null;
 
-  // Only show buttons for specific question types
-  const validQuestionTypes = [
-    "bedroom_size",
-    "move_in_date",
-    "over_20",
-    "income_requirement",
-    "eviction",
-    "employment_age",
-    "household_size",
-    "full_name",
-    "next_steps"
-  ];
+  // Get the appropriate hint data either from props or placeholder data
+  const hintData = hint || QUICK_REPLY_DATA[currentQuestion as keyof typeof QUICK_REPLY_DATA];
+  
+  // If no hint data is found, don't render anything
+  if (!hintData) return null;
 
-  if (!validQuestionTypes.includes(currentQuestion)) return null;
+  const renderButtons = () => {
+    switch (hintData.type) {
+      case QuickReplyType.MULTIPLE_CHOICE:
+        return (
+          <div className="flex flex-wrap gap-2">
+            {hintData.options?.map((option, index) => (
+              <motion.button
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                onClick={() => onSelect(option)}
+                className="px-4 py-2 bg-white text-blue-600 rounded-full border border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all text-sm font-medium shadow-sm"
+              >
+                {option}
+              </motion.button>
+            ))}
+          </div>
+        );
 
+      case QuickReplyType.DATE:
+        return (
+          <div className="flex flex-col gap-2">
+            <input
+              type="date"
+              min={hintData.min?.toString()}
+              max={hintData.max?.toString()}
+              onChange={(e) => onSelect(e.target.value)}
+              className="px-4 py-2 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        );
 
-  let options: string[] = [];
-  console.log("!!!!!!!!QuickReplyButtons received currentQuestion:", currentQuestion);
+      case QuickReplyType.NUMBER:
+        return (
+          <div className="flex flex-col gap-2">
+            <input
+              type="number"
+              min={hintData.min}
+              max={hintData.max}
+              placeholder={hintData.placeholder}
+              onChange={(e) => onSelect(e.target.value)}
+              className="px-4 py-2 bg-white rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        );
 
+      case QuickReplyType.BOOLEAN:
+        return (
+          <div className="flex gap-2">
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              onClick={() => onSelect('true')}
+              className="flex-1 px-4 py-2 bg-white text-blue-600 rounded-full border border-blue-200 hover:bg-blue-50 transition-all text-sm font-medium"
+            >
+              {hintData.options?.[0] || 'Yes'}
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              onClick={() => onSelect('false')}
+              className="flex-1 px-4 py-2 bg-white text-gray-600 rounded-full border border-gray-200 hover:bg-gray-50 transition-all text-sm font-medium"
+            >
+              {hintData.options?.[1] || 'No'}
+            </motion.button>
+          </div>
+        );
 
-  switch (currentQuestion) {
-    case "bedroom_size":
-      options = ["1 bedroom", "2 bedroom", "3 bedroom"];
-      break;
+      case QuickReplyType.CONFIRMATION:
+        return (
+          <div className="flex gap-2">
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={() => onSelect('confirm')}
+              className="flex-1 px-4 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-all text-sm font-medium"
+            >
+              {hintData.options?.[0] || 'Confirm'}
+            </motion.button>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              onClick={() => onSelect('restart')}
+              className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-all text-sm font-medium"
+            >
+              {hintData.options?.[1] || 'Start Over'}
+            </motion.button>
+          </div>
+        );
 
+      default:
+        return null;
+    }
+  };
 
-    case "move_in_date":
   return (
-    <div className="mt-2 ml-10">
-      <div className="bg-gray-50 px-4 py-3 rounded-2xl shadow-sm inline-block">
-        <input
-          type="date"
-          min={new Date().toISOString().split("T")[0]}  // Today or later only
-          onChange={(e) => {
-            const value = e.target.value;
-            if (value) onSelect(value);
-          }}
-          className="bg-white px-3 py-2 border border-gray-300 rounded-md text-sm w-full focus:ring-blue-500 focus:outline-none"
-        />
+    <div className="p-4 border-t bg-gray-50">
+      <div className="text-sm text-gray-600 mb-2">
+        {hintData.placeholder}
       </div>
-    </div>
-  );
-
-   case "preferred_name":
-    return (
-      <div className="mt-2 ml-10">
-        <input
-          type="text"
-          name="preferredname"
-          autoComplete="nickname"
-          placeholder="Enter your preferred name"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              const value = (e.target as HTMLInputElement).value;
-              if (value.trim()) onSelect(value.trim());
-            }
-          }}
-          className="px-4 py-2 border border-gray-300 rounded-full text-sm shadow w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-    );
-
-      case "full_name":
-    return (
-      <div className="mt-2 ml-10">
-        <input
-          type="text"
-          name="fullname"
-          autoComplete="name"
-          placeholder="Enter your full name"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              const value = (e.target as HTMLInputElement).value;
-              if (value.trim()) onSelect(value.trim());
-            }
-          }}
-          className="px-4 py-2 border border-gray-300 rounded-full text-sm shadow w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div>
-    );
-    case "over_20":
-      options = ["Yes", "No"];
-      break;
-    case "income_requirement":
-      options = ["Yes", "No"];
-      break;
-    case "eviction":
-      options = ["Yes", "No"];
-      break;
-    case "employment_age":
-      options = ["Yes", "No"];
-      break;
-      case "household_size":
-      options = ["1", "2", "3"];
-      break;
-
-    case "next_steps":
-      const tourScheduled = typeof window !== "undefined" && localStorage.getItem("tourScheduled") === "true";
-      options = tourScheduled ? ["Ask More Questions"] : ["Schedule in-person tour", "Ask More Questions"];
-      break;
-
-    default:
-      return null;
-  }
-
-  return (
-    <div className="flex gap-2 mt-2 ml-10 flex-wrap">
-      {options.map((label) => (
-        <button
-          key={label}
-          onClick={() => {
-  if (label === "Schedule in-person tour") {
-    localStorage.setItem('tourScheduled', 'true');
-    window.open('https://www.grandoaksburlington.com/amenities?show-appointment=true', '_blank');
-    return;
-  }
-
-  if (label === "Ask More Questions") {
-    window?.postMessage?.({ type: "showFAQ" }, "*");
-  }
-
-  onSelect(label);
-}}
-
-          className="px-4 py-2 bg-blue-500 text-white rounded-full text-sm shadow hover:bg-blue-600 transition-all"
-        >
-          {label}
-        </button>
-      ))}
+      {renderButtons()}
     </div>
   );
 };
