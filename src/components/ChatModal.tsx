@@ -71,20 +71,49 @@ const LiveAgentBadge: FC = () => (
 
 // Star Rating Component
 const StarRating: FC<{ rating: number }> = ({ rating }) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  
+  const stars = Array.from({ length: 5 }, (_, i) => {
+    const starValue = i + 1; // Star value from 1 to 5
+    let fillPercentage = 0;
+
+    if (starValue <= rating) {
+      // This star is fully filled
+      fillPercentage = 100;
+    } else if (starValue > rating && starValue - 1 < rating) {
+      // This is the fractional star
+      // Example: rating = 4.4, starValue = 5. (4.4 - (5-1)) * 100 = (4.4 - 4) * 100 = 40%
+      fillPercentage = (rating - (starValue - 1)) * 100;
+    } else {
+      // This star is empty
+      fillPercentage = 0;
+    }
+    return { index: i, fillPercentage };
+  });
+
   return (
     <div className="flex items-center gap-1">
-      {[...Array(5)].map((_, i) => (
-        <Star
-          key={i}
-          size={14}
-          className={i < fullStars ? 'fill-yellow-400 text-yellow-400' : 
-                     (i === fullStars && hasHalfStar ? 'fill-yellow-400 text-yellow-400' : 
-                     'fill-gray-200 text-gray-200')}
-          strokeWidth={1}
-        />
+      {stars.map(({ index, fillPercentage }) => (
+        <div key={index} className="relative" style={{ width: '14px', height: '14px' }}>
+          {/* Background star (always rendered, fully gray) */}
+          <Star
+            size={14}
+            className="absolute top-0 left-0 text-gray-200 fill-gray-200"
+            strokeWidth={1}
+          />
+          {/* Foreground star (yellow, clipped) */}
+          {fillPercentage > 0 && (
+            <div
+              className="absolute top-0 left-0 h-full overflow-hidden"
+              style={{ width: `${fillPercentage}%` }}
+            >
+              <Star
+                size={14}
+                className="text-yellow-400 fill-yellow-400"
+                strokeWidth={1}
+                style={{ width: '14px', height: '14px' }} // Ensure the inner star is full size for clipping
+              />
+            </div>
+          )}
+        </div>
       ))}
       <span className="text-sm text-gray-600 ml-1">{rating.toFixed(1)}</span>
     </div>
@@ -316,8 +345,8 @@ const ChatModal: FC<ChatModalProps> = ({
   };
 
   return (
-    <div className="fixed bottom-20 right-6 z-50 scale-[0.9] origin-bottom-right">
-      <div className="bg-white rounded-lg shadow-xl w-[400px] max-h-[600px] flex flex-col relative">
+    <div className="fixed bottom-20 right-6 z-50">
+      <div className="bg-white rounded-lg shadow-xl w-[360px] h-[600px] flex flex-col relative">
         {showSparkles && <SparkleBurst />}
         
         {/* Header */}

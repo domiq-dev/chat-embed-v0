@@ -211,3 +211,19 @@ Build Process:
   - Added `// @ts-ignore` for a persistent linter error related to `sendStreamMessage` type definitions, assuming runtime correctness.
   - Resolved linter errors related to potentially null Agora client instances after dynamic import by adding appropriate guards and checks.
   - Added detailed console logging for various states and IDs to aid debugging.
+
+## UI Refinements and Basic Scripted Checks
+
+- **Fractional Star Rating:** Modified the `StarRating` component in `src/components/ChatModal.tsx` to accurately display fractional star ratings (e.g., 4.4 stars will show the 5th star 40% filled) using a foreground/background star clipping technique.
+- **Consistent ChatModal Sizing:** 
+  - Removed `scale-[0.9]` transform from `ChatModal.tsx` to ensure it renders at its natural size.
+  - Adjusted the `ChatModal` width to `w-[360px]` and set a fixed height of `h-[600px]` to ensure consistent sizing across environments and prevent layout issues caused by short initial content.
+- **Introduced Script-Based Source Code Checks:**
+  - Created `tests/check-chat-modal.js` to perform basic static checks on `src/components/ChatModal.tsx`:
+    - Verifies the presence of critical Tailwind CSS sizing classes (`w-[360px]`, `h-[600px]`).
+    - Checks that `localStorage.getItem('chatbotState')` is accessed within a `typeof window !== 'undefined'` guard.
+  - Added an npm script `test:scripts` to `package.json` to run both `tests/check-tailwind-build.js` and `tests/check-chat-modal.js` with a single command.
+- **Testing Plan Discussion:** Outlined a high-level testing strategy, recommending:
+  - Unit/integration tests for components using Jest and React Testing Library (RTL), focusing on render checks and basic interactions.
+  - End-to-end (E2E) smoke tests with Playwright or Cypress for critical user flows.
+  - Continued use of TypeScript and ESLint for static analysis.

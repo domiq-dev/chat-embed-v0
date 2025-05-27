@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "postinstall": "patch-package",
-    "build:widget": "tsup --config src/lib/widget/build.config.ts"
+    "build:widget": "tsup --config src/lib/widget/build.config.ts",
+    "test:scripts": "node tests/check-tailwind-build.js && node tests/check-chat-modal.js"
   },
   "dependencies": {
     "@11labs/react": "^0.0.4",
