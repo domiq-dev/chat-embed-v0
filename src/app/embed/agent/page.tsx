@@ -1,12 +1,12 @@
 // src/app/embed/agent/page.tsx
 "use client";
 
-import FloatingVoiceChatWidget from "../../../components/VoiceComponent";
+import dynamic from 'next/dynamic';
+const ChatLauncher = dynamic(() => import('@/components/ChatLauncher'), { ssr: false });
 
-export const dynamic = "force-dynamic";
+// Force dynamic rendering for this page
+export const config = { dynamic: 'force-dynamic' };
 
-export default function EmbedAgent() {
-  return (
-      <FloatingVoiceChatWidget />
-  );
+export default function AgentEmbedPage() {
+  return <ChatLauncher />;
 }

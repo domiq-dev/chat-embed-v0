@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DomIQ Chat Widget Test</title>
+</head>
+<body>
+    <h1>DomIQ Chat Widget Test Page</h1>
+    <p>You should see the chat widget in the bottom-right corner.</p>
+
+    <!-- Widget Configuration -->
+    <script>
+        window.domIQChat = {
+            q: [],
+            config: {
+                propertyId: 'test123',
+                theme: 'light',
+                position: 'bottom-right'
+            }
+        };
+    </script>
+    <script src="/widget.min.js"></script>
+
+    <!-- Add some content to make the page scrollable -->
+    <div style="height: 200vh; padding: 20px;">
+        <h2>Scroll down...</h2>
+        <p>The widget should stay fixed in the bottom-right corner.</p>
+    </div>
+</body>
+</html> 
