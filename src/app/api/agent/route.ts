@@ -66,13 +66,17 @@ async function analyzeConversation(messages: VercelChatMessage[]): Promise<{
   },
   isQualified: boolean,
   question_type: string | null
-
 }> {
   try {
+    const apiKey = process.env.TOGETHER_API_KEY;
+    if (!apiKey) {
+      throw new Error('TOGETHER_API_KEY is not configured');
+    }
+
     const evaluator = new ChatTogetherAI({
       model: Evaluation_Model,
       temperature: 0,
-      apiKey: process.env.TOGETHER_API_KEY,
+      apiKey,
     });
 
     // Format conversation for analysis
@@ -134,7 +138,7 @@ Otherwise, return null for question_type.
       };
     }
   } catch (error) {
-    console.error("[ANALYZER] Error calling LLM:", error);
+    console.error("[ANALYZER] Error:", error);
     return {
       basicInfo: { full_name: "", preferred_name: "", apt_size: "", move_in_date: "" },
       qualificationInfo: { age: null, income: null, eviction: null },
@@ -146,11 +150,36 @@ Otherwise, return null for question_type.
 
 export async function POST(req: NextRequest) {
   try {
+    // Check Supabase configuration first
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("[API] Supabase configuration missing");
+      return NextResponse.json({ error: "Supabase configuration missing" }, { status: 500 });
+    }
+
+    // Check Together API configuration
+    const apiKey = process.env.TOGETHER_API_KEY;
+    if (!apiKey) {
+      console.error("[API] Together API key missing");
+      throw new Error('TOGETHER_API_KEY is not configured');
+    }
+
     const body = await req.json();
     console.log("[API] New request received:",
       body.messages?.[body.messages.length-1]?.content || "No message");
 
     const returnIntermediateSteps = body.stateFetch;
+
+    // Initialize agent tools with error handling
+    let agentTools = [];
+    try {
+      agentTools = [showFAQTool, bookTourTool, new Calculator()];
+    } catch (error) {
+      console.error("[TOOLS] Error initializing tools:", error);
+      return NextResponse.json({ error: "Failed to initialize agent tools" }, { status: 500 });
+    }
 
     // Get or create user in database
     const { userData, isNew } = await getOrCreateUser(body.userId);
@@ -167,16 +196,10 @@ export async function POST(req: NextRequest) {
     const messagesWithState = [...messages];
 
     // Setup agent and tools
-    const agentTools = [
-      showFAQTool,
-      bookTourTool,
-      new Calculator(),
-    ];
-
     const chat = new ChatTogetherAI({
       model: Model_Name,
       temperature: 0,
-      apiKey: process.env.TOGETHER_API_KEY,
+      apiKey,
       verbose: false,
     });
 
@@ -374,8 +397,8 @@ export async function POST(req: NextRequest) {
         current_question: question_type
       });
     }
-  } catch (e: any) {
-    console.error("[API] Error in request handler:", e);
-    return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
+  } catch (error: any) {
+    console.error("[API] Error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
