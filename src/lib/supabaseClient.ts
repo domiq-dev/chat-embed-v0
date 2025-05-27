@@ -1,16 +1,31 @@
 // lib/supabaseClient.ts
 import { createClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import {ConversationState} from "@/app/api/agent/stateManager";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Check if we have valid values
-if (!supabaseUrl || !supabaseKey) {
-  console.warn("Supabase credentials missing - some functionality may be limited");
-}
+// Create a dummy client if credentials are missing (during build)
+const createDummyClient = () => {
+  const dummyResponse = { data: null, error: new Error('Supabase not configured') };
+  const dummyPromise = Promise.resolve(dummyResponse);
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+  return {
+    from: () => ({
+      select: () => dummyPromise,
+      insert: () => dummyPromise,
+      update: () => dummyPromise,
+      delete: () => dummyPromise,
+      eq: () => ({ select: () => dummyPromise }),
+    }),
+  } as unknown as SupabaseClient;
+};
+
+// Export either real client or dummy client
+export const supabase = supabaseUrl && supabaseKey
+  ? createClient(supabaseUrl, supabaseKey)
+  : createDummyClient();
 
 // Types for database - updated to match your actual schema
 export interface UserData {

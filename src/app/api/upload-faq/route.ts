@@ -43,20 +43,15 @@ import pdfParse from 'pdf-parse';
 // Explicitly set Node.js runtime
 export const runtime = 'nodejs';
 
-// Initialize clients
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 async function generateEmbedding(text: string): Promise<number[]> {
   const cleanedText = text
     .trim()
     .replace(/\s+/g, ' ')
     .slice(0, 8000);
+
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
 
   const response = await openai.embeddings.create({
     model: "text-embedding-ada-002",
@@ -68,6 +63,16 @@ async function generateEmbedding(text: string): Promise<number[]> {
 
 export async function POST(req: NextRequest) {
   try {
+    // Initialize Supabase client
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Supabase configuration is missing');
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
 

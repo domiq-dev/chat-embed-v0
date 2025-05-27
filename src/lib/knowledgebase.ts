@@ -1,16 +1,15 @@
 // lib/openai-knowledgebase.ts
-import { createClient } from '@supabase/supabase-js';
 import { OpenAI } from 'openai';
+import { supabase } from './supabaseClient';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Initialize OpenAI client during request
+const getOpenAIClient = () => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new Error('OpenAI API key is missing');
+  }
+  return new OpenAI({ apiKey });
+};
 
 // Add the missing function
 export async function getKnowledgebaseText(): Promise<string[]> {
@@ -39,6 +38,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
       .replace(/\s+/g, ' ')
       .slice(0, 8000); // OpenAI has token limits
 
+    const openai = getOpenAIClient();
     const response = await openai.embeddings.create({
       model: "text-embedding-ada-002",
       input: cleanedText,
