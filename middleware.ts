@@ -5,24 +5,11 @@ import type { NextRequest } from "next/server";
 export const runtime = 'edge';
 
 export function middleware(req: NextRequest) {
-  // Create response
-  const response = NextResponse.next();
+  // Log the path for debugging
+  console.log(`Edge middleware invoked for path: ${req.nextUrl.pathname}`);
 
-  // Remove the default X-Frame-Options header
-  response.headers.delete("x-frame-options");
-
-  // Add security headers
-  response.headers.set(
-    "content-security-policy",
-    "frame-ancestors https://www.grandoaksburlington.com; default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; connect-src *; img-src 'self' data: blob:; font-src 'self' data:;"
-  );
-
-  // Add CORS headers for widget.min.js
-  if (req.nextUrl.pathname === '/widget.min.js') {
-    response.headers.set('Access-Control-Allow-Origin', '*');
-  }
-
-  return response;
+  // Simplest pass-through
+  return NextResponse.next();
 }
 
 // Configure which routes should trigger this middleware
