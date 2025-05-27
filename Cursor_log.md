@@ -162,5 +162,20 @@ Build Process:
 - Line ~1: Moved revalidation config to layout file and switched to force-dynamic.
 - Reason: Fix build error by properly configuring dynamic rendering at the layout level.
 
+## Tailwind CSS Styling Fix (Local Environment)
+
+- **Problem:** Local dev environment (`npm run dev`) failed to apply Tailwind CSS. Unprocessed `@tailwind` directives appeared in served CSS, while direct Tailwind CLI builds worked. This pointed to an issue in the Next.js CSS pipeline on the specific machine.
+- **Resolution:**
+    1.  Standard troubleshooting (config verification, cache clearing, Node.js version check).
+    2.  **Key Fix - PostCSS Configuration Adjustment:**
+        - Renamed `postcss.config.mjs` (ESM) to `postcss.config.js` (CommonJS).
+        - Explicitly added `tailwindcss: {}` and `autoprefixer: {}` to `plugins` in `postcss.config.js`.
+        - Installed `autoprefixer` as a dev dependency.
+    3.  This resolved the issue, and styles loaded correctly after clearing `.next` and restarting the dev server.
+- **Suspected Cause:** Conflict or misinterpretation of the ESM `postcss.config.mjs` or Tailwind's implicit autoprefixer within the local Next.js dev setup.
+- **Preventative Measure:**
+    - Added `tests/check-tailwind-build.js` script.
+    - This script runs a production build (`npm run build`) and checks the output CSS in `.next/static/css` for unprocessed `@tailwind` directives, aiming to catch similar issues early.
+
 ### Previous Changes
 // ... existing code ...
