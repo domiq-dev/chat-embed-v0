@@ -141,8 +141,8 @@ Build Process:
 
 [Cursor Log]
 - File: middleware.ts
-- Line ~20: Added middleware matcher and consolidated header handling.
-- Reason: Fix __dirname errors by properly configuring route handling and avoiding header conflicts.
+- Line ~3: Added Edge runtime specification and updated matcher patterns.
+- Reason: Fix __dirname errors by ensuring middleware runs in Edge runtime and doesn't process static files.
 
 - File: next.config.js
 - Line 1: Simplified configuration to only handle output mode.
@@ -154,8 +154,8 @@ Build Process:
 - Reason: Fix __dirname errors by using Node.js-style module resolution.
 
 - File: next.config.js
-- Line ~40: Added webpack config and updated esmExternals settings.
-- Reason: Properly handle module resolution and polyfill Node.js modules in the browser.
+- Line ~5: Added webpack configuration to handle Node.js modules.
+- Reason: Fix __dirname errors by properly excluding Node.js-specific packages from client bundle.
 
 [Cursor Log]
 - File: src/app/embed/agent/page.tsx, src/app/embed/agent/layout.tsx
