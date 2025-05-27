@@ -115,3 +115,9 @@ Build Process:
 1. Run `npm run build:widget` to generate widget bundle
 2. Output: `public/widget.min.js`
 3. Deploy to CDN: `https://chat.domiq.ai/widget.min.js`
+
+## Route Segment Configuration Updates
+1. Updated `/embed/agent/page.tsx` to use modern Next.js configuration
+   - Removed deprecated `export const config = { dynamic: 'force-dynamic' }`
+   - Replaced with `export const revalidate = 0` for dynamic page revalidation
+   - This change aligns with Next.js 13+ best practices for route segment configuration
