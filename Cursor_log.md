@@ -137,5 +137,16 @@ Build Process:
   - Smooth animations and transitions
   - Configurable timing and messaging
 
+## Configuration Cleanup and __dirname Error Fix
+
+[Cursor Log]
+- File: next.config.js
+- Line ~35: Added esmExternals and consolidated security headers.
+- Reason: Fix __dirname undefined error and streamline configuration.
+
+- File: next.config.ts, vercel.json
+- Line 1: Removed duplicate configuration files.
+- Reason: Avoid conflicting header settings and simplify deployment.
+
 ### Previous Changes
 // ... existing code ...

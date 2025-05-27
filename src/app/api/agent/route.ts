@@ -163,12 +163,23 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.TOGETHER_API_KEY;
     if (!apiKey) {
       console.error("[API] Together API key missing");
-      throw new Error('TOGETHER_API_KEY is not configured');
+      return NextResponse.json({ error: "Together API key not configured" }, { status: 500 });
     }
 
-    const body = await req.json();
-    console.log("[API] New request received:",
-      body.messages?.[body.messages.length-1]?.content || "No message");
+    let body;
+    try {
+      body = await req.json();
+    } catch (error) {
+      console.error("[API] Failed to parse request body:", error);
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+
+    console.log("[API] New request received:", {
+      messageCount: body.messages?.length || 0,
+      lastMessage: body.messages?.[body.messages.length-1]?.content || "No message",
+      userId: body.userId,
+      stateFetch: body.stateFetch
+    });
 
     const returnIntermediateSteps = body.stateFetch;
 
@@ -182,59 +193,86 @@ export async function POST(req: NextRequest) {
     }
 
     // Get or create user in database
-    const { userData, isNew } = await getOrCreateUser(body.userId);
-    const userId = userData.id;
-
-    // Get conversation data (only for tracking faq_shown and booking_shown flags)
-    const conversation = await getConversation(userId);
+    let userData, userId, conversation;
+    try {
+      const result = await getOrCreateUser(body.userId);
+      userData = result.userData;
+      userId = userData.id;
+      conversation = await getConversation(userId);
+    } catch (error) {
+      console.error("[API] Database operation failed:", error);
+      return NextResponse.json({ error: "Database operation failed" }, { status: 500 });
+    }
 
     // Get messages for the agent
-    const messages = (body.messages ?? [])
+    if (!Array.isArray(body.messages)) {
+      console.error("[API] Invalid messages format");
+      return NextResponse.json({ error: "Invalid messages format" }, { status: 400 });
+    }
+
+    const messages = body.messages
       .filter((message: { role: string; }) => message.role === "user" || message.role === "assistant")
       .map(convertVercelMessageToLangChainMessage);
 
     const messagesWithState = [...messages];
 
     // Setup agent and tools
-    const chat = new ChatTogetherAI({
-      model: Model_Name,
-      temperature: 0,
-      apiKey,
-      verbose: false,
-    });
+    let chat, agent;
+    try {
+      chat = new ChatTogetherAI({
+        model: Model_Name,
+        temperature: 0,
+        apiKey,
+        verbose: true, // Enable verbose mode for debugging
+      });
 
-    const agent = createReactAgent({
-      llm: chat,
-      tools: agentTools,
-      messageModifier: new SystemMessage(getDefaultPromptAgent()),
-    });
+      agent = createReactAgent({
+        llm: chat,
+        tools: agentTools,
+        messageModifier: new SystemMessage(getDefaultPromptAgent()),
+      });
+    } catch (error) {
+      console.error("[API] Failed to initialize chat agent:", error);
+      return NextResponse.json({ error: "Failed to initialize chat agent" }, { status: 500 });
+    }
 
     if (!returnIntermediateSteps) {
       // Streaming case
-      const eventStream = agent.streamEvents(
-        { messages: messagesWithState },
-        { version: "v2" }
-      );
+      try {
+        const eventStream = agent.streamEvents(
+          { messages: messagesWithState },
+          { version: "v2" }
+        );
 
-      const textEncoder = new TextEncoder();
-      const transformStream = new ReadableStream({
-        async start(controller) {
-          for await (const { event, data } of eventStream) {
-            if (event === "on_chat_model_stream") {
-              if (!!data.chunk.content) {
-                controller.enqueue(textEncoder.encode(data.chunk.content));
+        const textEncoder = new TextEncoder();
+        const transformStream = new ReadableStream({
+          async start(controller) {
+            try {
+              for await (const { event, data } of eventStream) {
+                if (event === "on_chat_model_stream") {
+                  if (!!data.chunk.content) {
+                    controller.enqueue(textEncoder.encode(data.chunk.content));
+                  }
+                }
               }
+            } catch (error) {
+              console.error("[STREAM] Error in stream processing:", error);
+              controller.error(error);
+            } finally {
+              controller.close();
             }
-          }
-          controller.close();
-        },
-      });
+          },
+        });
 
-      return new Response(transformStream, {
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-        },
-      });
+        return new Response(transformStream, {
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+          },
+        });
+      } catch (error) {
+        console.error("[STREAM] Failed to create stream:", error);
+        return NextResponse.json({ error: "Failed to create response stream" }, { status: 500 });
+      }
     } else {
       // Non-streaming case for state updates
       console.log("[API] Invoking agent for state updates");
