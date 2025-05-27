@@ -179,3 +179,12 @@ Build Process:
 
 ### Previous Changes
 // ... existing code ...
+
+## AKOOL Avatar Integration - Phase 1: Backend and Service Setup
+
+- **Installed `agora-rtc-sdk-ng`:** Added the necessary Agora SDK for AKOOL video avatar functionality.
+- **Created AKOOL Token API Route (`src/app/api/akool-token/route.ts`):** Implemented a secure backend API route to fetch AKOOL access tokens using Client ID and Secret stored in `.env.local`. This keeps sensitive credentials off the client-side.
+- **Developed `ApiService` (`src/services/apiService.ts`):** Created a TypeScript class to encapsulate interactions with the AKOOL API. This service includes methods for creating/closing sessions, and listing available languages, voices, and avatars, providing a structured way to call AKOOL endpoints.
+- **Added `AkoolAvatar.tsx` placeholder:** Created an initial placeholder component for the avatar display.
+- **Added `akool-test/page.tsx`:** Created a test page for isolated testing of the AKOOL avatar integration.
+- **Configured `vercel.json`:** Added a `vercel.json` file with basic Next.js configuration and permissive headers (including Content-Security-Policy) to facilitate Vercel deployment.
