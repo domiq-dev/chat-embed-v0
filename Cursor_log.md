@@ -188,3 +188,26 @@ Build Process:
 - **Added `AkoolAvatar.tsx` placeholder:** Created an initial placeholder component for the avatar display.
 - **Added `akool-test/page.tsx`:** Created a test page for isolated testing of the AKOOL avatar integration.
 - **Configured `vercel.json`:** Added a `vercel.json` file with basic Next.js configuration and permissive headers (including Content-Security-Policy) to facilitate Vercel deployment.
+
+## AKOOL Avatar Integration - Phase 2: Isolated Test Page Implementation
+
+- **Avatar Listing & Session Creation:** 
+  - Modified `src/app/akool-test/page.tsx` to use `ApiService` to fetch and display a list of available AKOOL avatars.
+  - Implemented functionality to create a live avatar session with a selected avatar, retrieving Agora credentials (`appId`, `channel`, `token`, `uid`).
+- **Agora RTC Integration for Video/Audio:**
+  - Dynamically imported `agora-rtc-sdk-ng` to avoid SSR `window is not defined` errors.
+  - Implemented Agora client setup to join the specified channel using the fetched credentials.
+  - Handled `user-published` events to subscribe to and play the remote avatar's video and audio tracks, rendering the live video in a designated player div.
+  - Added cleanup logic to leave the Agora channel when the session ends or the component unmounts.
+- **Text-to-Speech (TTS) Functionality:**
+  - Added an input field and send button to the test page.
+  - Implemented `handleSendText` to construct the required JSON payload (with `type: "chat"` and text) and send it to the avatar via `agoraClient.sendStreamMessage()`.
+  - The avatar now speaks the sent text, and lip-sync is visible.
+- **Chat Display & UI/UX Refinements:**
+  - Implemented a basic chat log on the test page to display user-sent messages and text responses received from the avatar via `stream-message`.
+  - Added state (`hasVideoStarted`) and styling to improve the video player UI (hiding "Waiting for video..." message after video starts, centering video).
+- **Error Handling & Debugging:**
+  - Addressed and resolved React duplicate key warnings in the chat log by ensuring uniquely generated keys (`window.crypto.randomUUID()`) for both user and bot messages, especially handling the case where the bot echoes back the user's message ID.
+  - Added `// @ts-ignore` for a persistent linter error related to `sendStreamMessage` type definitions, assuming runtime correctness.
+  - Resolved linter errors related to potentially null Agora client instances after dynamic import by adding appropriate guards and checks.
+  - Added detailed console logging for various states and IDs to aid debugging.
