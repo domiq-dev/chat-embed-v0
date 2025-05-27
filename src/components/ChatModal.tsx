@@ -1,12 +1,14 @@
 "use client";
 import React, { FC, useEffect, useRef, useState } from 'react';
-import { X, MessageSquare, Phone, Mail } from 'lucide-react';
+import { X, MessageSquare, Phone, Mail, Star } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
 import MessageStatus from "@/components/ui/MessageStatus";
 import QuickReplyButtons, { QuickReplyHint, QuickReplyType } from "@/components/ui/QuicklyReplyButtons";
 import FloatingBanner from "@/components/ui/FloatingBanner";
+import CountdownOffer from "@/components/ui/CountdownOffer";
+import { DEFAULT_APARTMENT_CONFIG } from "@/types/apartment";
 
 // Minimal particle effect for celebrations
 const SparkleBurst: FC = () => (
@@ -67,6 +69,28 @@ const LiveAgentBadge: FC = () => (
   </span>
 );
 
+// Star Rating Component
+const StarRating: FC<{ rating: number }> = ({ rating }) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+  
+  return (
+    <div className="flex items-center gap-1">
+      {[...Array(5)].map((_, i) => (
+        <Star
+          key={i}
+          size={14}
+          className={i < fullStars ? 'fill-yellow-400 text-yellow-400' : 
+                     (i === fullStars && hasHalfStar ? 'fill-yellow-400 text-yellow-400' : 
+                     'fill-gray-200 text-gray-200')}
+          strokeWidth={1}
+        />
+      ))}
+      <span className="text-sm text-gray-600 ml-1">{rating.toFixed(1)}</span>
+    </div>
+  );
+};
+
 interface Message {
   from: 'agent' | 'user';
   text: string;
@@ -77,9 +101,15 @@ interface ChatModalProps {
   onClose: () => void;
   unreadCount?: number;
   onClearUnread?: () => void;
+  config?: typeof DEFAULT_APARTMENT_CONFIG;
 }
 
-const ChatModal: FC<ChatModalProps> = ({ onClose, unreadCount = 0, onClearUnread }) => {
+const ChatModal: FC<ChatModalProps> = ({ 
+  onClose, 
+  unreadCount = 0, 
+  onClearUnread,
+  config = DEFAULT_APARTMENT_CONFIG
+}) => {
   const [messages, setMessages] = useState<Message[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('chatbotState');
@@ -108,6 +138,8 @@ const ChatModal: FC<ChatModalProps> = ({ onClose, unreadCount = 0, onClearUnread
   const [showFloatingBanner, setShowFloatingBanner] = useState(false);
   const [showSparkles, setShowSparkles] = useState(false);
   const [localUnreadCount, setLocalUnreadCount] = useState(unreadCount);
+  const [showOffer, setShowOffer] = useState(false);
+  const [offerExpired, setOfferExpired] = useState(false);
 
   // Clear unread count when modal opens
   useEffect(() => {
@@ -153,6 +185,23 @@ const ChatModal: FC<ChatModalProps> = ({ onClose, unreadCount = 0, onClearUnread
       return () => clearTimeout(timer);
     }
   }, [savings]);
+
+  // Show offer after 30 seconds of chat
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (messages.length > 1 && !qualified && !offerExpired) {
+        setShowOffer(true);
+      }
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [messages.length, qualified, offerExpired]);
+
+  // Handle offer expiration
+  const handleOfferExpire = () => {
+    setOfferExpired(true);
+    setShowOffer(false);
+  };
 
   const postText = async (text: string) => {
     setIsTyping(true);
@@ -280,28 +329,35 @@ const ChatModal: FC<ChatModalProps> = ({ onClose, unreadCount = 0, onClearUnread
         >
           <div className="flex items-center gap-3">
             <img
-              src="/realtor.png"
+              src={config.agent.avatar}
               alt="Leasing Agent"
               className="w-10 h-10 rounded-full object-cover border border-gray-100"
             />
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-medium text-gray-900">Jerome</span>
+                <span className="font-medium text-gray-900">{config.agent.name}</span>
                 <LiveAgentBadge />
               </div>
-              <p className="text-xs text-gray-500">Your leasing specialist</p>
+              <p className="text-xs text-gray-500">{config.agent.title}</p>
+              <StarRating rating={config.reviews.googleRating} />
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.location.href = 'tel:+1234567890'}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
-              title="Call us"
-            >
-              <Phone size={18} />
-            </motion.button>
+            {config.socialLinks.facebook && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.open(config.socialLinks.facebook, '_blank')}
+                className="p-2 hover:bg-gray-50 rounded-full transition-colors"
+                title="Visit our Facebook page"
+              >
+                <img 
+                  src="/social/facebook.svg" 
+                  alt="Facebook"
+                  className="w-[18px] h-[18px]"
+                />
+              </motion.button>
+            )}
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -372,6 +428,17 @@ const ChatModal: FC<ChatModalProps> = ({ onClose, unreadCount = 0, onClearUnread
             />
           </motion.div>
         )}
+
+        {/* Countdown Offer */}
+        <AnimatePresence>
+          {showOffer && !qualified && (
+            <CountdownOffer
+              initialMinutes={15}
+              onExpire={handleOfferExpire}
+              offerText="Lock in your special move-in rate"
+            />
+          )}
+        </AnimatePresence>
 
         {/* Savings Progress */}
         {savings > 0 && (
