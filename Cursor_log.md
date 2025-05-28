@@ -350,3 +350,14 @@ src/
                   │   └── MediaGallery.tsx
                   └── page.tsx
 ```
+
+
+## Added Calendar, Tasks and Contacts View
+
+- Switched calendar to FullCalendar for robust alignment, modern UI, and reliable scheduling (with drag-to-select only for new tours).
+- Added full tour management: status updates, color coding, deletion, and sidebar details.
+- Reordered navigation: Calendar now appears before Contacts in the sidebar.
+- Built elegant Contacts page: table of prospects with add/delete, clickable email/phone, and status badges.
+- Created Tasks page for property managers to answer user questions and train the AI, with add/answer/resolve/delete actions.
+- Media Library: Now persists images in localStorage (base64, <1MB per file) so uploads remain after refresh; shows warning for oversized files.
+- Numerous UI/UX improvements for consistency, clarity, and modern feel across all dashboard pages.

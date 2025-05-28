@@ -15,12 +15,12 @@ export const dashboardRoutes: Route[] = [
     label: 'Tasks',
   },
   {
-    path: '/dashboard/contacts',
-    label: 'Contacts',
-  },
-  {
     path: '/dashboard/calendar',
     label: 'Calendar',
+  },
+  {
+    path: '/dashboard/contacts',
+    label: 'Contacts',
   },
   {
     path: '/dashboard/knowledge',
