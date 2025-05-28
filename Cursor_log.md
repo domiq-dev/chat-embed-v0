@@ -227,3 +227,38 @@ Build Process:
   - Unit/integration tests for components using Jest and React Testing Library (RTL), focusing on render checks and basic interactions.
   - End-to-end (E2E) smoke tests with Playwright or Cypress for critical user flows.
   - Continued use of TypeScript and ESLint for static analysis.
+
+## ChatModal.tsx Video Overlay & Styling Refinements
+
+- **AKOOL Avatar Integration into `ChatModal.tsx`:**
+  - Modified `ChatLauncher.tsx` to fetch AKOOL token and create session, passing `akoolSession` data to `ChatModal`.
+  - Integrated Agora SDK logic (dynamic import, client setup, event handlers for video/audio/TTS) directly into `ChatModal.tsx`.
+  - Added logic to `sendMessage` in `ChatModal.tsx` to route TTS to AKOOL if a session is active, falling back to the existing backend agent otherwise.
+  - Resolved "avatar busy" error by updating `DEFAULT_AVATAR_ID` to a known working ID.
+  - Re-enabled logic to close AKOOL sessions when the modal is closed.
+- **Visual Styling for Video Overlay:**
+  - **Dynamic Video Player Sizing:** The video player in `ChatModal.tsx` was styled to display underneath the header by dynamically measuring the header's height using a `ref` and adjusting the video player's `top` and `height` CSS properties accordingly.
+  - **Message Bubble Styling:**
+    - User message bubbles styled with a blue-to-purple gradient (`bg-gradient-to-br from-blue-500/[.90] to-purple-500/[.90]`).
+    - Agent message text color changed to `text-black` for better contrast on the video.
+    - User message timestamps styled with `text-white/90`.
+    - Main text content (via `ReactMarkdown`) within user messages conditionally styled `text-white`.
+
+## ChatModal.tsx Structural Refactor and Clear Zone for Avatar
+
+- **Component Refactoring:** `ChatModal.tsx` was refactored by extracting its main UI sections into four conceptual sub-components (defined within the same file):
+  - `ChatHeader`: Displays agent info, social links, and close button.
+  - `ChatBody`: Manages the display of messages and the visual space for the video.
+  - `TimerSection`: Handles quick replies, countdown offers, and savings progress.
+  - `MessagingInput`: Contains the text input and send button.
+- **Persistent Clear Zone for Avatar:**
+  - **Objective**: Ensure the top part of the video avatar (where the face is) remains unobstructed by chat messages, even when scrolling.
+  - **Implementation in `ChatBody`:**
+    - The overall `ChatModal` height was adjusted (initially to 750px, then to 675px).
+    - The `ChatBody` was structured with a two-part layout using flexbox:
+      1.  A **static, non-scrollable clear zone div** at the top with a fixed height (initially 280px, then 200px, finalized at 180px).
+      2.  A **scrollable message list div** below it, taking up the remaining vertical space.
+    - The global video player (`id={AKOOL_PLAYER_ID}`) was positioned absolutely behind all `ChatModal` content sections (header, body, timer, input), filling the space below the header.
+- **Vanishing Effect for Messages:**
+  - To create a smoother transition where messages appear to fade out at the top of the scrollable area (entering the clear zone), a CSS `mask-image` was applied to the scrollable messages container.
+  - The mask uses a `linear-gradient` (e.g., `linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20px, black 40px)`) to transition the message visibility from fully transparent at the top edge of the scrollable area to fully opaque over a 40px distance, with an intermediate step for a smoother easing effect.
