@@ -8,6 +8,7 @@ import MessageStatus from "@/components/ui/MessageStatus";
 import QuickReplyButtons, { QuickReplyHint, QuickReplyType } from "@/components/ui/QuicklyReplyButtons";
 import FloatingBanner from "@/components/ui/FloatingBanner";
 import CountdownOffer from "@/components/ui/CountdownOffer";
+import AvatarLoadingScreen from "@/components/ui/AvatarLoadingScreen";
 import { DEFAULT_APARTMENT_CONFIG } from "@/types/apartment";
 import { Session as AkoolSessionType } from '../services/apiService';
 
@@ -27,7 +28,7 @@ interface ChatModalProps {
   unreadCount?: number;
   onClearUnread?: () => void;
   config?: typeof DEFAULT_APARTMENT_CONFIG;
-  akoolSession: AkoolSessionType | null; // New prop for AKOOL session data
+  akoolSession: AkoolSessionType | null;
 }
 
 // AKOOL video player ID
@@ -107,7 +108,7 @@ const StarRating: FC<{ rating: number }> = ({ rating }) => {
     }
     return { index: i, fillPercentage };
   });
-
+  
   return (
     <div className="flex items-center gap-1">
       {stars.map(({ index, fillPercentage }) => (
@@ -177,7 +178,7 @@ const ChatBody: FC<ChatBodyProps> = ({
       </div>
       <div
         ref={containerRef}
-        className="flex-1 overflow-y-auto px-4 pb-4 space-y-4" 
+        className="flex-1 overflow-y-auto px-4 pt-10 pb-4 space-y-4"
         style={{
           maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20px, black 40px)', // Smoother fade to black
           WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20px, black 40px)' // For Safari compatibility
@@ -248,13 +249,13 @@ const TimerSection: FC<TimerSectionProps> = ({
       )}
       <AnimatePresence>
         {showOffer && !qualified && (
-          <CountdownOffer initialMinutes={15} onExpire={onOfferExpire} offerText="Lock in your special move-in rate"/>
+          <CountdownOffer initialMinutes={5} onExpire={onOfferExpire} offerText="Lock in your special move-in rate"/>
         )}
       </AnimatePresence>
       {savings > 0 && (
-        <motion.div className="px-5 py-2 border-t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <div className="text-xs font-medium text-gray-700 mb-1">Savings Progress: ${savings}</div>
-          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${(savings / 90) * 100}%` }} className="h-full bg-gradient-to-r from-green-400 to-blue-500" transition={{ duration: 0.5, ease: "easeOut" }}/></div>
+        <motion.div className="px-5 py-1 border-t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+          <div className="text-[11px] font-medium text-gray-600 mb-0.5">Savings Progress: ${savings}</div>
+          <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${(savings / 90) * 100}%` }} className="h-full bg-gradient-to-r from-green-400 to-blue-500" transition={{ duration: 0.5, ease: "easeOut" }}/></div>
         </motion.div>
       )}
     </div>
@@ -355,6 +356,7 @@ const ChatModal: FC<ChatModalProps> = ({
   const [localUnreadCount, setLocalUnreadCount] = useState(unreadCount);
   const [showOffer, setShowOffer] = useState(false);
   const [offerExpired, setOfferExpired] = useState(false);
+  const [showSessionEndedOverlay, setShowSessionEndedOverlay] = useState(false);
 
   // AKOOL/Agora specific state
   const [AgoraRTCModule, setAgoraRTCModule] = useState<any>(null);
@@ -363,6 +365,12 @@ const ChatModal: FC<ChatModalProps> = ({
   const [hasVideoStarted, setHasVideoStarted] = useState(false);
   const [akoolSessionError, setAkoolSessionError] = useState<string | null>(null);
   const isSendingRef = useRef(false);
+  const [isAvatarBuffering, setIsAvatarBuffering] = useState(false);
+
+  // Determine video player background - now always black when session is active
+  const videoPlayerBgColor = akoolSession ? '#222' : 'white';
+  // Initial message color if no session (white background)
+  const initialMessageColor = akoolSession ? 'text-white' : 'text-gray-700'; 
 
   // Ref and state for header height
   const headerRef = useRef<HTMLDivElement>(null);
@@ -395,14 +403,19 @@ const ChatModal: FC<ChatModalProps> = ({
           .then(() => { 
             setIsAgoraConnected(false); 
             setHasVideoStarted(false);
+            setIsAvatarBuffering(false);
             agoraClientRef.current = null; 
           })
           .catch(e => console.error('Error leaving Agora channel during cleanup:', e));
       }
+      setIsAvatarBuffering(false);
+      setShowSessionEndedOverlay(false);
       return;
     }
 
     console.log("ChatModal: AgoraRTCModule and akoolSession credentials present. Setting up Agora client.");
+    setIsAvatarBuffering(true);
+    setShowSessionEndedOverlay(false);
     let clientInstance: IAgoraRTCClient | null = null;
     try {
       clientInstance = AgoraRTCModule.createClient({ mode: 'rtc' as SDK_MODE, codec: 'vp8' as SDK_CODEC });
@@ -425,29 +438,52 @@ const ChatModal: FC<ChatModalProps> = ({
       if (!currentActiveClient) return;
       console.log(`ChatModal: Agora user ${user.uid} published ${mediaType}`);
       try {
-        await currentActiveClient.subscribe(user, mediaType);
+        await currentActiveClient.subscribe(user, mediaType); // Subscribe first
+
         if (mediaType === 'video') {
+          const videoTrack = user.videoTrack as IRemoteVideoTrack;
           const videoPlayerDiv = document.getElementById(AKOOL_PLAYER_ID);
-          if (videoPlayerDiv) {
-              console.log('ChatModal: Playing remote video track in', AKOOL_PLAYER_ID);
-              user.videoTrack?.play(videoPlayerDiv);
+
+          if (videoTrack && videoPlayerDiv) {
+            const firstFrameDecodedHandler = () => {
+              console.log(`ChatModal: Video track first-frame-decoded for user ${user.uid}.`);
               setHasVideoStarted(true);
+              setIsAvatarBuffering(false);
+              setShowSessionEndedOverlay(false);
+            };
+            videoTrack.once('first-frame-decoded', firstFrameDecodedHandler);
+            console.log(`ChatModal: Playing remote video track in ${AKOOL_PLAYER_ID} for user ${user.uid}`);
+            videoTrack.play(videoPlayerDiv);
           } else {
-              console.warn("ChatModal: Video player div '", AKOOL_PLAYER_ID, "' not found.");
+            const warningMsg = `ChatModal: Video track or player div ('${AKOOL_PLAYER_ID}') not found for user ${user.uid}.`;
+            console.warn(warningMsg);
+            setAkoolSessionError(prev => prev || "Video player element not found.");
+            setIsAvatarBuffering(false);
           }
         }
         if (mediaType === 'audio') {
-          console.log('ChatModal: Remote user published audio. Attempting to play.');
-          user.audioTrack?.play();
+          console.log(`ChatModal: Remote user ${user.uid} published audio. Attempting to play.`);
+          if (user.audioTrack) {
+            (user.audioTrack as IRemoteAudioTrack).play();
+          } else {
+            console.warn(`ChatModal: Audio track not available for user ${user.uid}.`);
+          }
         }
-      } catch (e) {
-        console.error(`ChatModal: Error subscribing or playing ${mediaType} track:`, e);
+      } catch (e: any) {
+        const errorMsg = `ChatModal: Error in handleUserPublished for ${mediaType} track (user ${user.uid}): ${e.message}`;
+        console.error(errorMsg, e);
+        setAkoolSessionError(prev => prev || `Failed to handle media: ${e.message}`);
+        setIsAvatarBuffering(false);
       }
     };
 
     const handleUserUnpublished = (user: any, mediaType: 'video' | 'audio') => {
       console.log(`ChatModal: Agora user ${user.uid} unpublished ${mediaType}`);
-      if (mediaType === 'video') setHasVideoStarted(false);
+      if (mediaType === 'video') {
+        setHasVideoStarted(false);
+        setShowSessionEndedOverlay(true);
+        setIsAvatarBuffering(false);
+      }
     };
 
     const handleStreamMessage = (uid: UID, data: Uint8Array | string) => {
@@ -489,11 +525,13 @@ const ChatModal: FC<ChatModalProps> = ({
         setAkoolSessionError(`Agora join error: ${err.message}`);
         setIsAgoraConnected(false);
         setHasVideoStarted(false);
+        setIsAvatarBuffering(false);
         console.error("ChatModal: Agora join error:", err);
       });
 
     return () => {
       console.log("ChatModal: Cleaning up Agora client for session:", akoolSession?._id);
+      setIsAvatarBuffering(false);
       if (currentActiveClient) {
         currentActiveClient.off('user-published', handleUserPublished);
         currentActiveClient.off('user-unpublished', handleUserUnpublished);
@@ -640,8 +678,8 @@ const ChatModal: FC<ChatModalProps> = ({
         }
       }
       const stateRes = await fetch('/api/agent', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify({ messages: [...messages, {from: 'user', text, sentAt: new Date()}, {from: 'agent', text: reply, sentAt: new Date()}], stateFetch: true, agentState })
       });
       if (stateRes.ok) {
@@ -653,7 +691,7 @@ const ChatModal: FC<ChatModalProps> = ({
         if (data.savings && data.savings > savings) {
             const startValue = savings; const endValue = data.savings; const duration = 1000; const startTime = Date.now();
             const animateSavings = () => { const now = Date.now(); const progress = Math.min((now - startTime) / duration, 1); const currentValue = Math.floor(startValue + (endValue - startValue) * progress); setSavings(currentValue); if (progress < 1) requestAnimationFrame(animateSavings); };
-            requestAnimationFrame(animateSavings);
+          requestAnimationFrame(animateSavings);
         }
         if (data.qualified && !showFloatingBanner) { setShowFloatingBanner(true); setShowSparkles(true); setTimeout(() => setShowSparkles(false), 2000); }
       }
@@ -664,7 +702,7 @@ const ChatModal: FC<ChatModalProps> = ({
       setIsTyping(false);
     }
   };
-  
+
   return (
     <div className="fixed bottom-20 right-6 z-50">
       {akoolSessionError && (
@@ -680,15 +718,12 @@ const ChatModal: FC<ChatModalProps> = ({
             id={AKOOL_PLAYER_ID}
             className="absolute left-0 w-full z-0 flex items-center justify-center"
             style={{
-              backgroundColor: '#222',
+              backgroundColor: videoPlayerBgColor,
               top: `${headerHeight}px`,
               height: headerHeight > 0 ? `calc(100% - ${headerHeight}px)` : '100%',
               overflow: 'hidden',
             }}
         >
-            {!akoolSession && <p className="text-white text-center">Waiting for Avatar Session...</p>}
-            {akoolSession && !isAgoraConnected && <p className="text-white text-center">Connecting to Avatar...</p>}
-            {isAgoraConnected && !hasVideoStarted && <p className="text-white text-center">Loading Video...</p>}
         </div>
 
         <ChatHeader
@@ -707,7 +742,7 @@ const ChatModal: FC<ChatModalProps> = ({
         <TimerSection
           isTyping={isTyping}
           currentHint={currentHint}
-          currentQuestion={currentQuestion}
+              currentQuestion={currentQuestion}
           sendMessage={sendMessage}
           showOffer={showOffer}
           qualified={qualified}
@@ -723,6 +758,28 @@ const ChatModal: FC<ChatModalProps> = ({
           isAgoraConnected={isAgoraConnected}
           agentState={agentState}
         />
+
+        {isAvatarBuffering && !showSessionEndedOverlay && (
+          <div className="absolute inset-0 bg-white z-20 flex flex-col items-center justify-center">
+            <AvatarLoadingScreen message="Connecting to Jerome..." />
+            </div>
+        )}
+
+        {showSessionEndedOverlay && (
+          <div className="absolute inset-0 bg-black bg-opacity-80 z-30 flex flex-col items-center justify-center text-white p-6 text-center rounded-lg">
+            <X size={48} className="text-red-400 mb-4" />
+            <p className="text-xl font-semibold mb-2">Session Ended</p>
+            <p className="mb-4">Your live video session has ended. This might be due to inactivity.</p>
+            <p className="text-sm">
+Please close and reopen the chat window to start a new session with Jerome.</p>
+            <button 
+              onClick={onClose} 
+              className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
+            >
+              Close Chat
+            </button>
+          </div>
+        )}
       </div>
 
       <AnimatePresence>

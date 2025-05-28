@@ -40,21 +40,21 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 20 }}
-      className="px-5 py-3 border-t"
+      className="px-4 py-2 border-t"
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Clock size={16} className="text-blue-600" />
-          <span className="text-sm font-medium text-gray-700">{offerText}</span>
+        <div className="flex items-center gap-1.5">
+          <Clock size={14} className="text-blue-600" />
+          <span className="text-xs font-medium text-gray-700">{offerText}</span>
         </div>
         <div className="flex items-center gap-1">
-          <div className="bg-gray-100 px-2 py-1 rounded text-sm font-medium text-blue-600">
+          <div className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-medium text-blue-600">
             {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
           </div>
-          <span className="text-xs text-gray-500">remaining</span>
+          <span className="text-[10px] text-gray-500">remaining</span>
         </div>
       </div>
-      <div className="mt-2 w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+      <div className="mt-1.5 w-full h-1 bg-gray-100 rounded-full overflow-hidden">
         <motion.div
           className="h-full bg-gradient-to-r from-blue-500 to-blue-600"
           initial={{ width: "100%" }}

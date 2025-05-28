@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import ChatModal from './ChatModal';
 import { ApiService, Session as AkoolSessionType } from '../services/apiService'; // Adjusted path
 
@@ -24,16 +24,14 @@ const ChatLauncher = () => {
   const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   const toggle = () => {
-    setOpen((v) => {
-      const newOpenState = !v;
+    setOpen((prevOpen) => {
+      const newOpenState = !prevOpen;
       if (newOpenState) {
         setUnreadCount(0);
-        // If opening and no session, try to create one
         if (!currentSession && apiService && !isCreatingSession) {
           handleCreateAkoolSession();
         }
       } else {
-        // If closing and a session exists, close it
         if (currentSession && apiService) {
           console.log("ChatLauncher: Closing AKOOL session:", currentSession._id);
           apiService.closeSession(currentSession._id)
@@ -42,10 +40,8 @@ const ChatLauncher = () => {
             })
             .catch(err => {
               console.error("ChatLauncher: Error closing AKOOL session:", err);
-              // Optionally set a sessionError here too, though the user is closing the modal
             });
-          setCurrentSession(null); // Clear local session state immediately
-          // Note: Agora client cleanup is handled within ChatModal when akoolSession becomes null
+          setCurrentSession(null);
         }
       }
       return newOpenState;
@@ -78,7 +74,7 @@ const ChatLauncher = () => {
     initializeService();
   }, []);
 
-  const handleCreateAkoolSession = async () => {
+  const handleCreateAkoolSession = useCallback(async () => {
     if (!apiService) {
       setSessionError('ApiService not initialized yet for session creation.');
       return;
@@ -97,14 +93,18 @@ const ChatLauncher = () => {
     } finally {
       setIsCreatingSession(false);
     }
-  };
+  }, [apiService]); // Added apiService to dependency array, DEFAULT_AVATAR_ID and DEFAULT_SESSION_DURATION are constants
 
-  // Auto-create session if ApiService is ready and chat is set to auto-open
+  // Auto-create session if ApiService is ready and chat is set to auto-open OR manually opened
   useEffect(() => {
-    if (open && apiService && !currentSession && !isCreatingSession) {
-      handleCreateAkoolSession();
+    if (open) {
+      if (apiService && !currentSession && !isCreatingSession) {
+        handleCreateAkoolSession();
+      }
+    } else {
+      // If chat is closed, ensure avatar readiness is also reset
     }
-  }, [open, apiService, currentSession, isCreatingSession]); 
+  }, [open, apiService, currentSession, isCreatingSession, handleCreateAkoolSession]); 
 
   // Handle visibility change to clear unread count when tab becomes visible
   useEffect(() => {
@@ -121,28 +121,40 @@ const ChatLauncher = () => {
   // Initial auto-open with delay
   useEffect(() => {
     const timer = setTimeout(() => {
-      setOpen(true);
+      if (!open) {
+        setOpen(true);
+      }
     }, 500);
     return () => clearTimeout(timer);
-  }, []);
+  }, []); // Keep 'open' out of deps for initial auto-open logic
 
   return (
     <div className="fixed bottom-6 right-6 z-50" style={{ overflow: 'visible' }}>
       {sessionError && (
-        <div style={{ position: 'fixed', bottom: '100px', right: '20px', backgroundColor: 'red', color: 'white', padding: '10px', borderRadius: '5px', zIndex: 100}}>
+        <div style={{ position: 'fixed', bottom: '100px', right: '20px', backgroundColor: 'red', color: 'white', padding: '10px', borderRadius: '5px', zIndex: 1000}}>
           AKOOL Error: {sessionError}
         </div>
       )}
-      {isCreatingSession && (
+      {/* {isCreatingSession && (
          <div style={{ position: 'fixed', bottom: '150px', right: '20px', backgroundColor: 'orange', color: 'white', padding: '10px', borderRadius: '5px', zIndex: 100}}>
           Starting AKOOL Session...
         </div>
+      )} */}
+
+      {/* Unified Global Pre-Loading screen for ChatLauncher - shows during session creation or if no session */}
+      {open && (isCreatingSession || !currentSession) && (
+        <div className="mb-3 shadow-xl rounded-lg bg-white w-[360px] h-[675px] flex flex-col items-center justify-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-gray-700 text-sm">Loading Chat...</p>
+        </div>
       )}
-      {/* ────────── ChatModal card ────────── */}
-      {open && (
+
+      {/* ChatModal card - Render if open, session exists, AND not in initial API creation phase.
+          ChatModal will now handle its own full loading state until video is ready. */}
+      {open && currentSession && !isCreatingSession && (
         <div className="mb-3" style={{ overflow: 'visible' }}>
-          <ChatModal 
-            onClose={toggle} 
+          <ChatModal
+            onClose={toggle}
             unreadCount={unreadCount}
             onClearUnread={() => setUnreadCount(0)}
             akoolSession={currentSession}

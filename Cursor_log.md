@@ -262,3 +262,18 @@ Build Process:
 - **Vanishing Effect for Messages:**
   - To create a smoother transition where messages appear to fade out at the top of the scrollable area (entering the clear zone), a CSS `mask-image` was applied to the scrollable messages container.
   - The mask uses a `linear-gradient` (e.g., `linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20px, black 40px)`) to transition the message visibility from fully transparent at the top edge of the scrollable area to fully opaque over a 40px distance, with an intermediate step for a smoother easing effect.
+
+## Recent Major Updates (Date: Please fill in)
+
+*   **Improved Chat Loading Sequence & Visual Transitions:**
+    *   Addressed issues causing infinite loading screens or jarring intermediate visual states (e.g., white/black screen flashes) when loading the Akool video avatar.
+    *   Iteratively refined state management for loading screens between `ChatLauncher.tsx` and `ChatModal.tsx`.
+    *   The final approach involves `ChatLauncher.tsx` handling the initial session creation loading. Once a session is established, `ChatModal.tsx` renders and manages its own full-modal loading screen (`AvatarLoadingScreen` controlled by the `isAvatarBuffering` state).
+    *   This internal `ChatModal.tsx` loading screen persists until the Agora video track's 'first-frame-decoded' event fires, ensuring a direct and smooth transition from loading to the visible video avatar.
+
+*   **Graceful Handling of Avatar Session Timeouts:**
+    *   Implemented a "Session Ended" overlay in `ChatModal.tsx` to address the avatar video feed going black after a period of inactivity (due to Akool session timeout, e.g., 5 minutes).
+    *   A new state, `showSessionEndedOverlay`, controls the visibility of this overlay.
+    *   The overlay is triggered when the Agora video track is unpublished (`handleUserUnpublished` event for video).
+    *   It informs the user that the session has ended (e.g., due to inactivity) and provides a "Close Chat" button to allow them to restart the session by reopening the chat.
+    *   The overlay is reset when a new session starts or when a video track successfully begins playing.
