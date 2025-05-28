@@ -263,7 +263,7 @@ Build Process:
   - To create a smoother transition where messages appear to fade out at the top of the scrollable area (entering the clear zone), a CSS `mask-image` was applied to the scrollable messages container.
   - The mask uses a `linear-gradient` (e.g., `linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20px, black 40px)`) to transition the message visibility from fully transparent at the top edge of the scrollable area to fully opaque over a 40px distance, with an intermediate step for a smoother easing effect.
 
-## Recent Major Updates (Date: Please fill in)
+## Chat Loading Sequence and Avatar Handling of Session Timeouts
 
 *   **Improved Chat Loading Sequence & Visual Transitions:**
     *   Addressed issues causing infinite loading screens or jarring intermediate visual states (e.g., white/black screen flashes) when loading the Akool video avatar.
@@ -277,3 +277,8 @@ Build Process:
     *   The overlay is triggered when the Agora video track is unpublished (`handleUserUnpublished` event for video).
     *   It informs the user that the session has ended (e.g., due to inactivity) and provides a "Close Chat" button to allow them to restart the session by reopening the chat.
     *   The overlay is reset when a new session starts or when a video track successfully begins playing.
+
+
+## Exponential Backoff Introduced for Error Handling
+- Implemented exponential backoff retry mechanism in ApiService for handling AKOOL API errors
+- Added automatic retries with increasing delays (1s, 2s, 4s, 8s, 16s) when avatars are busy or network errors occur
