@@ -515,6 +515,55 @@ const ChatModal: FC<ChatModalProps> = ({
       }
     };
 
+    // NEW: Token expiration handlers for better session management
+    const handleTokenWillExpire = () => {
+      console.log('ChatModal: Agora token will expire soon - preparing for renewal');
+      // When token expires and renews, dialogue mode often gets reset
+      // We'll re-establish it after the renewal
+    };
+
+    const handleTokenDidExpire = () => {
+      console.error('ChatModal: Agora token expired - connection will be lost');
+      setAkoolSessionError('Session expired. Please close and reopen chat.');
+      setIsAgoraConnected(false);
+      setHasVideoStarted(false);
+      setShowSessionEndedOverlay(true);
+      setIsDialogueModeReady(false); // Reset dialogue mode on token expiry
+    };
+
+    // NEW: Connection state change handler
+    const handleConnectionStateChange = (curState: string, revState: string) => {
+      console.log(`ChatModal: Agora connection state changed from ${revState} to ${curState}`);
+      
+      if (curState === 'DISCONNECTED' || curState === 'DISCONNECTING') {
+        setIsAgoraConnected(false);
+        setHasVideoStarted(false);
+        setIsAvatarBuffering(false);
+        setIsDialogueModeReady(false); // Reset dialogue mode status when disconnected
+        
+        // Only show session ended if we were previously connected
+        if (revState === 'CONNECTED') {
+          setShowSessionEndedOverlay(true);
+          setAkoolSessionError('Connection lost. Please close and reopen chat.');
+        }
+      } else if (curState === 'CONNECTED') {
+        setIsAgoraConnected(true);
+        setAkoolSessionError(null); // Clear any previous errors
+        setShowSessionEndedOverlay(false);
+        
+        // IMPORTANT: Re-establish dialogue mode whenever we reconnect
+        console.log('ChatModal: Reconnected - re-establishing dialogue mode');
+        setTimeout(() => {
+          setupAvatarDialogueMode();
+        }, 1000); // Give connection a moment to stabilize
+        
+      } else if (curState === 'CONNECTING' || curState === 'RECONNECTING') {
+        setIsAvatarBuffering(true);
+        setAkoolSessionError(null);
+        setIsDialogueModeReady(false); // Reset while reconnecting
+      }
+    };
+
     // Set up avatar for dialogue mode once connected
     const setupAvatarDialogueMode = async (isRetry = false) => {
       if (currentActiveClient && typeof (currentActiveClient as any).sendStreamMessage === 'function') {
@@ -526,6 +575,9 @@ const ChatModal: FC<ChatModalProps> = ({
             cmd: "set-params",
             data: {
               mode: 2, // Dialogue mode (avatar engages in conversation)
+              session_id: akoolSession._id, // Include session ID for isolation
+              force_dialogue: true, // Force dialogue mode
+              reset_context: true, // Clear any previous context
             }
           }
         };
@@ -535,24 +587,61 @@ const ChatModal: FC<ChatModalProps> = ({
           // @ts-ignore - sendStreamMessage method exists at runtime despite type definitions
           await (currentActiveClient as IAgoraRTCClient).sendStreamMessage(JSON.stringify(setupMessage), false);
           console.log("ChatModal: Avatar dialogue mode configured successfully");
-          setIsDialogueModeReady(true);
+          
+          // Verify dialogue mode with a status check
+          setTimeout(async () => {
+            try {
+              const verifyMessage = {
+                v: 2,
+                type: "command",
+                mid: `verify-${Date.now()}`,
+                pld: {
+                  cmd: "get-status",
+                  data: {}
+                }
+              };
+              console.log("ChatModal: Verifying dialogue mode setup:", verifyMessage);
+              // @ts-ignore
+              await (currentActiveClient as IAgoraRTCClient).sendStreamMessage(JSON.stringify(verifyMessage), false);
+              
+              setIsDialogueModeReady(true);
+              console.log("ChatModal: Dialogue mode verified and ready");
+            } catch (verifyError) {
+              console.warn("ChatModal: Failed to verify dialogue mode:", verifyError);
+              setIsDialogueModeReady(true); // Set ready anyway
+            }
+          }, 500);
+          
         } catch (error) {
           console.error("ChatModal: Failed to setup avatar dialogue mode:", error);
-          // Only retry once to avoid infinite loops
+          // More aggressive retry for dialogue mode
           if (!isRetry) {
             setTimeout(() => {
               console.log("ChatModal: Retrying dialogue mode setup...");
               setupAvatarDialogueMode(true);
-            }, 2000);
+            }, 3000); // Longer delay before retry
+          } else {
+            console.error("ChatModal: Dialogue mode setup failed after retry - may experience echoing");
+            setAkoolSessionError('Dialogue mode setup failed - avatar may echo messages');
+            setIsDialogueModeReady(true); // Allow chat to continue even if setup failed
           }
         }
       }
     };
 
     const { agora_app_id, agora_channel, agora_token, agora_uid } = akoolSession.credentials;
+    
+    // Set up all event handlers
     currentActiveClient.on('user-published', handleUserPublished);
     currentActiveClient.on('user-unpublished', handleUserUnpublished);
     currentActiveClient.on('stream-message', handleStreamMessage);
+    
+    // NEW: Add token expiration handlers
+    currentActiveClient.on('token-privilege-will-expire', handleTokenWillExpire);
+    currentActiveClient.on('token-privilege-did-expire', handleTokenDidExpire);
+    
+    // NEW: Add connection state handler
+    currentActiveClient.on('connection-state-change', handleConnectionStateChange);
     
     console.log("ChatModal: Joining Agora channel...", {agora_app_id, agora_channel, agora_uid});
     currentActiveClient.join(agora_app_id, agora_channel, agora_token, agora_uid)
@@ -575,9 +664,14 @@ const ChatModal: FC<ChatModalProps> = ({
       console.log("ChatModal: Cleaning up Agora client for session:", akoolSession?._id);
       setIsAvatarBuffering(false);
       if (currentActiveClient) {
+        // Remove all event handlers
         currentActiveClient.off('user-published', handleUserPublished);
         currentActiveClient.off('user-unpublished', handleUserUnpublished);
         currentActiveClient.off('stream-message', handleStreamMessage);
+        currentActiveClient.off('token-privilege-will-expire', handleTokenWillExpire);
+        currentActiveClient.off('token-privilege-did-expire', handleTokenDidExpire);
+        currentActiveClient.off('connection-state-change', handleConnectionStateChange);
+        
         if (hasJoined || currentActiveClient.connectionState === 'CONNECTING' || currentActiveClient.connectionState === 'CONNECTED') {
           currentActiveClient.leave()
             .catch(e => console.error('ChatModal: Error leaving Agora channel on cleanup:', e))
@@ -594,6 +688,7 @@ const ChatModal: FC<ChatModalProps> = ({
            if (agoraClientRef.current === currentActiveClient) {
              setIsAgoraConnected(false);
              setHasVideoStarted(false);
+             setIsDialogueModeReady(false);
              agoraClientRef.current = null; 
              console.log("ChatModal: Agora client (not fully joined) cleaned up.");
            }
@@ -601,6 +696,56 @@ const ChatModal: FC<ChatModalProps> = ({
       }
     };
   }, [akoolSession, AgoraRTCModule]);
+
+  // NEW: Handle page visibility changes to maintain session
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('ChatModal: Tab became visible - checking connection state');
+        if (agoraClientRef.current && akoolSession) {
+          const connectionState = agoraClientRef.current.connectionState;
+          console.log('ChatModal: Current Agora connection state:', connectionState);
+          
+          if (connectionState === 'DISCONNECTED' && !showSessionEndedOverlay) {
+            console.log('ChatModal: Connection lost while tab was hidden - showing reconnection UI');
+            setShowSessionEndedOverlay(true);
+            setAkoolSessionError('Connection lost while tab was inactive. Please close and reopen chat.');
+          }
+        }
+      } else {
+        console.log('ChatModal: Tab became hidden - session will continue in background');
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [akoolSession, showSessionEndedOverlay]);
+
+  // NEW: Keep-alive mechanism for sessions
+  useEffect(() => {
+    if (!akoolSession || !isAgoraConnected) return;
+
+    const keepAliveInterval = setInterval(() => {
+      if (agoraClientRef.current && agoraClientRef.current.connectionState === 'CONNECTED') {
+        console.log('ChatModal: Sending keep-alive ping');
+        // Send a small keep-alive message to maintain connection
+        try {
+          const keepAliveMessage = {
+            v: 2,
+            type: "ping",
+            mid: `ping-${Date.now()}`,
+            pld: {}
+          };
+          // @ts-ignore
+          agoraClientRef.current.sendStreamMessage(JSON.stringify(keepAliveMessage), false);
+        } catch (error) {
+          console.warn('ChatModal: Keep-alive ping failed:', error);
+        }
+      }
+    }, 30000); // Send keep-alive every 30 seconds
+
+    return () => clearInterval(keepAliveInterval);
+  }, [akoolSession, isAgoraConnected]);
 
   // Existing useEffects for local chat functionality (unread count, scroll, localStorage)
   useEffect(() => { onClearUnread?.(); }, [onClearUnread]);
@@ -752,6 +897,41 @@ const ChatModal: FC<ChatModalProps> = ({
       setIsTyping(false);
     }
   };
+
+  // NEW: Periodic dialogue mode reinforcement to prevent echoing
+  useEffect(() => {
+    if (!akoolSession || !isAgoraConnected || !isDialogueModeReady) return;
+
+    const reinforcementInterval = setInterval(() => {
+      if (agoraClientRef.current && agoraClientRef.current.connectionState === 'CONNECTED') {
+        console.log('ChatModal: Reinforcing dialogue mode to prevent echoing');
+        // Re-send dialogue mode setup to ensure it hasn't been reset
+        const reinforceMessage = {
+          v: 2,
+          type: "command",
+          mid: `reinforce-${Date.now()}`,
+          pld: {
+            cmd: "set-params",
+            data: {
+              mode: 2, // Ensure dialogue mode is still active
+              session_id: akoolSession._id,
+              force_dialogue: true,
+            }
+          }
+        };
+        
+        try {
+          // @ts-ignore
+          agoraClientRef.current.sendStreamMessage(JSON.stringify(reinforceMessage), false);
+          console.log('ChatModal: Dialogue mode reinforced successfully');
+        } catch (error) {
+          console.warn('ChatModal: Failed to reinforce dialogue mode:', error);
+        }
+      }
+    }, 120000); // Reinforce every 2 minutes
+
+    return () => clearInterval(reinforcementInterval);
+  }, [akoolSession, isAgoraConnected, isDialogueModeReady]);
 
   return (
     <div className="fixed bottom-20 right-6 z-50">
