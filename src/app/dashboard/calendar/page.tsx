@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import TourCalendar from './components/TourCalendar';
 import { X, Calendar as CalendarIcon, User2, Building2, Clock } from 'lucide-react';
 import { format } from 'date-fns';
-import { dummyTours, DummyTour } from '@/lib/dummy-data'; // Import dummy data
+import { useLeadContext } from '@/lib/lead-context';
+import { dummyTours, DummyTour, dummyAgents } from '@/lib/dummy-data';
 
 // Use DummyTour as Tour, or rename DummyTour to Tour in dummy-data.ts
 interface Tour extends DummyTour {}
@@ -26,15 +27,18 @@ function formatDateForInput(date: Date): string {
 }
 
 function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleModalProps) {
-  const [formData, setFormData] = useState<Omit<Tour, 'id' | 'source' | 'prospectId' | 'agentId'>>({
+  const { leads } = useLeadContext();
+  const [formData, setFormData] = useState<Omit<Tour, 'id' | 'source' | 'prospectId' | 'agentId' | 'leadId'>>({
     title: '',
     prospectName: '',
     unit: '',
     start: new Date(),
     end: new Date(),
     status: 'scheduled',
-    agent: '' // agent is optional in DummyTour, ensure consistency or handle it
+    agent: ''
   });
+  const [selectedLeadId, setSelectedLeadId] = useState<string>('');
+  const [selectedAgentId, setSelectedAgentId] = useState<string>('');
 
   // Update form data when selectedSlot changes
   useEffect(() => {
@@ -47,21 +51,67 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
     }
   }, [selectedSlot]);
 
+  // Update prospect name when lead is selected
+  useEffect(() => {
+    if (selectedLeadId) {
+      const lead = leads.find(l => l.id === selectedLeadId);
+      if (lead) {
+        setFormData(prev => ({
+          ...prev,
+          prospectName: lead.name,
+          unit: lead.unitInterest || prev.unit
+        }));
+        if (lead.assignedAgentId) {
+          setSelectedAgentId(lead.assignedAgentId);
+        }
+      }
+    }
+  }, [selectedLeadId, leads]);
+
+  // Update agent name when agent is selected
+  useEffect(() => {
+    if (selectedAgentId) {
+      const agent = dummyAgents.find(a => a.id === selectedAgentId);
+      if (agent) {
+        setFormData(prev => ({
+          ...prev,
+          agent: agent.name
+        }));
+      }
+    }
+  }, [selectedAgentId]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSchedule({
       ...formData,
-      status: 'scheduled', // This is already in formData, could be removed here
-      source: 'manual', // Add source as it's required by DummyTour
+      status: 'scheduled',
+      source: 'manual',
+      leadId: selectedLeadId || undefined,
+      agentId: selectedAgentId || undefined,
+      prospectId: undefined, // Legacy field
     });
+    
+    // Reset form
+    setFormData({
+      title: '',
+      prospectName: '',
+      unit: '',
+      start: new Date(),
+      end: new Date(),
+      status: 'scheduled',
+      agent: ''
+    });
+    setSelectedLeadId('');
+    setSelectedAgentId('');
     onClose();
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Schedule Tour</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
@@ -70,6 +120,26 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Select Lead (Optional)
+            </label>
+            <select
+              value={selectedLeadId}
+              onChange={(e) => setSelectedLeadId(e.target.value)}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="">Manual entry (no lead)</option>
+              {leads
+                .filter(lead => lead.currentStage !== 'handed_off')
+                .map(lead => (
+                  <option key={lead.id} value={lead.id}>
+                    {lead.name} - {lead.currentStage.replace('_', ' ')}
+                  </option>
+                ))}
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Title
@@ -95,6 +165,7 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
               placeholder="Enter prospect's name"
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
+              disabled={!!selectedLeadId}
             />
           </div>
 
@@ -114,15 +185,20 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Agent (Optional)
+              Agent
             </label>
-            <input
-              type="text"
-              value={formData.agent || ''}
-              onChange={(e) => setFormData({ ...formData, agent: e.target.value })}
-              placeholder="Enter agent's name"
+            <select
+              value={selectedAgentId}
+              onChange={(e) => setSelectedAgentId(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
+            >
+              <option value="">No agent assigned</option>
+              {dummyAgents.map(agent => (
+                <option key={agent.id} value={agent.id}>
+                  {agent.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -192,7 +268,9 @@ export default function CalendarPage() {
   const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | undefined>();
-  const [tours, setTours] = useState<Tour[]>(dummyTours); // Use dummyTours
+  const [tours, setTours] = useState<Tour[]>(dummyTours);
+  
+  const { leads, updateLead, addActivity, setSelectedLead } = useLeadContext();
 
   // Calculate stats
   const stats = {
@@ -200,16 +278,36 @@ export default function CalendarPage() {
     scheduled: tours.filter(t => t.status === 'scheduled').length,
     completed: tours.filter(t => t.status === 'completed').length,
     cancelled: tours.filter(t => t.status === 'cancelled').length,
-    noShow: tours.filter(t => t.status === 'no_show').length,
-    fromChat: tours.filter(t => t.source === 'chat').length,
   };
 
   const handleScheduleTour = (tourData: Omit<Tour, 'id'>) => {
     const newTour: Tour = {
       ...tourData,
-      id: Math.random().toString(36).substr(2, 9),
+      id: `tour_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     };
-    setTours([...tours, newTour]);
+    
+    setTours(prev => [...prev, newTour]);
+
+    // If linked to a lead, update the lead's stage and add activity
+    if (tourData.leadId) {
+      const lead = leads.find(l => l.id === tourData.leadId);
+      if (lead && lead.currentStage !== 'tour_scheduled') {
+        // Update lead stage to tour_scheduled
+        updateLead(tourData.leadId, { currentStage: 'tour_scheduled' });
+        
+        // Add tour scheduled activity
+        addActivity(tourData.leadId, {
+          type: 'tour_scheduled',
+          timestamp: new Date(),
+          details: {
+            tourDate: tourData.start,
+            unitRequested: tourData.unit,
+            agentName: tourData.agent
+          },
+          createdBy: 'agent'
+        });
+      }
+    }
   };
 
   const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
@@ -218,174 +316,130 @@ export default function CalendarPage() {
   };
 
   const handleCancelTour = (tourId: string) => {
-    setTours(tours.map(tour => 
-      tour.id === tourId 
-        ? { ...tour, status: 'cancelled' }
-        : tour
-    ));
-    setSelectedTour(null);
+    setTours(prev => 
+      prev.map(tour => 
+        tour.id === tourId 
+          ? { ...tour, status: 'cancelled' as const }
+          : tour
+      )
+    );
   };
 
   const handleCompleteTour = (tourId: string) => {
-    setTours(tours.map(tour => 
-      tour.id === tourId 
-        ? { ...tour, status: 'completed' }
-        : tour
-    ));
-    setSelectedTour(null);
+    const tour = tours.find(t => t.id === tourId);
+    setTours(prev => 
+      prev.map(t => 
+        t.id === tourId 
+          ? { ...t, status: 'completed' as const }
+          : t
+      )
+    );
+
+    // If linked to a lead, update the lead's stage and add activity
+    if (tour?.leadId) {
+      const lead = leads.find(l => l.id === tour.leadId);
+      if (lead) {
+        // Update lead stage to tour_completed
+        updateLead(tour.leadId, { currentStage: 'tour_completed' });
+        
+        // Add tour completed activity
+        addActivity(tour.leadId, {
+          type: 'tour_completed',
+          timestamp: new Date(),
+          details: {
+            notes: 'Tour completed successfully'
+          },
+          createdBy: 'agent'
+        });
+      }
+    }
   };
 
   const handleDeleteTour = (tourId: string) => {
-    setTours(tours.filter(tour => tour.id !== tourId));
-    setSelectedTour(null);
+    setTours(prev => prev.filter(tour => tour.id !== tourId));
+  };
+
+  const handleTourClick = (tour: Tour) => {
+    setSelectedTour(tour);
+    
+    // If tour is linked to a lead, select that lead for cross-tab navigation
+    if (tour.leadId) {
+      const lead = leads.find(l => l.id === tour.leadId);
+      if (lead) {
+        setSelectedLead(lead);
+      }
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Tour Calendar</h1>
-        <button 
-          onClick={() => {
-            setSelectedSlot(undefined); // Clear any previously selected slot for general scheduling
-            setIsScheduleModalOpen(true);
-          }}
-          className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+        <h1 className="text-2xl font-bold">Calendar</h1>
+        <button
+          onClick={() => setIsScheduleModalOpen(true)}
+          className="px-4 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700"
         >
           Schedule Tour
         </button>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Total Tours</p>
-          <p className="text-2xl font-semibold">{stats.total}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Scheduled</p>
-          <p className="text-2xl font-semibold text-purple-600">{stats.scheduled}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Completed</p>
-          <p className="text-2xl font-semibold text-green-600">{stats.completed}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Cancelled</p>
-          <p className="text-2xl font-semibold text-red-600">{stats.cancelled}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">No Shows</p>
-          <p className="text-2xl font-semibold text-gray-600">{stats.noShow}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">From Chat</p>
-          <p className="text-2xl font-semibold text-blue-600">{stats.fromChat}</p>
-        </div>
-      </div>
-
-      <div className="flex gap-6">
-        {/* Calendar */}
-        <div className="flex-1">
-          <TourCalendar 
-            tours={tours} 
-            onSelectTour={setSelectedTour}
-            onSelectSlot={handleSelectSlot}
-          />
-        </div>
-
-        {/* Tour Details Sidebar */}
-        {selectedTour && (
-          <div className="w-80 bg-white rounded-lg border border-gray-200 p-4 h-[700px]">
-            <div className="flex justify-between items-start mb-6">
-              <h2 className="text-lg font-semibold">Tour Details</h2>
-              <button
-                onClick={() => setSelectedTour(null)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <CalendarIcon className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Date & Time</p>
-                    <p className="font-medium">
-                      {selectedTour.start.toLocaleDateString()} at{' '}
-                      {selectedTour.start.toLocaleTimeString([], { 
-                        hour: 'numeric', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <User2 className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Prospect</p>
-                    <p className="font-medium">{selectedTour.prospectName}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Building2 className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-gray-500">Unit</p>
-                    <p className="font-medium">{selectedTour.unit}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t pt-4">
-                <div className="flex gap-2 mb-4">
-                  <span className={`px-2 py-1 text-xs rounded-full ${selectedTour.status === 'scheduled' ? 'bg-purple-100 text-purple-700' : selectedTour.status === 'completed' ? 'bg-green-100 text-green-700' : selectedTour.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}
-                  `}>
-                    {selectedTour.status.charAt(0).toUpperCase() + selectedTour.status.slice(1)}
-                  </span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${selectedTour.source === 'chat' ? 'bg-blue-100 text-blue-700' : selectedTour.source === 'resman' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}
-                  `}>
-                    {selectedTour.source === 'chat' ? 'AI Chat' : selectedTour.source === 'resman' ? 'ResMan' : 'Manual'}
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  {selectedTour.status === 'scheduled' && (
-                    <>
-                      <button 
-                        onClick={() => handleCompleteTour(selectedTour.id)}
-                        className="w-full px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
-                      >
-                        Mark as Completed
-                      </button>
-                      <button 
-                        onClick={() => handleCancelTour(selectedTour.id)}
-                        className="w-full px-4 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50"
-                      >
-                        Cancel Tour
-                      </button>
-                    </>
-                  )}
-                  <button 
-                    onClick={() => handleDeleteTour(selectedTour.id)}
-                    className="w-full px-4 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
-                  >
-                    Delete Tour
-                  </button>
-                </div>
-              </div>
+          <div className="flex items-center">
+            <CalendarIcon className="w-6 h-6 text-purple-600" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Total Tours</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.total}</p>
             </div>
           </div>
-        )}
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <Clock className="w-6 h-6 text-blue-600" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Scheduled</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.scheduled}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <User2 className="w-6 h-6 text-green-600" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Completed</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.completed}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <div className="flex items-center">
+            <Building2 className="w-6 h-6 text-red-600" />
+            <div className="ml-3">
+              <p className="text-sm font-medium text-gray-500">Cancelled</p>
+              <p className="text-2xl font-semibold text-gray-900">{stats.cancelled}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* Calendar */}
+      <TourCalendar
+        tours={tours}
+        onSelectSlot={handleSelectSlot}
+        onTourClick={handleTourClick}
+        selectedTour={selectedTour}
+        onCancelTour={handleCancelTour}
+        onCompleteTour={handleCompleteTour}
+        onDeleteTour={handleDeleteTour}
+      />
+
+      {/* Schedule Modal */}
       <ScheduleModal
         isOpen={isScheduleModalOpen}
         onClose={() => {
           setIsScheduleModalOpen(false);
-          setSelectedSlot(undefined); // Clear slot after modal closes
+          setSelectedSlot(undefined);
         }}
         selectedSlot={selectedSlot}
         onSchedule={handleScheduleTour}

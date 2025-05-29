@@ -7,7 +7,7 @@ import { Plus, AlertTriangle } from 'lucide-react';
 
 interface MediaItem {
   id: string;
-  url: string; // base64 data URL
+  url: string; // Now a proper URL path instead of base64
   name: string;
   type: string;
   size: number;
@@ -16,7 +16,6 @@ interface MediaItem {
 }
 
 const LOCAL_STORAGE_KEY = 'mediaLibraryItems';
-const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1MB
 
 function serializeMediaItems(items: MediaItem[]): string {
   return JSON.stringify(items.map(item => ({
@@ -32,60 +31,142 @@ function deserializeMediaItems(data: string): MediaItem[] {
       ...item,
       uploadedAt: new Date(item.uploadedAt),
     }));
-  } catch {
+  } catch (error) {
+    console.error('Error deserializing media items:', error);
     return [];
   }
-}
-
-async function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 export default function MediaPage() {
   const [showUpload, setShowUpload] = useState(false);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load from localStorage on mount
+  // Load from API and localStorage on mount
   useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
-      setMediaItems(deserializeMediaItems(stored));
-    }
+    const loadMediaItems = async () => {
+      try {
+        // First try to load from API
+        const response = await fetch('/api/media-metadata');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.metadata) {
+            const items = result.metadata.map((item: any) => ({
+              ...item,
+              uploadedAt: new Date(item.uploadedAt),
+            }));
+            console.log('Loaded from API:', items.length, 'items');
+            setMediaItems(items);
+            
+            // Also save to localStorage as backup
+            localStorage.setItem(LOCAL_STORAGE_KEY, serializeMediaItems(items));
+            setIsLoaded(true);
+            return;
+          }
+        }
+        
+        // Fallback to localStorage
+        console.log('API failed, trying localStorage');
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+          const items = deserializeMediaItems(stored);
+          console.log('Loaded from localStorage:', items.length, 'items');
+          setMediaItems(items);
+          
+          // Sync to API
+          await syncToAPI(items);
+        }
+      } catch (error) {
+        console.error('Error loading media items:', error);
+        setError('Failed to load media library');
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+
+    loadMediaItems();
   }, []);
 
-  // Save to localStorage whenever mediaItems changes
-  useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, serializeMediaItems(mediaItems));
-  }, [mediaItems]);
-
-  const handleUpload = async (files: File[]) => {
-    setError(null);
-    const tooLarge = files.find(file => file.size > MAX_FILE_SIZE);
-    if (tooLarge) {
-      setError(`File "${tooLarge.name}" is too large. Max size is 1MB.`);
-      return;
+  // Sync data to API
+  const syncToAPI = async (items: MediaItem[]) => {
+    try {
+      const metadata = items.map(item => ({
+        ...item,
+        uploadedAt: item.uploadedAt.toISOString(),
+      }));
+      
+      await fetch('/api/media-metadata', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ metadata }),
+      });
+      console.log('Synced to API:', items.length, 'items');
+    } catch (error) {
+      console.error('Failed to sync to API:', error);
     }
-    // Convert files to base64 data URLs
-    const newItems: MediaItem[] = await Promise.all(files.map(async file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      url: await fileToBase64(file),
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      uploadedAt: new Date(),
-    })));
+  };
+
+  // Save to both localStorage and API whenever mediaItems changes (but only after initial load)
+  useEffect(() => {
+    if (isLoaded && mediaItems.length >= 0) {
+      try {
+        // Save to localStorage
+        const serialized = serializeMediaItems(mediaItems);
+        localStorage.setItem(LOCAL_STORAGE_KEY, serialized);
+        console.log('Saved to localStorage:', mediaItems.length, 'items');
+        
+        // Save to API
+        syncToAPI(mediaItems);
+      } catch (error) {
+        console.error('Error saving media items:', error);
+        setError('Failed to save media metadata');
+      }
+    }
+  }, [mediaItems, isLoaded]);
+
+  const handleUpload = async (newItems: MediaItem[]) => {
+    setError(null);
+    
+    // Add the new items to our collection
     setMediaItems(prev => [...prev, ...newItems]);
     setShowUpload(false);
   };
 
-  const handleDelete = (id: string) => {
-    setMediaItems(prev => prev.filter(item => item.id !== id));
+  const handleDelete = async (id: string) => {
+    // Find the item to delete
+    const itemToDelete = mediaItems.find(item => item.id === id);
+    if (!itemToDelete) return;
+
+    try {
+      // Call API to delete the physical file
+      const deleteFileResponse = await fetch('/api/delete-media', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: itemToDelete.url }),
+      });
+
+      if (!deleteFileResponse.ok) {
+        throw new Error('Failed to delete file from server');
+      }
+
+      // Remove metadata from API
+      await fetch('/api/media-metadata', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+
+      // Remove from state (this will trigger the useEffect to save to localStorage)
+      setMediaItems(prev => prev.filter(item => item.id !== id));
+    } catch (error) {
+      console.error('Delete failed:', error);
+      setError('Failed to delete file. It may still exist on the server.');
+    }
   };
 
   return (
@@ -95,11 +176,18 @@ export default function MediaPage() {
         <button
           onClick={() => setShowUpload(true)}
           className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+          disabled={!isLoaded}
         >
           <Plus className="h-5 w-5" />
           Upload Media
         </button>
       </div>
+
+      {!isLoaded && (
+        <div className="text-center text-gray-500 py-8">
+          Loading media library...
+        </div>
+      )}
 
       {error && (
         <div className="flex items-center gap-2 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg border border-yellow-300">
@@ -129,36 +217,38 @@ export default function MediaPage() {
         </div>
       )}
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Total Files</p>
-          <p className="text-2xl font-semibold">{mediaItems.length}</p>
+      {/* Stats Cards - only show when loaded */}
+      {isLoaded && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <p className="text-sm text-gray-500">Total Files</p>
+            <p className="text-2xl font-semibold">{mediaItems.length}</p>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <p className="text-sm text-gray-500">Total Size</p>
+            <p className="text-2xl font-semibold">
+              {(mediaItems.reduce((acc, item) => acc + item.size, 0) / (1024 * 1024)).toFixed(2)} MB
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <p className="text-sm text-gray-500">Image Types</p>
+            <p className="text-2xl font-semibold">
+              {new Set(mediaItems.map(item => item.type.split('/')[1].toUpperCase())).size}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <p className="text-sm text-gray-500">Last Upload</p>
+            <p className="text-2xl font-semibold">
+              {mediaItems.length > 0
+                ? new Date(Math.max(...mediaItems.map(item => item.uploadedAt.getTime()))).toLocaleDateString()
+                : '-'}
+            </p>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Total Size</p>
-          <p className="text-2xl font-semibold">
-            {(mediaItems.reduce((acc, item) => acc + item.size, 0) / (1024 * 1024)).toFixed(2)} MB
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Image Types</p>
-          <p className="text-2xl font-semibold">
-            {new Set(mediaItems.map(item => item.type.split('/')[1].toUpperCase())).size}
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-500">Last Upload</p>
-          <p className="text-2xl font-semibold">
-            {mediaItems.length > 0
-              ? new Date(Math.max(...mediaItems.map(item => item.uploadedAt.getTime()))).toLocaleDateString()
-              : '-'}
-          </p>
-        </div>
-      </div>
+      )}
 
-      {/* Gallery */}
-      <MediaGallery items={mediaItems} onDelete={handleDelete} />
+      {/* Gallery - only show when loaded */}
+      {isLoaded && <MediaGallery items={mediaItems} onDelete={handleDelete} />}
     </div>
   );
 } 

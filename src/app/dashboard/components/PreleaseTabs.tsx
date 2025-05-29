@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,22 +17,38 @@ interface PreleaseEntry {
   // prospectId: string; // Optional: if you need to link back
 }
 
-// Map dummyProspects (those who have leased) to the PreleaseEntry structure
-const preleasesData: PreleaseEntry[] = dummyProspects
-  .filter(prospect => prospect.status === 'leased') // Only show leased prospects
-  .slice(0, 2) // Take the first two leased prospects for this example
-  .map((prospect: DummyProspect, index: number) => ({
-    name: prospect.name,
-    // Example: Generate a signed date from a few days ago
-    signedDate: new Date(new Date().setDate(new Date().getDate() - (index * 2 + 5))).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    duration: `${Math.floor(Math.random() * 2) + 1}m ${Math.floor(Math.random() * 50) + 10}s`, // Random duration
-    questions: Math.floor(Math.random() * 4) + 5, // Random questions (5-8)
-    score: index === 0 ? "A+" : "A", // Example scores
-    // prospectId: prospect.id,
-  }));
+// Function to generate deterministic "random" values based on a string seed
+function seededRandom(seed: string, min: number, max: number): number {
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    const char = seed.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  const normalized = Math.abs(hash) / 2147483647; // Normalize to 0-1
+  return Math.floor(normalized * (max - min + 1)) + min;
+}
 
 export default function PreleaseTabs() {
   const [selectedRow, setSelectedRow] = useState<PreleaseEntry | null>(null);
+  const [preleasesData, setPreleasesData] = useState<PreleaseEntry[]>([]);
+
+  useEffect(() => {
+    // Generate the data on the client side after hydration to avoid server/client mismatch
+    const data: PreleaseEntry[] = dummyProspects
+      .filter(prospect => prospect.status === 'leased') // Only show leased prospects
+      .slice(0, 2) // Take the first two leased prospects for this example
+      .map((prospect: DummyProspect, index: number) => ({
+        name: prospect.name,
+        // Example: Generate a signed date from a few days ago
+        signedDate: new Date(new Date().setDate(new Date().getDate() - (index * 2 + 5))).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        duration: `${seededRandom(prospect.name + 'duration1', 1, 2)}m ${seededRandom(prospect.name + 'duration2', 10, 59)}s`, // Deterministic duration based on name
+        questions: seededRandom(prospect.name + 'questions', 5, 8), // Deterministic questions (5-8)
+        score: index === 0 ? "A+" : "A", // Example scores
+        // prospectId: prospect.id,
+      }));
+    setPreleasesData(data);
+  }, []);
 
   const getScoreColor = (score: string) => {
     if (score === "A+") return "bg-green-200 text-green-800";

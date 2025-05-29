@@ -325,17 +325,9 @@ const ChatModal: FC<ChatModalProps> = ({
   akoolSession
 }) => {
   const [messages, setMessages] = useState<ChatMessageForDisplay[]>(() => {
+    // Clear localStorage and start fresh session on every page load
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('chatbotState');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return (parsed.messages ?? []).map((msg: any) => ({ 
-            id: msg.id || `msg-${Math.random().toString(36).substr(2, 9)}`,
-            from: msg.from,
-            text: msg.text,
-            sentAt: msg.sentAt ? new Date(msg.sentAt) : new Date()
-        }));
-      }
+      localStorage.removeItem('chatbotState');
     }
     return [
       { 
@@ -758,16 +750,6 @@ const ChatModal: FC<ChatModalProps> = ({
   useEffect(() => {
     if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight;
   }, [messages]);
-  useEffect(() => {
-    // Save full chat messages to localStorage, including new IDs
-    const dataToSave = {
-      messages: messages.map(m => ({...m, sentAt: m.sentAt?.toISOString() })),
-      currentQuestion, agentState, savings, qualified
-    };
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('chatbotState', JSON.stringify(dataToSave));
-    }
-  }, [messages, currentQuestion, agentState, savings, qualified]);
   useEffect(() => {
     if (savings > 0) { setShowSparkles(true); const timer = setTimeout(() => setShowSparkles(false), 2000); return () => clearTimeout(timer); }
   }, [savings]);

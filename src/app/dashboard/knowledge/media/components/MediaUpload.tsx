@@ -4,12 +4,13 @@ import { useState, useRef } from 'react';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 
 interface MediaUploadProps {
-  onUpload: (files: File[]) => void;
+  onUpload: (files: any[]) => void;
 }
 
 export default function MediaUpload({ onUpload }: MediaUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -32,7 +33,7 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
     
     if (files.length > 0) {
       setPreviewFiles(files);
-      onUpload(files);
+      uploadFiles(files);
     }
   };
 
@@ -42,7 +43,50 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
         file.type.startsWith('image/')
       );
       setPreviewFiles(files);
-      onUpload(files);
+      uploadFiles(files);
+    }
+  };
+
+  const uploadFiles = async (files: File[]) => {
+    if (files.length === 0) return;
+    
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      files.forEach(file => {
+        formData.append('files', file);
+      });
+
+      const response = await fetch('/api/upload-media', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload files');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Convert the API response to match the expected format
+        const mediaItems = result.files.map((file: any) => ({
+          id: file.id,
+          url: file.url,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          uploadedAt: new Date(file.uploadedAt),
+        }));
+        
+        onUpload(mediaItems);
+        setPreviewFiles([]);
+      }
+    } catch (error) {
+      console.error('Upload failed:', error);
+      alert('Failed to upload files. Please try again.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -69,6 +113,7 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
           accept="image/*"
           multiple
           className="hidden"
+          disabled={uploading}
         />
 
         <div className="space-y-4">
@@ -77,13 +122,18 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
           </div>
           <div className="space-y-2">
             <p className="text-gray-600">
-              Drag and drop your images here, or{' '}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="text-purple-600 hover:text-purple-700 font-medium"
-              >
-                browse
-              </button>
+              {uploading ? 'Uploading...' : (
+                <>
+                  Drag and drop your images here, or{' '}
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="text-purple-600 hover:text-purple-700 font-medium"
+                    disabled={uploading}
+                  >
+                    browse
+                  </button>
+                </>
+              )}
             </p>
             <p className="text-sm text-gray-500">
               Supported formats: PNG, JPG, GIF up to 10MB
@@ -108,6 +158,7 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
               <button
                 onClick={() => removeFile(index)}
                 className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                disabled={uploading}
               >
                 <X className="h-4 w-4 text-gray-600" />
               </button>
