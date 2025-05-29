@@ -5,38 +5,42 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { dummyProspects, DummyProspect } from "@/lib/dummy-data"; // Import dummyProspects
 
-// Dummy dataset
-const insights = [
-  {
-    name: "Cindy Chang",
-    questions: 8,
-    summary: "Asked about pricing and amenities.",
-    signed: true,
-    duration: "2m 14s",
-    score: "A+",
-    audio: "/recordings/cindy.mp3",
-  },
-  {
-    name: "Tom Chen",
-    questions: 6,
-    summary: "Inquired about pet policies and parking.",
-    signed: true,
-    duration: "1m 45s",
-    score: "A",
-    audio: "/recordings/tom.mp3",
-  },
-];
+// Define an interface for the insight data used by the modal
+interface ModalInsight {
+  name: string;
+  questions: number;
+  summary: string;
+  signed: boolean; // Represents pre-lease signed
+  duration: string;
+  score: "A+" | "A" | "B" | "C"; // Assuming score is one of these
+  audio: string; // Path to audio file
+  // prospectId: string; // Optional: if you need to link back
+}
+
+// Map dummyProspects to the structure needed for this modal
+const insights: ModalInsight[] = dummyProspects.slice(0, 2).map((prospect: DummyProspect, index: number) => ({
+  name: prospect.name,
+  questions: Math.floor(Math.random() * 5) + 5, // Random number of questions (5-9)
+  summary: `Client expressed interest in ${prospect.status === 'leased' ? 'finalizing lease' : 'touring options'}. Touched upon amenities and unit availability.`,
+  signed: prospect.status === 'leased', // True if prospect has leased
+  duration: `${Math.floor(Math.random() * 2) + 1}m ${Math.floor(Math.random() * 50) + 10}s`, // Random duration
+  score: index === 0 ? "A+" : "A", // Example scores, e.g., first prospect gets A+, second A
+  audio: index === 0 ? "/recordings/cindy.mp3" : "/recordings/tom.mp3", // Keep existing audio for now
+  // prospectId: prospect.id,
+}));
 
 export default function ClientRecordModal() {
   const params = useSearchParams();
-  const personId = params.get("id");
-  const [selected, setSelected] = useState<any>(null);
+  const personId = params.get("id"); // This will be the prospect's name based on current DeepInsightsTable click
+  const [selected, setSelected] = useState<ModalInsight | null>(null);
 
   useEffect(() => {
     if (personId) {
       const match = insights.find((i) => i.name === personId);
       if (match) setSelected(match);
+      else setSelected(null); // Clear if no match
     }
   }, [personId]);
 

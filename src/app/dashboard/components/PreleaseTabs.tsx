@@ -5,14 +5,34 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { dummyProspects, DummyProspect } from "@/lib/dummy-data";
 
-const preleases = [
-  { name: "Cindy Chang", signedDate: "Apr 12", duration: "2m 14s", questions: 8, score: "A+" },
-  { name: "Tom Chen", signedDate: "Apr 10", duration: "1m 45s", questions: 6, score: "A" },
-];
+// Define an interface for the pre-lease data structure
+interface PreleaseEntry {
+  name: string;
+  signedDate: string;
+  duration: string;
+  questions: number;
+  score: "A+" | "A" | "B" | "C"; // Assuming score is one of these
+  // prospectId: string; // Optional: if you need to link back
+}
+
+// Map dummyProspects (those who have leased) to the PreleaseEntry structure
+const preleasesData: PreleaseEntry[] = dummyProspects
+  .filter(prospect => prospect.status === 'leased') // Only show leased prospects
+  .slice(0, 2) // Take the first two leased prospects for this example
+  .map((prospect: DummyProspect, index: number) => ({
+    name: prospect.name,
+    // Example: Generate a signed date from a few days ago
+    signedDate: new Date(new Date().setDate(new Date().getDate() - (index * 2 + 5))).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    duration: `${Math.floor(Math.random() * 2) + 1}m ${Math.floor(Math.random() * 50) + 10}s`, // Random duration
+    questions: Math.floor(Math.random() * 4) + 5, // Random questions (5-8)
+    score: index === 0 ? "A+" : "A", // Example scores
+    // prospectId: prospect.id,
+  }));
 
 export default function PreleaseTabs() {
-  const [selectedRow, setSelectedRow] = useState<(typeof preleases)[0] | null>(null);
+  const [selectedRow, setSelectedRow] = useState<PreleaseEntry | null>(null);
 
   const getScoreColor = (score: string) => {
     if (score === "A+") return "bg-green-200 text-green-800";
@@ -36,7 +56,7 @@ export default function PreleaseTabs() {
               </tr>
             </thead>
             <tbody>
-              {preleases.map((item, i) => (
+              {preleasesData.map((item, i) => (
                 <tr
                   key={i}
                   className="border-b last:border-none hover:bg-muted cursor-pointer"

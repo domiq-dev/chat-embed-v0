@@ -46,7 +46,7 @@ export default function ActivityTimeline() {
       timestamp: new Date('2024-03-28T10:20:00'),
       status: 'in_progress',
       details: {
-        agentName: 'Sarah Johnson'
+        agentName: 'Sarah Miller'
       }
     }
   ];

@@ -72,28 +72,6 @@ const config: Config = {
   			sm: 'calc(var(--radius) - 4px)'
   		},
   		keyframes: {
-  			'balloon-float': {
-  				'0%': {
-  					transform: 'translateY(0) translateX(0)',
-  					opacity: '1'
-  				},
-  				'50%': {
-  					transform: 'translateY(-50vh) translateX(10px)',
-  					opacity: '0.9'
-  				},
-  				'100%': {
-  					transform: 'translateY(-100vh) translateX(-10px)',
-  					opacity: '0'
-  				}
-  			},
-  			'fall-confetti': {
-  				'0%': {
-  					transform: 'translateY(-100%) rotate(0deg)'
-  				},
-  				'100%': {
-  					transform: 'translateY(100vh) rotate(360deg)'
-  				}
-  			},
   			'pulse-glow': {
   				'0%, 100%': {
   					opacity: '1',

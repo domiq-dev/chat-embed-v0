@@ -4,18 +4,10 @@ import { useState, useEffect } from 'react';
 import TourCalendar from './components/TourCalendar';
 import { X, Calendar as CalendarIcon, User2, Building2, Clock } from 'lucide-react';
 import { format } from 'date-fns';
+import { dummyTours, DummyTour } from '@/lib/dummy-data'; // Import dummy data
 
-interface Tour {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  prospectName: string;
-  unit: string;
-  agent?: string;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no_show';
-  source: 'chat' | 'resman' | 'manual';
-}
+// Use DummyTour as Tour, or rename DummyTour to Tour in dummy-data.ts
+interface Tour extends DummyTour {}
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -34,12 +26,14 @@ function formatDateForInput(date: Date): string {
 }
 
 function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleModalProps) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Omit<Tour, 'id' | 'source' | 'prospectId' | 'agentId'>>({
     title: '',
     prospectName: '',
     unit: '',
     start: new Date(),
     end: new Date(),
+    status: 'scheduled',
+    agent: '' // agent is optional in DummyTour, ensure consistency or handle it
   });
 
   // Update form data when selectedSlot changes
@@ -59,8 +53,8 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
     e.preventDefault();
     onSchedule({
       ...formData,
-      status: 'scheduled',
-      source: 'manual',
+      status: 'scheduled', // This is already in formData, could be removed here
+      source: 'manual', // Add source as it's required by DummyTour
     });
     onClose();
   };
@@ -117,6 +111,19 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
               required
             />
           </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Agent (Optional)
+            </label>
+            <input
+              type="text"
+              value={formData.agent || ''}
+              onChange={(e) => setFormData({ ...formData, agent: e.target.value })}
+              placeholder="Enter agent's name"
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -131,7 +138,6 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
                   setFormData(prev => ({
                     ...prev,
                     start: newDate,
-                    // If end time is before new start time, adjust it
                     end: prev.end < newDate ? new Date(newDate.getTime() + 60 * 60 * 1000) : prev.end
                   }));
                 }}
@@ -150,7 +156,6 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
                   const newDate = new Date(e.target.value);
                   setFormData(prev => ({
                     ...prev,
-                    // If new end time is before start time, adjust start time
                     start: newDate < prev.start ? new Date(newDate.getTime() - 60 * 60 * 1000) : prev.start,
                     end: newDate
                   }));
@@ -187,29 +192,7 @@ export default function CalendarPage() {
   const [selectedTour, setSelectedTour] = useState<Tour | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | undefined>();
-  const [tours, setTours] = useState<Tour[]>([
-    {
-      id: '1',
-      title: 'Tour - 2BR Unit',
-      start: new Date(2024, 2, 28, 10, 0),
-      end: new Date(2024, 2, 28, 11, 0),
-      prospectName: 'John Smith',
-      unit: '2BR - Unit 204',
-      agent: 'Sarah Johnson',
-      status: 'scheduled',
-      source: 'chat'
-    },
-    {
-      id: '2',
-      title: 'Tour - 1BR Unit',
-      start: new Date(2024, 2, 28, 14, 0),
-      end: new Date(2024, 2, 28, 15, 0),
-      prospectName: 'Emma Davis',
-      unit: '1BR - Unit 105',
-      status: 'completed',
-      source: 'resman'
-    },
-  ]);
+  const [tours, setTours] = useState<Tour[]>(dummyTours); // Use dummyTours
 
   // Calculate stats
   const stats = {
@@ -222,7 +205,7 @@ export default function CalendarPage() {
   };
 
   const handleScheduleTour = (tourData: Omit<Tour, 'id'>) => {
-    const newTour = {
+    const newTour: Tour = {
       ...tourData,
       id: Math.random().toString(36).substr(2, 9),
     };
@@ -263,7 +246,7 @@ export default function CalendarPage() {
         <h1 className="text-2xl font-bold">Tour Calendar</h1>
         <button 
           onClick={() => {
-            setSelectedSlot(undefined);
+            setSelectedSlot(undefined); // Clear any previously selected slot for general scheduling
             setIsScheduleModalOpen(true);
           }}
           className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
@@ -358,19 +341,13 @@ export default function CalendarPage() {
 
               <div className="border-t pt-4">
                 <div className="flex gap-2 mb-4">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    selectedTour.status === 'scheduled' ? 'bg-purple-100 text-purple-700' :
-                    selectedTour.status === 'completed' ? 'bg-green-100 text-green-700' :
-                    selectedTour.status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
+                  <span className={`px-2 py-1 text-xs rounded-full ${selectedTour.status === 'scheduled' ? 'bg-purple-100 text-purple-700' : selectedTour.status === 'completed' ? 'bg-green-100 text-green-700' : selectedTour.status === 'cancelled' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}
+                  `}>
                     {selectedTour.status.charAt(0).toUpperCase() + selectedTour.status.slice(1)}
                   </span>
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    selectedTour.source === 'chat' ? 'bg-blue-100 text-blue-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                    {selectedTour.source === 'chat' ? 'AI Chat' : 'ResMan'}
+                  <span className={`px-2 py-1 text-xs rounded-full ${selectedTour.source === 'chat' ? 'bg-blue-100 text-blue-700' : selectedTour.source === 'resman' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}
+                  `}>
+                    {selectedTour.source === 'chat' ? 'AI Chat' : selectedTour.source === 'resman' ? 'ResMan' : 'Manual'}
                   </span>
                 </div>
 
@@ -408,7 +385,7 @@ export default function CalendarPage() {
         isOpen={isScheduleModalOpen}
         onClose={() => {
           setIsScheduleModalOpen(false);
-          setSelectedSlot(undefined);
+          setSelectedSlot(undefined); // Clear slot after modal closes
         }}
         selectedSlot={selectedSlot}
         onSchedule={handleScheduleTour}

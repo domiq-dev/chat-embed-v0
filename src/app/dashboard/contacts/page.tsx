@@ -4,50 +4,18 @@ import { useState } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableFooter } from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { X, Plus, Trash2 } from 'lucide-react';
+import { dummyProspects, DummyProspect, dummyTours } from '@/lib/dummy-data'; // Import dummy data
 
-interface Contact {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  tours: number;
-  status: 'prospect' | 'toured' | 'leased';
+// Extend DummyProspect for this page to include toursCount
+interface Contact extends DummyProspect {
+  toursCount: number;
 }
 
-const initialContacts: Contact[] = [
-  {
-    id: '1',
-    name: 'John Smith',
-    email: 'john.smith@email.com',
-    phone: '(555) 123-4567',
-    tours: 2,
-    status: 'toured',
-  },
-  {
-    id: '2',
-    name: 'Emma Davis',
-    email: 'emma.davis@email.com',
-    phone: '(555) 987-6543',
-    tours: 1,
-    status: 'prospect',
-  },
-  {
-    id: '3',
-    name: 'Michael Lee',
-    email: 'michael.lee@email.com',
-    phone: '(555) 555-7890',
-    tours: 3,
-    status: 'leased',
-  },
-  {
-    id: '4',
-    name: 'Sophia Chen',
-    email: 'sophia.chen@email.com',
-    phone: '(555) 222-3333',
-    tours: 1,
-    status: 'prospect',
-  },
-];
+// Calculate toursCount for each prospect
+const initialContacts: Contact[] = dummyProspects.map(prospect => ({
+  ...prospect,
+  toursCount: dummyTours.filter(tour => tour.prospectId === prospect.id && (tour.status === 'completed' || tour.status === 'scheduled')).length,
+}));
 
 const statusColors = {
   prospect: 'bg-gray-100 text-gray-700',
@@ -55,12 +23,12 @@ const statusColors = {
   leased: 'bg-green-100 text-green-700',
 };
 
-function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: () => void; onAdd: (contact: Omit<Contact, 'id'>) => void }) {
-  const [form, setForm] = useState<Omit<Contact, 'id'>>({
+// Omit id and toursCount for the AddContactModal form
+function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: () => void; onAdd: (contact: Omit<Contact, 'id' | 'toursCount'>) => void }) {
+  const [form, setForm] = useState<Omit<Contact, 'id' | 'toursCount'>>({
     name: '',
     email: '',
     phone: '',
-    tours: 1,
     status: 'prospect',
   });
 
@@ -79,7 +47,7 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
           onSubmit={e => {
             e.preventDefault();
             onAdd(form);
-            setForm({ name: '', email: '', phone: '', tours: 1, status: 'prospect' });
+            setForm({ name: '', email: '', phone: '', status: 'prospect' });
             onClose();
           }}
           className="space-y-4"
@@ -114,30 +82,17 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
               required
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tours</label>
-              <input
-                type="number"
-                min={1}
-                value={form.tours}
-                onChange={e => setForm(f => ({ ...f, tours: Number(e.target.value) }))}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-              <select
-                value={form.status}
-                onChange={e => setForm(f => ({ ...f, status: e.target.value as Contact['status'] }))}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="prospect">Prospect</option>
-                <option value="toured">Toured</option>
-                <option value="leased">Leased</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select
+              value={form.status}
+              onChange={e => setForm(f => ({ ...f, status: e.target.value as Contact['status'] }))}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="prospect">Prospect</option>
+              <option value="toured">Toured</option>
+              <option value="leased">Leased</option>
+            </select>
           </div>
           <div className="flex justify-end gap-2 mt-6">
             <button
@@ -164,10 +119,10 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>(initialContacts);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const handleAddContact = (contact: Omit<Contact, 'id'>) => {
+  const handleAddContact = (contactData: Omit<Contact, 'id' | 'toursCount'>) => {
     setContacts(prev => [
       ...prev,
-      { ...contact, id: Math.random().toString(36).substr(2, 9) },
+      { ...contactData, id: Math.random().toString(36).substr(2, 9), toursCount: 0 }, // New contacts start with 0 tours
     ]);
   };
 
@@ -214,7 +169,7 @@ export default function ContactsPage() {
                       <a href={`tel:${contact.phone.replace(/[^\d]/g, '')}`} className="text-gray-700 hover:underline">{contact.phone}</a>
                     </TableCell>
                     <TableCell>
-                      <span className="inline-block px-2 py-1 rounded bg-purple-100 text-purple-700 text-xs font-semibold">{contact.tours}</span>
+                      <span className="inline-block px-2 py-1 rounded bg-purple-100 text-purple-700 text-xs font-semibold">{contact.toursCount}</span>
                     </TableCell>
                     <TableCell>
                       <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${statusColors[contact.status]}`}>{contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}</span>

@@ -4,31 +4,11 @@ import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableFooter } from '@/components/ui/table';
 import { X, Plus, CheckCircle, Trash2 } from 'lucide-react';
+import { dummyTasks, DummyTask } from '@/lib/dummy-data';
 
-interface Task {
-  id: string;
-  question: string;
-  answer: string;
-  status: 'pending' | 'answered' | 'resolved';
-  createdAt: Date;
-}
+interface Task extends DummyTask {}
 
-const initialTasks: Task[] = [
-  {
-    id: '1',
-    question: 'What is the pet policy for this property?',
-    answer: '',
-    status: 'pending',
-    createdAt: new Date('2024-06-01T10:00:00'),
-  },
-  {
-    id: '2',
-    question: 'Is there covered parking available?',
-    answer: 'Yes, we offer covered parking for an additional fee.',
-    status: 'answered',
-    createdAt: new Date('2024-06-02T14:30:00'),
-  },
-];
+const initialTasks: Task[] = dummyTasks;
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-700',

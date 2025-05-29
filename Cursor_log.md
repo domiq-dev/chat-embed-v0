@@ -361,3 +361,36 @@ src/
 - Created Tasks page for property managers to answer user questions and train the AI, with add/answer/resolve/delete actions.
 - Media Library: Now persists images in localStorage (base64, <1MB per file) so uploads remain after refresh; shows warning for oversized files.
 - Numerous UI/UX improvements for consistency, clarity, and modern feel across all dashboard pages.
+
+## Data Centralization & Code Cleanup
+
+- **Centralized Dummy Data (`src/lib/dummy-data.ts`):**
+    - Created a new file `src/lib/dummy-data.ts` to consolidate all dummy data used across the dashboard.
+    - Defined interfaces: `DummyAgent`, `DummyProspect`, `DummyTour`, `DummyTask`.
+    - Exported arrays of standardized dummy data: `dummyAgents`, `dummyProspects`, `dummyTours`, `dummyTasks` with consistent details and dynamic dates.
+- **Dashboard Pages Refactored to Use Centralized Data:**
+    - Updated the following pages to import and use data from `src/lib/dummy-data.ts` for their initial state, replacing local hardcoded data:
+        - `src/app/dashboard/calendar/page.tsx` (using `dummyTours`)
+        - `src/app/dashboard/contacts/page.tsx` (using `dummyProspects`, `dummyTours`)
+        - `src/app/dashboard/tasks/page.tsx` (using `dummyTasks`)
+        - `src/app/dashboard/specials/page.tsx` (using `dummyProspects`)
+    - Updated components within the main Dashboard and Deep Insights sections to use centralized dummy data where names were previously hardcoded:
+        - `src/app/dashboard/activity/page.tsx` (Active Agents list now uses `dummyAgents`).
+        - `src/app/dashboard/components/DeepInsightsTable.tsx` (User names now from `dummyProspects`).
+        - `src/app/dashboard/deep-insights/ClientRecordModal.tsx` (User names now from `dummyProspects`).
+        - `src/app/dashboard/components/PreleaseTabs.tsx` (User names now from `dummyProspects`, filtered for 'leased' status).
+- **Navigation Highlighting Fix & File Structure Adjustment:**
+    - Addressed an issue where multiple navigation links under "Knowledge" were highlighted simultaneously.
+    - Changed the route for "Knowledge Base" from `/dashboard/knowledge` to `/dashboard/knowledge/base` in `src/lib/routes.ts`.
+    - Updated the `NavItem` component in `src/app/dashboard/layout.tsx` to use a strict path match (`pathname === href`) for determining active link state.
+    - Moved the "Knowledge Base" page from `src/app/dashboard/knowledge/page.tsx` to `src/app/dashboard/knowledge/base/page.tsx` to align with the new route.
+    - Corrected a broken import path for `KnowledgeForm` in `src/app/dashboard/knowledge/base/page.tsx` that occurred due to the file move.
+- **Unused Component Cleanup:**
+    - Identified and deleted the following unused UI components to maintain a cleaner repository:
+        - `src/components/ui/BalloonRain.tsx`
+        - `src/components/ui/ConfettiRain.tsx`
+        - `src/components/ChatBox.tsx`
+        - `src/components/ui/progress.tsx`
+        - `src/components/ui/input.tsx`
+        - `src/components/ui/dropdown-menu.tsx`
+    - Verification was done by searching for imports or usages of these components across the codebase.

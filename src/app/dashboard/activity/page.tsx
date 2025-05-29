@@ -1,6 +1,7 @@
 'use client';
 
 import ActivityTimeline from './components/ActivityTimeline';
+import { dummyAgents, DummyAgent } from '@/lib/dummy-data';
 
 export default function ActivityPage() {
   return (
@@ -46,10 +47,10 @@ export default function ActivityPage() {
           <div className="bg-white p-6 rounded-lg border border-gray-200">
             <h3 className="text-lg font-semibold mb-4">Active Agents</h3>
             <div className="space-y-3">
-              {['Sarah Johnson', 'Mike Peters', 'Emma Davis'].map((agent) => (
-                <div key={agent} className="flex items-center gap-2">
+              {dummyAgents.map((agent: DummyAgent) => (
+                <div key={agent.id} className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500" />
-                  <span>{agent}</span>
+                  <span>{agent.name}</span>
                 </div>
               ))}
             </div>

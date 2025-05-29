@@ -27,7 +27,7 @@ export const dashboardRoutes: Route[] = [
     label: 'Knowledge',
     children: [
       {
-        path: '/dashboard/knowledge',
+        path: '/dashboard/knowledge/base',
         label: 'Knowledge Base',
       },
       {
@@ -51,5 +51,9 @@ export const dashboardRoutes: Route[] = [
   {
     path: '/dashboard/deep-insights',
     label: 'Deep Insights',
+  },
+  {
+    path: '/embed/radial-test',
+    label: 'Chat Interface',
   },
 ]; 

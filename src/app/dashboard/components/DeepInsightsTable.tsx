@@ -22,6 +22,7 @@ import {
   CircleX,
 } from "lucide-react";
 import DeepInsightsModal from "./DeepInsightsModal";
+import { dummyProspects, DummyProspect } from "@/lib/dummy-data";
 
 /* ───── Types & mock data ───── */
 interface Insight {
@@ -35,30 +36,18 @@ interface Insight {
   duration: string;
   score: "A+" | "A" | "B" | "C";
 }
-const mockData: Insight[] = [
-  {
-    name: "Cindy Chang",
-    qualified: false,
-    engaged:   true,
-    tourIntent:true,
-    signed:    true,
-    questions: 8,
-    summary:   "Asked about pricing, size, move‑in, and a tour.",
-    duration:  "2m 14s",
-    score:     "A+",
-  },
-  {
-    name: "Tom Chen",
-    qualified: false,
-    engaged:   true,
-    tourIntent:false,
-    signed:    true,
-    questions: 6,
-    summary:   "Inquired about parking and move‑in.",
-    duration:  "1m 45s",
-    score:     "A",
-  },
-];
+
+const mockData: Insight[] = dummyProspects.slice(0, 2).map((prospect: DummyProspect, index: number) => ({
+  name: prospect.name,
+  qualified: index === 0 ? false : true,
+  engaged: true,
+  tourIntent: prospect.status === 'toured' || prospect.status === 'leased',
+  signed: prospect.status === 'leased',
+  questions: Math.floor(Math.random() * 5) + 5,
+  summary: `Inquired about general property information. Status: ${prospect.status}`,
+  duration: `${Math.floor(Math.random() * 2) + 1}m ${Math.floor(Math.random() * 50) + 10}s`,
+  score: index === 0 ? "A+" : "A",
+}));
 
 /* ───── small helpers ───── */
 const Flag = ({ ok }: { ok: boolean }) => (

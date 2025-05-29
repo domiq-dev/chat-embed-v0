@@ -1,6 +1,6 @@
 'use client';
 
-import KnowledgeForm from './components/KnowledgeForm';
+import KnowledgeForm from '../components/KnowledgeForm';
 
 export default function KnowledgeBasePage() {
   return (

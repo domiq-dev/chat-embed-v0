@@ -79,8 +79,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 function NavItem({ href, label, className }: { href: string; label: string; className?: string }) {
   const pathname = usePathname();
-  const isActive = pathname === href || 
-    (pathname?.startsWith(`${href}/`) && href !== '/dashboard'); // Exclude dashboard from partial matches
+  const isActive = pathname === href;
 
   return (
     <Link
