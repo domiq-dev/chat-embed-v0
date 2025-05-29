@@ -268,6 +268,7 @@ interface MessagingInputProps {
   sendMessage: (text: string) => Promise<void>;
   akoolSession: AkoolSessionType | null;
   isAgoraConnected: boolean;
+  isDialogueModeReady: boolean;
   agentState: string | null;
 }
 const MessagingInput: FC<MessagingInputProps> = ({
@@ -276,6 +277,7 @@ const MessagingInput: FC<MessagingInputProps> = ({
   sendMessage,
   akoolSession,
   isAgoraConnected,
+  isDialogueModeReady,
   agentState
 }) => {
   return (
@@ -288,20 +290,22 @@ const MessagingInput: FC<MessagingInputProps> = ({
       <div className="flex items-center gap-2">
         <input
           type="text"
-          placeholder={akoolSession && isAgoraConnected ? "Chat with Avatar..." : "Type your message..."}
+          placeholder={akoolSession && isAgoraConnected ? 
+            (isDialogueModeReady ? "Chat with Avatar..." : "Preparing avatar...") : 
+            "Type your message..."}
           className="flex-1 px-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all bg-white/70"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage(inputText)}
-          disabled={!(akoolSession && isAgoraConnected) && !agentState}
+          disabled={!(akoolSession && isAgoraConnected && isDialogueModeReady) && !agentState}
         />
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => sendMessage(inputText)}
-          disabled={!inputText.trim() || (!(akoolSession && isAgoraConnected) && !agentState)}
+          disabled={!inputText.trim() || (!(akoolSession && isAgoraConnected && isDialogueModeReady) && !agentState)}
           className={`p-2 rounded-full transition-colors ${
-            (inputText.trim() && ((akoolSession && isAgoraConnected) || agentState))
+            (inputText.trim() && ((akoolSession && isAgoraConnected && isDialogueModeReady) || agentState))
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }`}
@@ -365,6 +369,7 @@ const ChatModal: FC<ChatModalProps> = ({
   const [akoolSessionError, setAkoolSessionError] = useState<string | null>(null);
   const isSendingRef = useRef(false);
   const [isAvatarBuffering, setIsAvatarBuffering] = useState(false);
+  const [isDialogueModeReady, setIsDialogueModeReady] = useState(false); // NEW: Track dialogue mode status
 
   // Determine video player background - now always black when session is active
   const videoPlayerBgColor = akoolSession ? '#222' : 'white';
@@ -403,12 +408,14 @@ const ChatModal: FC<ChatModalProps> = ({
             setIsAgoraConnected(false); 
             setHasVideoStarted(false);
             setIsAvatarBuffering(false);
+            setIsDialogueModeReady(false); // Reset dialogue mode status
             agoraClientRef.current = null; 
           })
           .catch(e => console.error('Error leaving Agora channel during cleanup:', e));
       }
       setIsAvatarBuffering(false);
       setShowSessionEndedOverlay(false);
+      setIsDialogueModeReady(false); // Reset dialogue mode status
       return;
     }
 
@@ -508,6 +515,40 @@ const ChatModal: FC<ChatModalProps> = ({
       }
     };
 
+    // Set up avatar for dialogue mode once connected
+    const setupAvatarDialogueMode = async (isRetry = false) => {
+      if (currentActiveClient && typeof (currentActiveClient as any).sendStreamMessage === 'function') {
+        const setupMessage = {
+          v: 2, 
+          type: "command", 
+          mid: `setup-${Date.now()}`, 
+          pld: {
+            cmd: "set-params",
+            data: {
+              mode: 2, // Dialogue mode (avatar engages in conversation)
+            }
+          }
+        };
+        
+        try {
+          console.log("ChatModal: Setting up avatar dialogue mode:", setupMessage);
+          // @ts-ignore - sendStreamMessage method exists at runtime despite type definitions
+          await (currentActiveClient as IAgoraRTCClient).sendStreamMessage(JSON.stringify(setupMessage), false);
+          console.log("ChatModal: Avatar dialogue mode configured successfully");
+          setIsDialogueModeReady(true);
+        } catch (error) {
+          console.error("ChatModal: Failed to setup avatar dialogue mode:", error);
+          // Only retry once to avoid infinite loops
+          if (!isRetry) {
+            setTimeout(() => {
+              console.log("ChatModal: Retrying dialogue mode setup...");
+              setupAvatarDialogueMode(true);
+            }, 2000);
+          }
+        }
+      }
+    };
+
     const { agora_app_id, agora_channel, agora_token, agora_uid } = akoolSession.credentials;
     currentActiveClient.on('user-published', handleUserPublished);
     currentActiveClient.on('user-unpublished', handleUserUnpublished);
@@ -519,6 +560,8 @@ const ChatModal: FC<ChatModalProps> = ({
         setIsAgoraConnected(true);
         hasJoined = true;
         console.log("ChatModal: Successfully joined Agora channel.");
+        // Set up dialogue mode immediately after joining
+        setupAvatarDialogueMode();
       })
       .catch(err => {
         setAkoolSessionError(`Agora join error: ${err.message}`);
@@ -542,6 +585,7 @@ const ChatModal: FC<ChatModalProps> = ({
               if (agoraClientRef.current === currentActiveClient) {
                 setIsAgoraConnected(false);
                 setHasVideoStarted(false);
+                setIsDialogueModeReady(false); // Reset dialogue mode status
                 agoraClientRef.current = null;
                  console.log("ChatModal: Agora client left and cleaned up.");
               }
@@ -604,6 +648,13 @@ const ChatModal: FC<ChatModalProps> = ({
 
     // If AKOOL session is active, send text to AKOOL for TTS
     if (akoolSession && agoraClientRef.current && isAgoraConnected && AgoraRTCModule) {
+      // Check if dialogue mode is ready before sending messages
+      if (!isDialogueModeReady) {
+        console.log('ChatModal: Dialogue mode not ready yet, falling back to backend agent.');
+        postTextToBackendAgent(text.trim(), userMessageId);
+        return;
+      }
+      
       if (isSendingRef.current) {
         console.log('ChatModal: Send to AKOOL already in progress, skipping.');
         return;
@@ -741,7 +792,7 @@ const ChatModal: FC<ChatModalProps> = ({
         <TimerSection
           isTyping={isTyping}
           currentHint={currentHint}
-              currentQuestion={currentQuestion}
+          currentQuestion={currentQuestion}
           sendMessage={sendMessage}
           showOffer={showOffer}
           qualified={qualified}
@@ -755,13 +806,14 @@ const ChatModal: FC<ChatModalProps> = ({
           sendMessage={sendMessage}
           akoolSession={akoolSession}
           isAgoraConnected={isAgoraConnected}
+          isDialogueModeReady={isDialogueModeReady}
           agentState={agentState}
         />
 
         {isAvatarBuffering && !showSessionEndedOverlay && (
           <div className="absolute inset-0 bg-white z-20 flex flex-col items-center justify-center">
             <AvatarLoadingScreen message="Connecting to Alinna..." />
-            </div>
+          </div>
         )}
 
         {showSessionEndedOverlay && (
@@ -770,7 +822,8 @@ const ChatModal: FC<ChatModalProps> = ({
             <p className="text-xl font-semibold mb-2">Session Ended</p>
             <p className="mb-4">Your live video session has ended. This might be due to inactivity.</p>
             <p className="text-sm">
-Please close and reopen the chat window to start a new session with Alinna.</p>
+              Please close and reopen the chat window to start a new session with Alinna.
+            </p>
             <button 
               onClick={onClose} 
               className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"

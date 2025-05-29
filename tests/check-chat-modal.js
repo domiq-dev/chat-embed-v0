@@ -16,17 +16,17 @@ try {
   const content = fs.readFileSync(chatModalPath, 'utf-8');
 
   // 1. Check for critical sizing classes
-  const expectedSizingClasses = ['w-[360px]', 'h-[600px]'];
+  const expectedSizingClasses = ['w-[360px]', 'h-[675px]'];
   // This regex looks for a div that likely is the main modal container and has the sizing classes.
   // It's a bit broad to avoid being too brittle.
-  const sizingClassRegex = /<div className=.*bg-white.*shadow-xl(?=.*w-\[360px\])(?=.*h-\[600px\]).*>/;
+  const sizingClassRegex = /<div className=.*bg-white.*shadow-xl(?=.*w-\[360px\])(?=.*h-\[675px\]).*>/;
 
   if (!sizingClassRegex.test(content)) {
-    console.error('Error: ChatModal.tsx does not appear to have the expected sizing classes (w-[360px] and h-[600px]) on its main container.');
-    console.error('Expected something like: <div className="...bg-white...shadow-xl...w-[360px]...h-[600px]...">');
+    console.error('Error: ChatModal.tsx does not appear to have the expected sizing classes (w-[360px] and h-[675px]) on its main container.');
+    console.error('Expected something like: <div className="...bg-white...shadow-xl...w-[360px]...h-[675px]...">');
     issuesFound++;
   } else {
-    console.log('ChatModal sizing classes (w-[360px], h-[600px]) check PASSED.');
+    console.log('ChatModal sizing classes (w-[360px], h-[675px]) check PASSED.');
   }
 
   // 2. Check for localStorage access guard

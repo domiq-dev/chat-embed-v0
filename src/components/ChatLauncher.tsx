@@ -11,7 +11,7 @@ interface TokenResponse {
 }
 
 const AKOOL_OPENAPI_HOST = 'https://openapi.akool.com'; // Consider moving to .env or a config file
-const DEFAULT_SESSION_DURATION = 300; // 5 minutes in seconds
+const DEFAULT_SESSION_DURATION = 600; // 10 minutes in seconds
 const DEFAULT_AVATAR_ID = 'Alinna_background_st01_Domiq'; // Changed to the working avatar ID
 
 const ChatLauncher = () => {
@@ -19,7 +19,29 @@ const ChatLauncher = () => {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [apiService, setApiService] = useState<ApiService | null>(null);
-  const [currentSession, setCurrentSession] = useState<AkoolSessionType | null>(null);
+  const [currentSession, setCurrentSession] = useState<AkoolSessionType | null>(() => {
+    // Try to restore session from localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const savedSession = localStorage.getItem('akool-session');
+        if (savedSession) {
+          const session = JSON.parse(savedSession);
+          // Check if session is still valid (not older than 9 minutes for 10-minute sessions)
+          const sessionAge = Date.now() - (session.createdAt || 0);
+          if (sessionAge < 540000) { // 9 minutes in milliseconds
+            console.log('Restored AKOOL session from localStorage:', session);
+            return session;
+          } else {
+            localStorage.removeItem('akool-session'); // Clean up old session
+          }
+        }
+      } catch (error) {
+        console.error('Failed to restore session from localStorage:', error);
+        localStorage.removeItem('akool-session');
+      }
+    }
+    return null;
+  });
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
 
@@ -28,25 +50,77 @@ const ChatLauncher = () => {
       const newOpenState = !prevOpen;
       if (newOpenState) {
         setUnreadCount(0);
-        if (!currentSession && apiService && !isCreatingSession) {
-          handleCreateAkoolSession();
-        }
+        // Don't automatically create session here - let the useEffect handle it
       } else {
-        if (currentSession && apiService) {
-          console.log("ChatLauncher: Closing AKOOL session:", currentSession._id);
-          apiService.closeSession(currentSession._id)
-            .then(() => {
-              console.log("ChatLauncher: AKOOL session closed successfully.");
-            })
-            .catch(err => {
-              console.error("ChatLauncher: Error closing AKOOL session:", err);
-            });
-          setCurrentSession(null);
-        }
+        // Close session properly
+        closeCurrentSession();
       }
       return newOpenState;
     });
   };
+
+  const closeCurrentSession = useCallback(async () => {
+    if (currentSession && apiService) {
+      console.log("ChatLauncher: Closing AKOOL session:", currentSession._id);
+      try {
+        await apiService.closeSession(currentSession._id);
+        console.log("ChatLauncher: AKOOL session closed successfully.");
+      } catch (err) {
+        console.error("ChatLauncher: Error closing AKOOL session:", err);
+        
+        // Check if it's a server unavailable error
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        if (errorMessage.includes('unavailable') || errorMessage.includes('server')) {
+          console.log("ChatLauncher: AKOOL server unavailable - session will auto-expire");
+        } else {
+          console.warn("ChatLauncher: Unexpected session close error, but continuing cleanup");
+        }
+      } finally {
+        // Always clean up locally regardless of API success/failure
+        localStorage.removeItem('akool-session');
+        setCurrentSession(null);
+        console.log("ChatLauncher: Local session cleanup completed");
+      }
+    }
+  }, [currentSession, apiService]);
+
+  // Handle page unload/refresh - close session
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (currentSession && apiService) {
+        // Use sendBeacon for reliable cleanup on page unload
+        const sessionData = JSON.stringify({ id: currentSession._id });
+        navigator.sendBeacon('/api/avatar/session/close', sessionData);
+        localStorage.removeItem('akool-session');
+      }
+    };
+
+    const handleUnload = () => {
+      if (currentSession && apiService) {
+        localStorage.removeItem('akool-session');
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('unload', handleUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('unload', handleUnload);
+    };
+  }, [currentSession, apiService]);
+
+  // Component unmount cleanup
+  useEffect(() => {
+    return () => {
+      if (currentSession && apiService) {
+        console.log("ChatLauncher: Component unmounting, closing session");
+        apiService.closeSession(currentSession._id)
+          .catch(err => console.error("Error closing session on unmount:", err));
+        localStorage.removeItem('akool-session');
+      }
+    };
+  }, [currentSession, apiService]);
 
   // Initialize ApiService
   useEffect(() => {
@@ -84,6 +158,14 @@ const ChatLauncher = () => {
     console.log(`Attempting to create AKOOL session for avatar: ${DEFAULT_AVATAR_ID}`);
     try {
       const sessionData = await apiService.createSession({ avatar_id: DEFAULT_AVATAR_ID, duration: DEFAULT_SESSION_DURATION });
+      
+      // Save session to localStorage with timestamp
+      const sessionWithTimestamp = {
+        ...sessionData,
+        createdAt: Date.now()
+      };
+      localStorage.setItem('akool-session', JSON.stringify(sessionWithTimestamp));
+      
       setCurrentSession(sessionData);
       console.log("AKOOL Session created successfully:", sessionData);
     } catch (err) {
@@ -93,18 +175,14 @@ const ChatLauncher = () => {
     } finally {
       setIsCreatingSession(false);
     }
-  }, [apiService]); // Added apiService to dependency array, DEFAULT_AVATAR_ID and DEFAULT_SESSION_DURATION are constants
+  }, [apiService]);
 
-  // Auto-create session if ApiService is ready and chat is set to auto-open OR manually opened
+  // Auto-create session ONLY when manually opened, not automatically
   useEffect(() => {
-    if (open) {
-      if (apiService && !currentSession && !isCreatingSession) {
-        handleCreateAkoolSession();
-      }
-    } else {
-      // If chat is closed, ensure avatar readiness is also reset
+    if (open && apiService && !currentSession && !isCreatingSession) {
+      handleCreateAkoolSession();
     }
-  }, [open, apiService, currentSession, isCreatingSession, handleCreateAkoolSession]); 
+  }, [open, handleCreateAkoolSession]); // Removed apiService and currentSession from deps to prevent loops
 
   // Handle visibility change to clear unread count when tab becomes visible
   useEffect(() => {
@@ -118,15 +196,17 @@ const ChatLauncher = () => {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [open]);
 
-  // Initial auto-open with delay
+  // Session timeout handling - close sessions that are about to expire
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!open) {
-        setOpen(true);
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []); // Keep 'open' out of deps for initial auto-open logic
+    if (!currentSession) return;
+
+    const sessionTimeout = setTimeout(() => {
+      console.log("ChatLauncher: Session approaching timeout, closing proactively");
+      closeCurrentSession();
+    }, (DEFAULT_SESSION_DURATION - 30) * 1000); // Close 30 seconds before expiry
+
+    return () => clearTimeout(sessionTimeout);
+  }, [currentSession, closeCurrentSession]);
 
   return (
     <div className="fixed bottom-6 right-6 z-50" style={{ overflow: 'visible' }}>
