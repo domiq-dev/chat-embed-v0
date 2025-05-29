@@ -124,10 +124,10 @@ useEffect(() => {
           <div className="flex flex-col items-center justify-center space-y-3 max-w-sm w-full">
             {/* Header */}
             <div className="text-center space-y-1">
-              <h2 className="text-xl font-bold text-gray-900">Speak With Jerome</h2>
+              <h2 className="text-xl font-bold text-gray-900">Speak With Alinna</h2>
               <p className="text-base font-semibold text-emerald-600">
                 {status === 'connected'
-                    ? "You're live with Jerome — feel free to ask anything!"
+                    ? "You're live with Alinna — feel free to ask anything!"
                     : "Your leasing expert is ready — just say hello!"}
               </p>
             </div>

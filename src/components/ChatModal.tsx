@@ -4,7 +4,6 @@ import { X, MessageSquare, Phone, Mail, Star, Volume2, Mic, MicOff } from 'lucid
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
-import MessageStatus from "@/components/ui/MessageStatus";
 import QuickReplyButtons, { QuickReplyHint, QuickReplyType } from "@/components/ui/QuicklyReplyButtons";
 import FloatingBanner from "@/components/ui/FloatingBanner";
 import CountdownOffer from "@/components/ui/CountdownOffer";
@@ -82,7 +81,7 @@ const TypingIndicator: FC = () => (
         transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
       />
     </div>
-    <span className="text-sm text-gray-500">Jerome is typing</span>
+    <span className="text-sm text-gray-500">Alinna is typing</span>
   </div>
 );
 
@@ -338,7 +337,7 @@ const ChatModal: FC<ChatModalProps> = ({
       { 
         id: `agent-initial-${Date.now()}`,
         from: 'agent', 
-        text: "🎉 Welcome to Grand Oaks Apartments! I'm Jerome. We have some beautiful apartment homes and great deals right now! Ready to begin?\n",
+        text: "🎉 Welcome to Grand Oaks Apartments! I'm Alinna. We have some beautiful apartment homes and great deals right now! Ready to begin?\n",
         sentAt: new Date()
       }
     ];
@@ -761,7 +760,7 @@ const ChatModal: FC<ChatModalProps> = ({
 
         {isAvatarBuffering && !showSessionEndedOverlay && (
           <div className="absolute inset-0 bg-white z-20 flex flex-col items-center justify-center">
-            <AvatarLoadingScreen message="Connecting to Jerome..." />
+            <AvatarLoadingScreen message="Connecting to Alinna..." />
             </div>
         )}
 
@@ -771,7 +770,7 @@ const ChatModal: FC<ChatModalProps> = ({
             <p className="text-xl font-semibold mb-2">Session Ended</p>
             <p className="mb-4">Your live video session has ended. This might be due to inactivity.</p>
             <p className="text-sm">
-Please close and reopen the chat window to start a new session with Jerome.</p>
+Please close and reopen the chat window to start a new session with Alinna.</p>
             <button 
               onClick={onClose} 
               className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"

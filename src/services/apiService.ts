@@ -103,6 +103,7 @@ export class ApiService {
   public async createSession(data: {
     avatar_id: string;
     duration: number;
+    voice_id?: string;
   }): Promise<Session> {
     return this.fetchWithRetry("/api/open/v4/liveAvatar/session/create", "POST", data);
   }

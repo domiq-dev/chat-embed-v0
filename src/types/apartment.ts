@@ -34,7 +34,7 @@ export const DEFAULT_APARTMENT_CONFIG: ApartmentConfig = {
     lastUpdated: new Date().toISOString()
   },
   agent: {
-    name: "Jerome",
+    name: "Alinna",
     title: "Your leasing specialist",
     avatar: "/realtor.png"
   }

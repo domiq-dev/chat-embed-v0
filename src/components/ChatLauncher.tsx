@@ -12,7 +12,7 @@ interface TokenResponse {
 
 const AKOOL_OPENAPI_HOST = 'https://openapi.akool.com'; // Consider moving to .env or a config file
 const DEFAULT_SESSION_DURATION = 300; // 5 minutes in seconds
-const DEFAULT_AVATAR_ID = 'dvp_Tristan_cloth2_1080P'; // Changed to the working avatar ID
+const DEFAULT_AVATAR_ID = 'Alinna_background_st01_Domiq'; // Changed to the working avatar ID
 
 const ChatLauncher = () => {
   const [open, setOpen] = useState(false);
