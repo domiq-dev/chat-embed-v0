@@ -32,6 +32,7 @@ interface ChatModalProps {
   onClearUnread?: () => void;
   config?: typeof DEFAULT_APARTMENT_CONFIG;
   akoolSession: AkoolSessionType | null;
+  lastMailtoClickTime?: React.MutableRefObject<number>;
 }
 
 // AKOOL video player ID
@@ -134,12 +135,13 @@ interface ChatHeaderProps {
   config: typeof DEFAULT_APARTMENT_CONFIG;
   onClose: () => void;
   headerRef: React.RefObject<HTMLDivElement>;
+  lastMailtoClickTime?: React.MutableRefObject<number>;
   analytics: {
     trackEmailOfficeClick: (location: string) => void;
     trackPhoneCallClick: (location: string) => void;
   };
 }
-const ChatHeader: FC<ChatHeaderProps> = ({ config, onClose, headerRef, analytics }) => {
+const ChatHeader: FC<ChatHeaderProps> = ({ config, onClose, headerRef, lastMailtoClickTime, analytics }) => {
   return (
     <motion.div
       ref={headerRef}
@@ -162,7 +164,11 @@ const ChatHeader: FC<ChatHeaderProps> = ({ config, onClose, headerRef, analytics
           whileHover={{ scale: 1.05 }} 
           whileTap={{ scale: 0.95 }} 
           onClick={() => {
+            console.log('ChatModal: Email button clicked - opening mailto');
             analytics.trackEmailOfficeClick('header');
+            if (lastMailtoClickTime) {
+              lastMailtoClickTime.current = Date.now();
+            }
             window.location.href = 'mailto:leasing@grandoaks.com';
           }} 
           className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" 
@@ -361,7 +367,8 @@ const ChatModal: FC<ChatModalProps> = ({
   unreadCount = 0, 
   onClearUnread,
   config = DEFAULT_APARTMENT_CONFIG,
-  akoolSession
+  akoolSession,
+  lastMailtoClickTime
 }) => {
   const [messages, setMessages] = useState<ChatMessageForDisplay[]>(() => {
     // Clear localStorage and start fresh session on every page load
@@ -565,7 +572,10 @@ const ChatModal: FC<ChatModalProps> = ({
 
     const handleUserUnpublished = (user: any, mediaType: 'video' | 'audio') => {
       console.log(`ChatModal: Agora user ${user.uid} unpublished ${mediaType}`);
+      console.log('ChatModal: Current connection state:', agoraClientRef.current?.connectionState);
+      console.log('ChatModal: Current video started state:', hasVideoStarted);
       if (mediaType === 'video') {
+        console.log('ChatModal: Video unpublished - ending session');
         setHasVideoStarted(false);
         setShowSessionEndedOverlay(true);
         setIsAvatarBuffering(false);
@@ -784,17 +794,21 @@ const ChatModal: FC<ChatModalProps> = ({
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        console.log('ChatModal: Tab became visible - checking connection state');
-        if (agoraClientRef.current && akoolSession) {
-          const connectionState = agoraClientRef.current.connectionState;
-          console.log('ChatModal: Current Agora connection state:', connectionState);
-          
-          if (connectionState === 'DISCONNECTED' && !showSessionEndedOverlay) {
-            console.log('ChatModal: Connection lost while tab was hidden - showing reconnection UI');
-            setShowSessionEndedOverlay(true);
-            setAkoolSessionError('Connection lost while tab was inactive. Please close and reopen chat.');
+        // Add a small delay before checking connection to avoid false positives
+        // from UI interactions that briefly change focus
+        setTimeout(() => {
+          console.log('ChatModal: Tab became visible - checking connection state');
+          if (agoraClientRef.current && akoolSession) {
+            const connectionState = agoraClientRef.current.connectionState;
+            console.log('ChatModal: Current Agora connection state:', connectionState);
+            
+            if (connectionState === 'DISCONNECTED' && !showSessionEndedOverlay) {
+              console.log('ChatModal: Connection lost while tab was hidden - showing reconnection UI');
+              setShowSessionEndedOverlay(true);
+              setAkoolSessionError('Connection lost while tab was inactive. Please close and reopen chat.');
+            }
           }
-        }
+        }, 500); // Wait 500ms before checking
       } else {
         console.log('ChatModal: Tab became hidden - session will continue in background');
       }
@@ -1172,6 +1186,7 @@ const ChatModal: FC<ChatModalProps> = ({
           config={config}
           onClose={handleClose}
           headerRef={headerRef}
+          lastMailtoClickTime={lastMailtoClickTime}
           analytics={analytics}
         />
 

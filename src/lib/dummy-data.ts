@@ -29,6 +29,45 @@ export interface Lead {
   unitInterest?: string;
   timeline: LeadActivity[];
   notes?: string;
+  // 18 Amplitude Analytics Variables
+  amplitudeData?: {
+    // Core Engagement Metrics
+    chatSessionStarted?: boolean;
+    userMessagesSent?: number;
+    botMessagesReceived?: number;
+    answerButtonClicks?: number;
+    
+    // Contact & Tour Metrics
+    contactCaptured?: boolean;
+    contactMethod?: 'email' | 'phone';
+    tourBooked?: boolean;
+    tourType?: 'in_person' | 'self_guided' | 'video';
+    
+    // CTA Interactions
+    emailOfficeClicked?: number;
+    phoneCallClicked?: number;
+    
+    // Incentive Tracking
+    incentiveOffered?: boolean;
+    incentiveAccepted?: boolean;
+    incentiveExpired?: boolean;
+    
+    // Advanced Session Management
+    adminHandoffTriggered?: boolean;
+    customerServiceEscalated?: boolean;
+    conversationAbandoned?: boolean;
+    widgetSessionEnded?: boolean;
+    widgetMinimized?: number;
+    
+    // Calculated Metrics
+    sessionDuration?: number; // in minutes
+    engagementScore?: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | 'F';
+    qualified?: boolean;
+    preLease?: boolean;
+    tourIntent?: boolean;
+    engaged?: boolean;
+    signed?: boolean;
+  };
 }
 
 export interface LeadActivity {
@@ -93,6 +132,44 @@ export const leads: Lead[] = [
     assignedAgent: 'Sarah Miller',
     assignedAgentId: 'agent1',
     unitInterest: '1BR - Unit A101',
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 8,
+      botMessagesReceived: 12,
+      answerButtonClicks: 5,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: true,
+      contactMethod: 'email',
+      tourBooked: true,
+      tourType: 'in_person',
+      
+      // CTA Interactions
+      emailOfficeClicked: 2,
+      phoneCallClicked: 1,
+      
+      // Incentive Tracking
+      incentiveOffered: true,
+      incentiveAccepted: false,
+      incentiveExpired: true,
+      
+      // Advanced Session Management
+      adminHandoffTriggered: false,
+      customerServiceEscalated: false,
+      conversationAbandoned: false,
+      widgetSessionEnded: true,
+      widgetMinimized: 3,
+      
+      // Calculated Metrics
+      sessionDuration: 73, // 1m 12s in seconds converted to 1.2 minutes
+      engagementScore: 'A+',
+      qualified: false,
+      preLease: false,
+      tourIntent: true,
+      engaged: true,
+      signed: false,
+    },
     timeline: [
       {
         id: 'activity1',
@@ -151,6 +228,44 @@ export const leads: Lead[] = [
     assignedAgent: 'Tom Lee',
     assignedAgentId: 'agent2',
     unitInterest: '2BR - Unit B205',
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 15,
+      botMessagesReceived: 18,
+      answerButtonClicks: 8,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: true,
+      contactMethod: 'phone',
+      tourBooked: true,
+      tourType: 'in_person',
+      
+      // CTA Interactions
+      emailOfficeClicked: 1,
+      phoneCallClicked: 3,
+      
+      // Incentive Tracking
+      incentiveOffered: true,
+      incentiveAccepted: true,
+      incentiveExpired: false,
+      
+      // Advanced Session Management
+      adminHandoffTriggered: true,
+      customerServiceEscalated: false,
+      conversationAbandoned: false,
+      widgetSessionEnded: true,
+      widgetMinimized: 1,
+      
+      // Calculated Metrics
+      sessionDuration: 235, // ~4 minutes
+      engagementScore: 'A',
+      qualified: true,
+      preLease: true,
+      tourIntent: true,
+      engaged: true,
+      signed: true,
+    },
     timeline: [
       {
         id: 'activity5',
@@ -215,6 +330,42 @@ export const leads: Lead[] = [
     createdAt: new Date(2024, 2, 26, 10, 0),
     lastActivity: new Date(2024, 2, 26, 10, 30),
     unitInterest: 'Studio',
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 3,
+      botMessagesReceived: 4,
+      answerButtonClicks: 2,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: true,
+      contactMethod: 'email',
+      tourBooked: false,
+      
+      // CTA Interactions
+      emailOfficeClicked: 0,
+      phoneCallClicked: 0,
+      
+      // Incentive Tracking
+      incentiveOffered: false,
+      incentiveAccepted: false,
+      incentiveExpired: false,
+      
+      // Advanced Session Management
+      adminHandoffTriggered: false,
+      customerServiceEscalated: false,
+      conversationAbandoned: true,
+      widgetSessionEnded: true,
+      
+      // Calculated Metrics
+      sessionDuration: 30, // 30 seconds
+      engagementScore: 'C+',
+      qualified: false,
+      preLease: false,
+      tourIntent: false,
+      engaged: false,
+      signed: false,
+    },
     timeline: [
       {
         id: 'activity10',
@@ -245,6 +396,42 @@ export const leads: Lead[] = [
     source: 'chat',
     createdAt: new Date(2024, 2, 26, 15, 45),
     lastActivity: new Date(2024, 2, 26, 15, 45),
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 1,
+      botMessagesReceived: 2,
+      answerButtonClicks: 0,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: false,
+      // contactMethod intentionally undefined since contact not captured
+      tourBooked: false,
+      // tourType intentionally undefined since no tour booked
+      
+      // CTA Interactions
+      emailOfficeClicked: 0,
+      phoneCallClicked: 0,
+      // widgetMinimized intentionally undefined to show N/A
+      
+      // Incentive Tracking
+      // All incentive fields intentionally undefined to show N/A
+      
+      // Advanced Session Management
+      adminHandoffTriggered: false,
+      customerServiceEscalated: false,
+      conversationAbandoned: true,
+      widgetSessionEnded: false,
+      
+      // Calculated Metrics
+      sessionDuration: 15, // 15 seconds
+      engagementScore: 'D',
+      qualified: false,
+      preLease: false,
+      tourIntent: false,
+      engaged: false,
+      signed: false,
+    },
     timeline: [
       {
         id: 'activity12',
@@ -270,6 +457,44 @@ export const leads: Lead[] = [
     assignedAgent: 'Tom Lee',
     assignedAgentId: 'agent2',
     unitInterest: '2BR - Unit C102',
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 12,
+      botMessagesReceived: 14,
+      answerButtonClicks: 6,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: true,
+      contactMethod: 'phone',
+      tourBooked: true,
+      tourType: 'in_person',
+      
+      // CTA Interactions
+      emailOfficeClicked: 1,
+      phoneCallClicked: 2,
+      
+      // Incentive Tracking
+      incentiveOffered: true,
+      incentiveAccepted: false,
+      incentiveExpired: true,
+      
+      // Advanced Session Management
+      adminHandoffTriggered: false,
+      customerServiceEscalated: true,
+      conversationAbandoned: false,
+      widgetSessionEnded: true,
+      widgetMinimized: 2,
+      
+      // Calculated Metrics
+      sessionDuration: 145, // ~2.5 minutes
+      engagementScore: 'B+',
+      qualified: true,
+      preLease: false,
+      tourIntent: true,
+      engaged: true,
+      signed: false,
+    },
     timeline: [
       {
         id: 'activity13',
@@ -327,6 +552,44 @@ export const leads: Lead[] = [
     assignedAgent: 'Sarah Miller',
     assignedAgentId: 'agent1',
     unitInterest: '2BR - Unit B301',
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 22,
+      botMessagesReceived: 25,
+      answerButtonClicks: 12,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: true,
+      contactMethod: 'email',
+      tourBooked: true,
+      tourType: 'video',
+      
+      // CTA Interactions
+      emailOfficeClicked: 3,
+      phoneCallClicked: 1,
+      
+      // Incentive Tracking
+      incentiveOffered: true,
+      incentiveAccepted: true,
+      incentiveExpired: false,
+      
+      // Advanced Session Management
+      adminHandoffTriggered: false,
+      customerServiceEscalated: false,
+      conversationAbandoned: false,
+      widgetSessionEnded: true,
+      widgetMinimized: 4,
+      
+      // Calculated Metrics
+      sessionDuration: 420, // 7 minutes
+      engagementScore: 'A+',
+      qualified: true,
+      preLease: true,
+      tourIntent: true,
+      engaged: true,
+      signed: false,
+    },
     timeline: [
       {
         id: 'activity17',
@@ -368,6 +631,303 @@ export const leads: Lead[] = [
         details: {
           tourDate: new Date(2024, 2, 29, 10, 0),
           unitRequested: '2BR - Unit B301'
+        },
+        createdBy: 'agent'
+      }
+    ]
+  },
+  {
+    id: 'lead7',
+    name: 'Jessica Chen',
+    email: 'jessica.chen@example.com',
+    phone: '(555) 222-3333',
+    currentStage: 'handed_off',
+    source: 'chat',
+    createdAt: new Date(2024, 2, 22, 16, 45),
+    lastActivity: new Date(2024, 2, 24, 11, 20),
+    assignedAgent: 'Sarah Miller',
+    assignedAgentId: 'agent1',
+    unitInterest: '3BR - Unit C304',
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 31,
+      botMessagesReceived: 35,
+      answerButtonClicks: 15,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: true,
+      contactMethod: 'phone',
+      tourBooked: true,
+      tourType: 'self_guided',
+      
+      // CTA Interactions
+      emailOfficeClicked: 4,
+      phoneCallClicked: 7,
+      
+      // Incentive Tracking
+      incentiveOffered: true,
+      incentiveAccepted: true,
+      incentiveExpired: false,
+      
+      // Advanced Session Management
+      adminHandoffTriggered: true,
+      customerServiceEscalated: false,
+      conversationAbandoned: false,
+      widgetSessionEnded: true,
+      widgetMinimized: 2,
+      
+      // Calculated Metrics
+      sessionDuration: 650, // ~11 minutes
+      engagementScore: 'A+',
+      qualified: true,
+      preLease: true,
+      tourIntent: true,
+      engaged: true,
+      signed: true,
+    },
+    timeline: [
+      {
+        id: 'activity21',
+        leadId: 'lead7',
+        type: 'chat_initiated',
+        timestamp: new Date(2024, 2, 22, 16, 45),
+        details: {
+          chatSummary: 'High-intent prospect looking for luxury 3BR unit'
+        },
+        createdBy: 'system'
+      },
+      {
+        id: 'activity22',
+        leadId: 'lead7',
+        type: 'info_collected',
+        timestamp: new Date(2024, 2, 22, 17, 0),
+        details: {
+          emailCollected: 'jessica.chen@example.com',
+          phoneCollected: '(555) 222-3333'
+        },
+        createdBy: 'ai'
+      },
+      {
+        id: 'activity23',
+        leadId: 'lead7',
+        type: 'tour_completed',
+        timestamp: new Date(2024, 2, 23, 14, 30),
+        details: {
+          notes: 'Extremely interested, ready to sign lease immediately'
+        },
+        createdBy: 'agent'
+      },
+      {
+        id: 'activity24',
+        leadId: 'lead7',
+        type: 'handed_off',
+        timestamp: new Date(2024, 2, 24, 11, 20),
+        details: {
+          notes: 'Priority lead - lease signed and approved'
+        },
+        createdBy: 'agent'
+      }
+    ]
+  },
+  {
+    id: 'lead8',
+    name: 'Mike Thompson',
+    currentStage: 'chat_initiated',
+    source: 'chat',
+    createdAt: new Date(2024, 2, 27, 9, 15),
+    lastActivity: new Date(2024, 2, 27, 9, 20),
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 2,
+      botMessagesReceived: 3,
+      answerButtonClicks: 1,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: false,
+      tourBooked: false,
+      
+      // CTA Interactions
+      emailOfficeClicked: 0,
+      phoneCallClicked: 1,
+      
+      // Incentive Tracking
+      incentiveOffered: false,
+      incentiveAccepted: false,
+      incentiveExpired: false,
+      
+      // Advanced Session Management
+      adminHandoffTriggered: false,
+      customerServiceEscalated: false,
+      conversationAbandoned: true,
+      widgetSessionEnded: false,
+      
+      // Calculated Metrics
+      sessionDuration: 5, // 5 seconds
+      engagementScore: 'F',
+      qualified: false,
+      preLease: false,
+      tourIntent: false,
+      engaged: false,
+      signed: false,
+    },
+    timeline: [
+      {
+        id: 'activity25',
+        leadId: 'lead8',
+        type: 'chat_initiated',
+        timestamp: new Date(2024, 2, 27, 9, 15),
+        details: {
+          chatSummary: 'Asked about pricing, left immediately'
+        },
+        createdBy: 'system'
+      }
+    ]
+  },
+  {
+    id: 'lead9',
+    name: 'Sarah Martinez',
+    email: 'sarah.martinez@example.com',
+    currentStage: 'info_collected',
+    source: 'chat',
+    createdAt: new Date(2024, 2, 26, 13, 30),
+    lastActivity: new Date(2024, 2, 26, 14, 45),
+    unitInterest: '1BR - Unit A205',
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 6,
+      botMessagesReceived: 8,
+      answerButtonClicks: 3,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: true,
+      contactMethod: 'email',
+      tourBooked: false,
+      
+      // CTA Interactions
+      emailOfficeClicked: 2,
+      phoneCallClicked: 0,
+      
+      // Incentive Tracking
+      incentiveOffered: true,
+      incentiveAccepted: false,
+      incentiveExpired: true,
+      
+      // Advanced Session Management
+      adminHandoffTriggered: false,
+      customerServiceEscalated: true,
+      conversationAbandoned: false,
+      widgetSessionEnded: true,
+      
+      // Calculated Metrics
+      sessionDuration: 75, // 1m 15s
+      engagementScore: 'B',
+      qualified: false,
+      preLease: false,
+      tourIntent: true,
+      engaged: true,
+      signed: false,
+    },
+    timeline: [
+      {
+        id: 'activity26',
+        leadId: 'lead9',
+        type: 'chat_initiated',
+        timestamp: new Date(2024, 2, 26, 13, 30),
+        details: {
+          chatSummary: 'Graduate student interested in 1BR units'
+        },
+        createdBy: 'system'
+      },
+      {
+        id: 'activity27',
+        leadId: 'lead9',
+        type: 'info_collected',
+        timestamp: new Date(2024, 2, 26, 14, 45),
+        details: {
+          emailCollected: 'sarah.martinez@example.com'
+        },
+        createdBy: 'ai'
+      }
+    ]
+  },
+  {
+    id: 'lead10',
+    name: 'Robert Kim',
+    phone: '(555) 888-9999',
+    currentStage: 'tour_completed',
+    source: 'chat',
+    createdAt: new Date(2024, 2, 20, 11, 0),
+    lastActivity: new Date(2024, 2, 22, 15, 30),
+    assignedAgent: 'Tom Lee',
+    assignedAgentId: 'agent2',
+    unitInterest: '2BR - Unit B102',
+    amplitudeData: {
+      // Core Engagement Metrics
+      chatSessionStarted: true,
+      userMessagesSent: 18,
+      botMessagesReceived: 21,
+      answerButtonClicks: 9,
+      
+      // Contact & Tour Metrics  
+      contactCaptured: true,
+      contactMethod: 'phone',
+      tourBooked: true,
+      tourType: 'in_person',
+      
+      // CTA Interactions
+      phoneCallClicked: 5,
+      
+      // Incentive Tracking
+      incentiveOffered: true,
+      incentiveAccepted: false,
+      incentiveExpired: true,
+      
+      // Advanced Session Management
+      adminHandoffTriggered: false,
+      customerServiceEscalated: false,
+      conversationAbandoned: false,
+      widgetSessionEnded: true,
+      
+      // Calculated Metrics
+      sessionDuration: 280, // ~4.5 minutes
+      engagementScore: 'B+',
+      qualified: true,
+      preLease: false,
+      tourIntent: true,
+      engaged: true,
+      signed: false,
+    },
+    timeline: [
+      {
+        id: 'activity28',
+        leadId: 'lead10',
+        type: 'chat_initiated',
+        timestamp: new Date(2024, 2, 20, 11, 0),
+        details: {
+          chatSummary: 'Professional interested in 2BR with home office space'
+        },
+        createdBy: 'system'
+      },
+      {
+        id: 'activity29',
+        leadId: 'lead10',
+        type: 'info_collected',
+        timestamp: new Date(2024, 2, 20, 11, 30),
+        details: {
+          phoneCollected: '(555) 888-9999'
+        },
+        createdBy: 'ai'
+      },
+      {
+        id: 'activity30',
+        leadId: 'lead10',
+        type: 'tour_completed',
+        timestamp: new Date(2024, 2, 22, 15, 30),
+        details: {
+          notes: 'Liked the unit but wants to think about it over the weekend'
         },
         createdBy: 'agent'
       }

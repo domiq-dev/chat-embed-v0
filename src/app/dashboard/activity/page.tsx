@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import LeadOverview from './components/LeadOverview';
 import LeadFunnel from './components/LeadFunnel';
-import IndividualLeadTimeline from './components/IndividualLeadTimeline';
 import NewLeadModal from './components/NewLeadModal';
 import { dummyAgents, DummyAgent } from '@/lib/dummy-data';
 
@@ -27,11 +27,11 @@ export default function ActivityPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
+        {/* Lead Distribution Overview */}
+        <LeadOverview />
+        
         {/* Lead Funnel */}
         <LeadFunnel />
-        
-        {/* Individual Lead Timeline */}
-        <IndividualLeadTimeline />
       </div>
 
       {/* New Lead Modal */}

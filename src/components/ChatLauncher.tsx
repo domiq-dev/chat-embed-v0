@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import ChatModal from './ChatModal';
 import { ApiService, Session as AkoolSessionType } from '../services/apiService'; // Adjusted path
 
@@ -17,6 +17,9 @@ const DEFAULT_AVATAR_ID = 'Alinna_background_st01_Domiq'; // Changed to the work
 const ChatLauncher = () => {
   const [open, setOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  
+  // Track recent mailto clicks to ignore beforeunload events
+  const lastMailtoClickTime = useRef<number>(0);
 
   const [apiService, setApiService] = useState<ApiService | null>(null);
   const [currentSession, setCurrentSession] = useState<AkoolSessionType | null>(() => {
@@ -87,6 +90,13 @@ const ChatLauncher = () => {
   // Handle page unload/refresh - close session
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      // Check if this is a mailto link navigation - don't close session for these
+      const timeSinceMailtoClick = Date.now() - lastMailtoClickTime.current;
+      if (timeSinceMailtoClick < 2000) { // Within 2 seconds of mailto click
+        console.log('ChatLauncher: Ignoring beforeunload for recent mailto click');
+        return;
+      }
+      
       if (currentSession && apiService) {
         // Use sendBeacon for reliable cleanup on page unload
         const sessionData = JSON.stringify({ id: currentSession._id });
@@ -238,6 +248,7 @@ const ChatLauncher = () => {
             unreadCount={unreadCount}
             onClearUnread={() => setUnreadCount(0)}
             akoolSession={currentSession}
+            lastMailtoClickTime={lastMailtoClickTime}
           />
         </div>
       )}

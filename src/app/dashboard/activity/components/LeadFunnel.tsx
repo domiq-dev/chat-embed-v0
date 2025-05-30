@@ -6,6 +6,7 @@ import { Lead } from '@/lib/dummy-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, AlertTriangle } from 'lucide-react';
+import LeadSummaryModal from './LeadSummaryModal';
 
 interface FunnelStageProps {
   stage: Lead['currentStage'];
@@ -31,31 +32,33 @@ function FunnelStage({ stage, title, color, leads, onLeadClick, onDeleteLead, se
         {leads.map((lead) => (
           <div
             key={lead.id}
-            className={`p-3 rounded-lg border transition-all hover:shadow-md ${
+            className={`p-3 rounded-lg border transition-all hover:shadow-md cursor-pointer ${
               selectedLead?.id === lead.id
                 ? 'border-purple-500 bg-purple-50'
                 : 'border-gray-200 hover:border-purple-200'
             }`}
+            onClick={() => onLeadClick(lead)}
           >
-            <div 
-              className="cursor-pointer"
-              onClick={() => onLeadClick(lead)}
-            >
-              <div className="font-medium text-sm">{lead.name}</div>
-              <div className="text-xs text-gray-500 mt-1">
-                {lead.unitInterest && (
-                  <span className="mr-2">{lead.unitInterest}</span>
-                )}
-                <span>
-                  {new Date(lead.lastActivity).toLocaleDateString()}
-                </span>
-              </div>
-              {lead.assignedAgent && (
-                <Badge variant="secondary" className="text-xs mt-1">
-                  {lead.assignedAgent}
-                </Badge>
+            <div className="font-medium text-sm">{lead.name}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              {lead.unitInterest && (
+                <span className="mr-2">{lead.unitInterest}</span>
               )}
+              <span>
+                {new Date(lead.lastActivity).toLocaleDateString()}
+              </span>
             </div>
+            {lead.assignedAgent && (
+              <Badge variant="secondary" className="text-xs mt-1">
+                {lead.assignedAgent}
+              </Badge>
+            )}
+            {/* Amplitude Score Badge */}
+            {lead.amplitudeData?.engagementScore && (
+              <Badge variant="outline" className="text-xs mt-1 ml-2">
+                {lead.amplitudeData.engagementScore}
+              </Badge>
+            )}
             <div className="flex justify-end mt-2">
               <button
                 onClick={(e) => {
@@ -125,6 +128,7 @@ function DeleteConfirmationModal({ isOpen, lead, onConfirm, onCancel }: DeleteCo
 export default function LeadFunnel() {
   const { leads, selectedLead, setSelectedLead, getLeadsByStage, deleteLead } = useLeadContext();
   const [leadToDelete, setLeadToDelete] = useState<Lead | null>(null);
+  const [summaryModalLead, setSummaryModalLead] = useState<Lead | null>(null);
 
   const stages = [
     {
@@ -160,7 +164,7 @@ export default function LeadFunnel() {
   ];
 
   const handleLeadClick = (lead: Lead) => {
-    setSelectedLead(selectedLead?.id === lead.id ? null : lead);
+    setSummaryModalLead(lead);
   };
 
   const handleDeleteLead = (lead: Lead) => {
@@ -199,45 +203,39 @@ export default function LeadFunnel() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {stages.map((stage, index) => (
-              <div key={stage.stage} className="relative">
-                <FunnelStage
-                  {...stage}
-                  onLeadClick={handleLeadClick}
-                  onDeleteLead={handleDeleteLead}
-                  selectedLead={selectedLead}
-                />
-                
-                {/* Conversion rate indicator */}
-                <div className="text-center text-xs text-gray-500 mt-2">
-                  {conversionRates[index]}% of total
-                </div>
-                
-                {/* Arrow between stages */}
-                {index < stages.length - 1 && (
-                  <div className="hidden md:block absolute right-0 top-12 transform translate-x-2 text-gray-300">
-                    →
-                  </div>
-                )}
-              </div>
+              <FunnelStage
+                key={stage.stage}
+                stage={stage.stage}
+                title={stage.title}
+                color={stage.color}
+                leads={stage.leads}
+                onLeadClick={handleLeadClick}
+                onDeleteLead={handleDeleteLead}
+                selectedLead={summaryModalLead}
+              />
             ))}
           </div>
           
-          {selectedLead && (
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600 mb-2">
-                Click on any lead above to see their detailed timeline, or{' '}
-                <button
-                  onClick={() => setSelectedLead(null)}
-                  className="text-purple-600 hover:text-purple-800 underline"
-                >
-                  clear selection
-                </button>
+          {/* Conversion rates */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+            {conversionRates.map((rate, index) => (
+              <div key={index} className="text-center">
+                <div className="text-xs text-gray-500">Conversion</div>
+                <div className="text-lg font-semibold text-purple-600">{rate}%</div>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
         </CardContent>
       </Card>
 
+      {/* Lead Summary Modal */}
+      <LeadSummaryModal
+        isOpen={!!summaryModalLead}
+        lead={summaryModalLead}
+        onClose={() => setSummaryModalLead(null)}
+      />
+
+      {/* Delete Confirmation Modal */}
       <DeleteConfirmationModal
         isOpen={!!leadToDelete}
         lead={leadToDelete}
