@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@11labs/react": "^0.0.4",
+    "@amplitude/analytics-browser": "^2.17.6",
     "@fullcalendar/core": "^6.1.17",
     "@fullcalendar/daygrid": "^6.1.17",
     "@fullcalendar/interaction": "^6.1.17",

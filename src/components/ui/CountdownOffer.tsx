@@ -6,19 +6,39 @@ interface CountdownOfferProps {
   initialMinutes?: number;
   onExpire?: () => void;
   offerText?: string;
+  analytics?: {
+    trackIncentiveOffered?: (incentiveType: string) => void;
+    trackIncentiveExpired?: (incentiveType: string) => void;
+  };
 }
 
 const CountdownOffer: FC<CountdownOfferProps> = ({
   initialMinutes = 15,
   onExpire,
-  offerText = "Lock in your special rate"
+  offerText = "Lock in your special rate",
+  analytics
 }) => {
   const [timeLeft, setTimeLeft] = useState(initialMinutes * 60);
   const [isVisible, setIsVisible] = useState(true);
+  const [hasTrackedOffer, setHasTrackedOffer] = useState(false);
+
+  // Track incentive offered when component first mounts
+  useEffect(() => {
+    if (!hasTrackedOffer && analytics?.trackIncentiveOffered) {
+      analytics.trackIncentiveOffered('move_in_rate');
+      setHasTrackedOffer(true);
+    }
+  }, [hasTrackedOffer, analytics]);
 
   useEffect(() => {
     if (timeLeft <= 0) {
       setIsVisible(false);
+      
+      // Track incentive expired
+      if (analytics?.trackIncentiveExpired) {
+        analytics.trackIncentiveExpired('move_in_rate');
+      }
+      
       onExpire?.();
       return;
     }
@@ -28,7 +48,7 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [timeLeft, onExpire]);
+  }, [timeLeft, onExpire, analytics]);
 
   if (!isVisible) return null;
 

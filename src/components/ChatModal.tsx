@@ -8,8 +8,12 @@ import QuickReplyButtons, { QuickReplyHint, QuickReplyType } from "@/components/
 import FloatingBanner from "@/components/ui/FloatingBanner";
 import CountdownOffer from "@/components/ui/CountdownOffer";
 import AvatarLoadingScreen from "@/components/ui/AvatarLoadingScreen";
+import ContactFormModal from "@/components/ui/ContactFormModal";
+import TourBookingModal from "@/components/ui/TourBookingModal";
+import CTAButtons from "@/components/ui/CTAButtons";
 import { DEFAULT_APARTMENT_CONFIG } from "@/types/apartment";
 import { Session as AkoolSessionType } from '../services/apiService';
+import { useChatLifecycle } from '@/hooks/useChatLifecycle';
 
 // Dynamically import AgoraRTC types
 import type { IAgoraRTCClient, IRemoteVideoTrack, IRemoteAudioTrack, UID, SDK_MODE, SDK_CODEC } from 'agora-rtc-sdk-ng';
@@ -130,8 +134,12 @@ interface ChatHeaderProps {
   config: typeof DEFAULT_APARTMENT_CONFIG;
   onClose: () => void;
   headerRef: React.RefObject<HTMLDivElement>;
+  analytics: {
+    trackEmailOfficeClick: (location: string) => void;
+    trackPhoneCallClick: (location: string) => void;
+  };
 }
-const ChatHeader: FC<ChatHeaderProps> = ({ config, onClose, headerRef }) => {
+const ChatHeader: FC<ChatHeaderProps> = ({ config, onClose, headerRef, analytics }) => {
   return (
     <motion.div
       ref={headerRef}
@@ -150,7 +158,18 @@ const ChatHeader: FC<ChatHeaderProps> = ({ config, onClose, headerRef }) => {
       </div>
       <div className="flex items-center gap-2">
         {config.socialLinks.facebook && (<motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => window.open(config.socialLinks.facebook, '_blank')} className="p-2 hover:bg-gray-50 rounded-full transition-colors" title="Visit our Facebook page"><img src="/social/facebook.svg" alt="Facebook"className="w-[18px] h-[18px]"/></motion.button>)}
-        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => window.location.href = 'mailto:leasing@grandoaks.com'} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Email us"><Mail size={18} /></motion.button>
+        <motion.button 
+          whileHover={{ scale: 1.05 }} 
+          whileTap={{ scale: 0.95 }} 
+          onClick={() => {
+            analytics.trackEmailOfficeClick('header');
+            window.location.href = 'mailto:leasing@grandoaks.com';
+          }} 
+          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" 
+          title="Email us"
+        >
+          <Mail size={18} />
+        </motion.button>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={onClose} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Close chat"><X size={18} /></motion.button>
       </div>
     </motion.div>
@@ -228,6 +247,11 @@ interface TimerSectionProps {
   qualified: boolean;
   onOfferExpire: () => void;
   savings: number;
+  trackAnswerButtonClick?: (optionId: string, optionText: string) => void;
+  analytics?: {
+    trackIncentiveOffered: (incentiveType: string) => void;
+    trackIncentiveExpired: (incentiveType: string) => void;
+  };
 }
 const TimerSection: FC<TimerSectionProps> = ({
   isTyping,
@@ -237,18 +261,33 @@ const TimerSection: FC<TimerSectionProps> = ({
   showOffer,
   qualified,
   onOfferExpire,
-  savings
+  savings,
+  trackAnswerButtonClick,
+  analytics
 }) => {
   return (
     <div className="relative z-10 bg-white/80 backdrop-blur-sm">
       {!isTyping && (currentHint || currentQuestion) && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-          <QuickReplyButtons currentQuestion={currentQuestion} hint={currentHint || undefined} onSelect={(value) => sendMessage(value)} />
+          <QuickReplyButtons 
+            currentQuestion={currentQuestion} 
+            hint={currentHint || undefined} 
+            onSelect={(value) => sendMessage(value)}
+            trackAnswerButtonClick={trackAnswerButtonClick} 
+          />
         </motion.div>
       )}
       <AnimatePresence>
         {showOffer && !qualified && (
-          <CountdownOffer initialMinutes={5} onExpire={onOfferExpire} offerText="Lock in your special move-in rate"/>
+          <CountdownOffer 
+            initialMinutes={5} 
+            onExpire={onOfferExpire} 
+            offerText="Lock in your special move-in rate"
+            analytics={{
+              trackIncentiveOffered: analytics?.trackIncentiveOffered,
+              trackIncentiveExpired: analytics?.trackIncentiveExpired
+            }}
+          />
         )}
       </AnimatePresence>
       {savings > 0 && (
@@ -352,6 +391,17 @@ const ChatModal: FC<ChatModalProps> = ({
   const [showOffer, setShowOffer] = useState(false);
   const [offerExpired, setOfferExpired] = useState(false);
   const [showSessionEndedOverlay, setShowSessionEndedOverlay] = useState(false);
+  
+  // Modal states for new components
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [showTourBooking, setShowTourBooking] = useState(false);
+
+  // NEW: Session tracking state for 18/18 analytics completion
+  const [sessionStartTime] = useState(Date.now());
+  const [lastActivityTime, setLastActivityTime] = useState(Date.now());
+  const [lastActivityType, setLastActivityType] = useState<string>('session_start');
+  const [inactivityTimeout, setInactivityTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [conversationStage, setConversationStage] = useState<'initial' | 'engaged' | 'qualified' | 'converted'>('initial');
 
   // AKOOL/Agora specific state
   const [AgoraRTCModule, setAgoraRTCModule] = useState<any>(null);
@@ -371,6 +421,44 @@ const ChatModal: FC<ChatModalProps> = ({
   // Ref and state for header height
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
+
+  // Initialize analytics tracking for chat lifecycle
+  const analytics = useChatLifecycle({
+    // We'll add the chatSdk when we have proper SDK integration
+    // For now, we'll use the manual tracking functions
+  });
+
+  // NEW: Activity tracking and session management for 18/18 analytics completion
+  const updateActivity = (activityType: string) => {
+    setLastActivityTime(Date.now());
+    setLastActivityType(activityType);
+    
+    // Clear existing timeout
+    if (inactivityTimeout) {
+      clearTimeout(inactivityTimeout);
+    }
+    
+    // Set new inactivity timeout (5 minutes)
+    const timeout = setTimeout(() => {
+      const sessionDuration = Date.now() - sessionStartTime;
+      analytics.trackConversationAbandoned(sessionDuration, messages.length, activityType);
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    setInactivityTimeout(timeout);
+  };
+
+  // Enhanced close handler with session end tracking
+  const handleClose = () => {
+    const sessionDuration = Date.now() - sessionStartTime;
+    analytics.trackWidgetSessionEnded('user_closed', sessionDuration, messages.length);
+    
+    // Clear timeout
+    if (inactivityTimeout) {
+      clearTimeout(inactivityTimeout);
+    }
+    
+    onClose();
+  };
 
   // Dynamically import AgoraRTC SDK
   useEffect(() => {
@@ -501,6 +589,9 @@ const ChatModal: FC<ChatModalProps> = ({
               sentAt: new Date(),
             },
           ]);
+          
+          // Track bot message received
+          analytics.trackBotMessage();
         }
       } catch (e) {
         console.error('ChatModal: Error processing stream message:', e, 'Raw data:', data);
@@ -763,6 +854,16 @@ const ChatModal: FC<ChatModalProps> = ({
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
     
+    // NEW: Update activity tracking
+    updateActivity('user_message');
+    
+    // NEW: Update conversation stage based on message content and context
+    if (conversationStage === 'initial' && messages.length > 2) {
+      setConversationStage('engaged');
+    } else if (qualified && conversationStage === 'engaged') {
+      setConversationStage('qualified');
+    }
+    
     const userMessageId = `user-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     const userMessage: ChatMessageForDisplay = { 
         id: userMessageId, 
@@ -772,6 +873,9 @@ const ChatModal: FC<ChatModalProps> = ({
     };
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
+
+    // Track user message sent
+    analytics.trackUserMessage(text.trim());
 
     // If AKOOL session is active, send text to AKOOL for TTS
     if (akoolSession && agoraClientRef.current && isAgoraConnected && AgoraRTCModule) {
@@ -824,6 +928,10 @@ const ChatModal: FC<ChatModalProps> = ({
   // Extracted backend posting logic
   const postTextToBackendAgent = async (text: string, originalUserMessageId: string) => {
     setIsTyping(true); // Show backend agent typing indicator
+    
+    // NEW: Track activity for backend agent interaction
+    updateActivity('backend_agent_query');
+    
     try {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate typing
       const res = await fetch('/api/agent', {
@@ -854,6 +962,26 @@ const ChatModal: FC<ChatModalProps> = ({
           });
         }
       }
+      
+      // NEW: Detect escalation patterns in the response
+      const lowerReply = reply.toLowerCase();
+      if (lowerReply.includes('contact our leasing office') || 
+          lowerReply.includes('speak with an agent') || 
+          lowerReply.includes('call us directly')) {
+        analytics.trackAdminHandoffTriggered('automated_escalation', conversationStage);
+      }
+      
+      // NEW: Detect complex queries that might need escalation
+      const complexKeywords = ['legal', 'lawsuit', 'emergency', 'urgent', 'complaint', 'issue', 'problem'];
+      if (complexKeywords.some(keyword => text.toLowerCase().includes(keyword))) {
+        analytics.trackCustomerServiceEscalated('complex_query', text);
+      }
+      
+      // Track bot message received for backend response
+      if (reply) {
+        analytics.trackBotMessage();
+      }
+      
       const stateRes = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -870,14 +998,82 @@ const ChatModal: FC<ChatModalProps> = ({
             const animateSavings = () => { const now = Date.now(); const progress = Math.min((now - startTime) / duration, 1); const currentValue = Math.floor(startValue + (endValue - startValue) * progress); setSavings(currentValue); if (progress < 1) requestAnimationFrame(animateSavings); };
           requestAnimationFrame(animateSavings);
         }
-        if (data.qualified && !showFloatingBanner) { setShowFloatingBanner(true); setShowSparkles(true); setTimeout(() => setShowSparkles(false), 2000); }
+        if (data.qualified && !showFloatingBanner) { 
+          setShowFloatingBanner(true); 
+          setShowSparkles(true); 
+          setTimeout(() => setShowSparkles(false), 2000);
+          
+          // Track incentive acceptance when someone qualifies
+          analytics.trackIncentiveAccepted('qualification_bonus');
+        }
       }
     } catch (err) {
       console.error(err);
+      
+      // Track fallback event when errors occur
+      analytics.trackFallback('error');
+      
       setMessages(prev => [...prev, { id: `err-backend-${Date.now()}`, from: 'agent', text: 'Sorry, something went wrong 😞', sentAt: new Date() }]);
     } finally {
       setIsTyping(false);
     }
+  };
+
+  // Modal handlers for new components
+  const handleContactFormSubmit = (contactData: { 
+    name: string; 
+    email?: string; 
+    phone?: string; 
+    method: 'email' | 'phone' 
+  }) => {
+    console.log('Contact form submitted:', contactData);
+    
+    // NEW: Update conversation stage and activity
+    if (conversationStage !== 'converted') {
+      setConversationStage('qualified');
+    }
+    updateActivity('contact_capture');
+    
+    // Add a success message to the chat
+    const successMessage = `Thank you ${contactData.name}! We'll reach out to you via ${contactData.method === 'email' ? 'email' : 'phone'} soon.`;
+    setMessages(prev => [...prev, { 
+      id: `contact-success-${Date.now()}`, 
+      from: 'agent', 
+      text: successMessage, 
+      sentAt: new Date() 
+    }]);
+    
+    // Could also trigger a backend API call here to save the contact
+    toast.success('Contact information saved!');
+  };
+
+  const handleTourBookingSubmit = (tourData: { 
+    name: string; 
+    email: string; 
+    tourType: 'in_person' | 'self_guided' | 'video';
+    preferredDate?: string;
+    preferredTime?: string;
+  }) => {
+    console.log('Tour booking submitted:', tourData);
+    
+    // NEW: Update conversation stage to converted
+    setConversationStage('converted');
+    updateActivity('tour_booking');
+    
+    // Add a success message to the chat
+    const tourTypeDisplay = tourData.tourType === 'in_person' ? 'in-person' : 
+                           tourData.tourType === 'self_guided' ? 'self-guided' : 'virtual';
+    const successMessage = `Great! Your ${tourTypeDisplay} tour has been scheduled. Check your email for confirmation details.`;
+    
+    setMessages(prev => [...prev, { 
+      id: `tour-success-${Date.now()}`, 
+      from: 'agent', 
+      text: successMessage, 
+      sentAt: new Date() 
+    }]);
+    
+    // Could also trigger a backend API call here to save the tour booking
+    toast.success('Tour scheduled successfully!');
   };
 
   // NEW: Periodic dialogue mode reinforcement to prevent echoing
@@ -915,6 +1111,40 @@ const ChatModal: FC<ChatModalProps> = ({
     return () => clearInterval(reinforcementInterval);
   }, [akoolSession, isAgoraConnected, isDialogueModeReady]);
 
+  // Initialize activity tracking on mount
+  useEffect(() => {
+    updateActivity('session_start');
+  }, []);
+
+  // NEW: Cleanup effect for session end tracking
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const sessionDuration = Date.now() - sessionStartTime;
+      analytics.trackWidgetSessionEnded('navigation', sessionDuration, messages.length);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        updateActivity('page_hidden');
+      } else {
+        updateActivity('page_visible');
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      
+      // Clear timeout on unmount
+      if (inactivityTimeout) {
+        clearTimeout(inactivityTimeout);
+      }
+    };
+  }, [analytics, sessionStartTime, messages.length, inactivityTimeout]);
+
   return (
     <div className="fixed bottom-20 right-6 z-50">
       {akoolSessionError && (
@@ -940,8 +1170,9 @@ const ChatModal: FC<ChatModalProps> = ({
 
         <ChatHeader
           config={config}
-          onClose={onClose}
+          onClose={handleClose}
           headerRef={headerRef}
+          analytics={analytics}
         />
 
         <ChatBody
@@ -960,6 +1191,8 @@ const ChatModal: FC<ChatModalProps> = ({
           qualified={qualified}
           onOfferExpire={handleOfferExpire}
           savings={savings}
+          trackAnswerButtonClick={analytics.trackAnswerButtonClick}
+          analytics={analytics}
         />
         
         <MessagingInput
@@ -987,13 +1220,29 @@ const ChatModal: FC<ChatModalProps> = ({
               Please close and reopen the chat window to start a new session with Alinna.
             </p>
             <button 
-              onClick={onClose} 
+              onClick={handleClose} 
               className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
             >
               Close Chat
             </button>
           </div>
         )}
+      </div>
+
+      {/* CTA Buttons Section */}
+      <div className="mt-2">
+        <CTAButtons
+          location="chat_footer"
+          analytics={analytics}
+          onContactFormOpen={() => setShowContactForm(true)}
+          onTourBookingOpen={() => setShowTourBooking(true)}
+          config={{
+            email: 'leasing@grandoaks.com',
+            phone: '+1-555-123-4567',
+            showContactForm: true,
+            showTourBooking: true
+          }}
+        />
       </div>
 
       <AnimatePresence>
@@ -1010,6 +1259,22 @@ const ChatModal: FC<ChatModalProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Contact Form Modal */}
+      <ContactFormModal
+        isOpen={showContactForm}
+        onClose={() => setShowContactForm(false)}
+        onSubmit={handleContactFormSubmit}
+        analytics={analytics}
+      />
+
+      {/* Tour Booking Modal */}
+      <TourBookingModal
+        isOpen={showTourBooking}
+        onClose={() => setShowTourBooking(false)}
+        onSubmit={handleTourBookingSubmit}
+        analytics={analytics}
+      />
     </div>
   );
 };

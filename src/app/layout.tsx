@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+// Import analytics early to initialize Amplitude immediately
+import "../lib/analytics";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",

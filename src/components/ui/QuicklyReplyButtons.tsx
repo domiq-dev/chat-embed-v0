@@ -55,12 +55,14 @@ interface QuickReplyButtonsProps {
   currentQuestion: string | null;
   hint?: QuickReplyHint;
   onSelect: (value: string) => void;
+  trackAnswerButtonClick?: (optionId: string, optionText: string) => void;
 }
 
 const QuickReplyButtons: React.FC<QuickReplyButtonsProps> = ({
   currentQuestion,
   hint,
-  onSelect
+  onSelect,
+  trackAnswerButtonClick
 }) => {
   // If no hint is provided, don't render anything
   if (!hint && !currentQuestion) return null;
@@ -82,7 +84,10 @@ const QuickReplyButtons: React.FC<QuickReplyButtonsProps> = ({
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                onClick={() => onSelect(option)}
+                onClick={() => {
+                  trackAnswerButtonClick?.(currentQuestion || 'unknown', option);
+                  onSelect(option);
+                }}
                 className="px-4 py-2 bg-white text-blue-600 rounded-full border border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all text-sm font-medium shadow-sm"
               >
                 {option}
@@ -124,7 +129,10 @@ const QuickReplyButtons: React.FC<QuickReplyButtonsProps> = ({
             <motion.button
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              onClick={() => onSelect('true')}
+              onClick={() => {
+                trackAnswerButtonClick?.(currentQuestion || 'boolean', hintData.options?.[0] || 'Yes');
+                onSelect('true');
+              }}
               className="flex-1 px-4 py-2 bg-white text-blue-600 rounded-full border border-blue-200 hover:bg-blue-50 transition-all text-sm font-medium"
             >
               {hintData.options?.[0] || 'Yes'}
@@ -132,7 +140,10 @@ const QuickReplyButtons: React.FC<QuickReplyButtonsProps> = ({
             <motion.button
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              onClick={() => onSelect('false')}
+              onClick={() => {
+                trackAnswerButtonClick?.(currentQuestion || 'boolean', hintData.options?.[1] || 'No');
+                onSelect('false');
+              }}
               className="flex-1 px-4 py-2 bg-white text-gray-600 rounded-full border border-gray-200 hover:bg-gray-50 transition-all text-sm font-medium"
             >
               {hintData.options?.[1] || 'No'}
@@ -146,7 +157,10 @@ const QuickReplyButtons: React.FC<QuickReplyButtonsProps> = ({
             <motion.button
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              onClick={() => onSelect('confirm')}
+              onClick={() => {
+                trackAnswerButtonClick?.(currentQuestion || 'confirmation', hintData.options?.[0] || 'Confirm');
+                onSelect('confirm');
+              }}
               className="flex-1 px-4 py-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition-all text-sm font-medium"
             >
               {hintData.options?.[0] || 'Confirm'}
@@ -154,7 +168,10 @@ const QuickReplyButtons: React.FC<QuickReplyButtonsProps> = ({
             <motion.button
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              onClick={() => onSelect('restart')}
+              onClick={() => {
+                trackAnswerButtonClick?.(currentQuestion || 'confirmation', hintData.options?.[1] || 'Start Over');
+                onSelect('restart');
+              }}
               className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-all text-sm font-medium"
             >
               {hintData.options?.[1] || 'Start Over'}
