@@ -411,8 +411,7 @@ const ChatModal: FC<ChatModalProps> = ({
   const [lastActivityType, setLastActivityType] = useState<string>('session_start');
   const [inactivityTimeout, setInactivityTimeout] = useState<NodeJS.Timeout | null>(null);
   const [conversationStage, setConversationStage] = useState<'initial' | 'engaged' | 'qualified' | 'converted'>('initial');
-  const [turnId, setTurnId] = useState(0);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+
   // AKOOL/Agora specific state
   const [AgoraRTCModule, setAgoraRTCModule] = useState<any>(null);
   const agoraClientRef = useRef<IAgoraRTCClient | null>(null);
@@ -422,6 +421,10 @@ const ChatModal: FC<ChatModalProps> = ({
   const isSendingRef = useRef(false);
   const [isAvatarBuffering, setIsAvatarBuffering] = useState(false);
   const [isDialogueModeReady, setIsDialogueModeReady] = useState(false); // NEW: Track dialogue mode status
+
+  // Add these state variables near the top with other useState calls
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [turnId, setTurnId] = useState(0);
 
   // Determine video player background - now always black when session is active
   const videoPlayerBgColor = akoolSession ? '#222' : 'white';
@@ -590,22 +593,22 @@ const ChatModal: FC<ChatModalProps> = ({
         const messageStr = typeof data === 'string' ? data : new TextDecoder().decode(data as Uint8Array);
         console.log('ChatModal: Received stream message from UID:', uid, 'Data:', messageStr);
         const parsedMessage = JSON.parse(messageStr);
-        // Existing logic: Handle bot messages (avatar confirmations/TTS confirmations)
-        // if (parsedMessage.type === 'chat' && parsedMessage.pld?.from === 'bot' && parsedMessage.pld?.text) {
-        //   const displayBotMessageId = `bot-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        //   setMessages(prev => [
-        //     ...prev,
-        //     {
-        //       id: displayBotMessageId,
-        //       from: 'agent',
-        //       text: parsedMessage.pld.text,
-        //       sentAt: new Date(),
-        //     },
-        //   ]);
+
+        if (parsedMessage.type === 'chat' && parsedMessage.pld?.from === 'bot' && parsedMessage.pld?.text) {
+          const displayBotMessageId = `bot-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+          setMessages(prev => [
+            ...prev,
+            {
+              id: displayBotMessageId,
+              from: 'agent',
+              text: parsedMessage.pld.text,
+              sentAt: new Date(),
+            },
+          ]);
           
-        //   // Track bot message received
-        //   analytics.trackBotMessage();
-        // }
+          // Track bot message received
+          analytics.trackBotMessage();
+        }
       } catch (e) {
         console.error('ChatModal: Error processing stream message:', e, 'Raw data:', data);
       }
@@ -668,13 +671,7 @@ const ChatModal: FC<ChatModalProps> = ({
           type: "command", 
           mid: `setup-${Date.now()}`, 
           pld: {
-            cmd: "set-params",
-            data: {
-              mode: 2, // Dialogue mode (avatar engages in conversation)
-              session_id: akoolSession._id, // Include session ID for isolation
-              force_dialogue: true, // Force dialogue mode
-              reset_context: true, // Clear any previous context
-            }
+            mode: 1, // Retelling mode only
           }
         };
         
@@ -741,35 +738,13 @@ const ChatModal: FC<ChatModalProps> = ({
     
     console.log("ChatModal: Joining Agora channel...", {agora_app_id, agora_channel, agora_uid});
     currentActiveClient.join(agora_app_id, agora_channel, agora_token, agora_uid)
-  .then(() => {
-    setIsAgoraConnected(true);
-    hasJoined = true;
-    console.log('ChatModal: Successfully joined Agora channel');
-    
-    // DISABLE avatar's built-in AI responses
-    const disableDialogueMessage = {
-      v: 2,
-      type: "command",
-      mid: `set-mode-${Date.now()}`,
-      pld: {
-        cmd: "set-params",
-        data: {
-          mode: 1  // Try retelling mode instead of dialogue mode
-        }
-      }
-    };
-
-    try {
-      // @ts-ignore
-      currentActiveClient.sendStreamMessage(JSON.stringify(disableDialogueMessage), false);
-      console.log('ChatModal: Disabled avatar dialogue mode');
-    } catch (error) {
-      console.error('ChatModal: Failed to disable dialogue mode:', error);
-    }
-    
-    // Setup avatar dialogue mode after successful connection
-    // setupAvatarDialogueMode();
-  })
+      .then(() => {
+        setIsAgoraConnected(true);
+        hasJoined = true;
+        console.log("ChatModal: Successfully joined Agora channel.");
+        // Set up dialogue mode immediately after joining
+        setupAvatarDialogueMode();
+      })
       .catch(err => {
         setAkoolSessionError(`Agora join error: ${err.message}`);
         setIsAgoraConnected(false);
@@ -889,7 +864,6 @@ const ChatModal: FC<ChatModalProps> = ({
   }, [messages.length, qualified, offerExpired]);
   const handleOfferExpire = () => { setOfferExpired(true); setShowOffer(false); };
 
-
   // sendMessage function: decides whether to send to backend agent or AKOOL
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -939,81 +913,62 @@ const ChatModal: FC<ChatModalProps> = ({
         isSendingRef.current = false;
         return;
       }
-const currentConversationId = conversationId || `conv-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-const currentTurnId = turnId + 1;
 
-console.log("ChatModal: Processing message through LLM API:", text.trim());
-
-let llmResponse = text.trim(); // fallback to original message
-
-try {
-  console.log("ChatModal: About to call LLM, AKOOL active:", !!akoolSession);
-  const response = await fetch('/api/llm/stream', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      conversation_id: currentConversationId,
-      turn_id: currentTurnId,
-      user_message: text.trim(),
-      end_signal: false
-    }),
-  });
-
-  if (response.ok && response.body) {
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
+      // Call LLM API to get response
+      let llmResponse = text.trim(); // fallback
       
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n').filter(line => line.trim());
-      
-      for (const line of lines) {
-        try {
-          const data = JSON.parse(line);
-          if (data.completed_reply) {
-            llmResponse = data.completed_reply;
-            console.log("ChatModal: Got LLM response:", llmResponse);
-            setMessages(prev => [...prev, {
-              id: `llm-${Date.now()}`,
-              from: 'agent',
-              text: llmResponse,
-              sentAt: new Date()
-            }]);
+      // Generate conversation ID once, then reuse it
+      const currentConversationId = conversationId || `conv-${Date.now()}`;
+      const currentTurnId = turnId + 1;
+
+      try {
+        const response = await fetch('/api/llm/stream', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_message: text.trim(),
+            conversation_id: currentConversationId,  // ✅ Always has a value
+            turn_id: currentTurnId,                  // ✅ Incrementing turn number
+            end_signal: false
+          }),
+        });
+
+        if (response.ok && response.body) {
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n').filter(line => line.trim());
+            
+            for (const line of lines) {
+              try {
+                const data = JSON.parse(line);
+                if (data.completed_reply) {
+                  llmResponse = data.completed_reply;
+                }
+              } catch (parseError) {
+                // ignore parsing errors
+              }
+            }
           }
-        } catch (parseError) {
-          // Ignore parsing errors for individual lines
+          // ✅ Update conversation state after successful LLM call
+          if (!conversationId) {
+            setConversationId(currentConversationId);
+          }
+          setTurnId(currentTurnId);
         }
+      } catch (error) {
+        console.error("LLM API error:", error);
       }
-    }
-    
-    // Update conversation tracking
-    if (!conversationId) {
-      setConversationId(currentConversationId);
-    }
-    setTurnId(currentTurnId);
-    
-  } else {
-    console.error("ChatModal: LLM API failed:", response.statusText);
-  }
-} catch (error) {
-  console.error("ChatModal: Error calling LLM API:", error);
-}
 
-console.log("THIS IS ChatModal: LLM response:", llmResponse);
-
-// Step 2: Send LLM response to avatar (not user's original message)
-const agoraMessage = {
-  v: 2, type: "chat", mid: userMessageId, idx: 0, fin: true,
-  pld: { 
-    text: llmResponse,
-    from: "bot"  // This tells avatar to SPEAK this, not respond to it
-  },
-};
+      const agoraMessage = {
+        v: 2, type: "chat", mid: userMessageId, idx: 0, fin: true,
+        pld: { text: llmResponse }, // Send LLM response instead of user input
+      };
 
       try {
         console.log("ChatModal: Sending message to AKOOL avatar:", agoraMessage);
@@ -1209,12 +1164,7 @@ const agoraMessage = {
           type: "command",
           mid: `reinforce-${Date.now()}`,
           pld: {
-            cmd: "set-params",
-            data: {
-              mode: 2, // Ensure dialogue mode is still active
-              session_id: akoolSession._id,
-              force_dialogue: true,
-            }
+            mode: 1, // Retelling mode only
           }
         };
         
