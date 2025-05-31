@@ -257,6 +257,7 @@ interface TimerSectionProps {
   analytics?: {
     trackIncentiveOffered: (incentiveType: string) => void;
     trackIncentiveExpired: (incentiveType: string) => void;
+    trackIncentiveAccepted: (incentiveType: string) => void;
   };
 }
 const TimerSection: FC<TimerSectionProps> = ({
@@ -291,7 +292,8 @@ const TimerSection: FC<TimerSectionProps> = ({
             offerText="Lock in your special move-in rate"
             analytics={{
               trackIncentiveOffered: analytics?.trackIncentiveOffered,
-              trackIncentiveExpired: analytics?.trackIncentiveExpired
+              trackIncentiveExpired: analytics?.trackIncentiveExpired,
+              trackIncentiveAccepted: analytics?.trackIncentiveAccepted
             }}
           />
         )}
@@ -327,7 +329,7 @@ const MessagingInput: FC<MessagingInputProps> = ({
 }) => {
   return (
     <motion.div
-      className="border-t bg-white/90 backdrop-blur-sm p-4 relative z-10"
+      className="border-t bg-white/90 backdrop-blur-sm p-3 relative z-10"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -338,7 +340,7 @@ const MessagingInput: FC<MessagingInputProps> = ({
           placeholder={akoolSession && isAgoraConnected ? 
             (isDialogueModeReady ? "Chat with Avatar..." : "Preparing avatar...") : 
             "Type your message..."}
-          className="flex-1 px-4 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all bg-white/70"
+          className="flex-1 px-3 py-1.5 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all bg-white/70 text-sm"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && sendMessage(inputText)}
@@ -349,13 +351,13 @@ const MessagingInput: FC<MessagingInputProps> = ({
           whileTap={{ scale: 0.95 }}
           onClick={() => sendMessage(inputText)}
           disabled={!inputText.trim() || (!(akoolSession && isAgoraConnected && isDialogueModeReady) && !agentState)}
-          className={`p-2 rounded-full transition-colors ${
+          className={`p-1.5 rounded-full transition-colors ${
             (inputText.trim() && ((akoolSession && isAgoraConnected && isDialogueModeReady) || agentState))
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }`}
         >
-          <MessageSquare size={20} />
+          <MessageSquare size={18} />
         </motion.button>
       </div>
     </motion.div>
@@ -1021,6 +1023,16 @@ const ChatModal: FC<ChatModalProps> = ({
           analytics.trackIncentiveAccepted('qualification_bonus');
         }
       }
+
+      // Check for fallback patterns in response
+      const responseText = reply.toLowerCase();
+      if (responseText.includes("sorry, i don't understand") || 
+          responseText.includes("i'm not sure") ||
+          responseText.includes("could you please") ||
+          responseText.includes("can you rephrase") ||
+          reply.trim().length < 10) {
+        analytics.trackFallback('no_match');
+      }
     } catch (err) {
       console.error(err);
       
@@ -1167,7 +1179,7 @@ const ChatModal: FC<ChatModalProps> = ({
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-xl w-[360px] h-[675px] flex flex-col relative overflow-hidden">
+      <div className="bg-white rounded-lg shadow-xl w-[360px] h-[625px] flex flex-col relative overflow-hidden">
         {showSparkles && <SparkleBurst />}
         
         <div
@@ -1245,7 +1257,7 @@ const ChatModal: FC<ChatModalProps> = ({
       </div>
 
       {/* CTA Buttons Section */}
-      <div className="mt-2">
+      <div className="mt-2 w-[360px]">
         <CTAButtons
           location="chat_footer"
           analytics={analytics}
@@ -1255,7 +1267,8 @@ const ChatModal: FC<ChatModalProps> = ({
             email: 'leasing@grandoaks.com',
             phone: '+1-555-123-4567',
             showContactForm: true,
-            showTourBooking: true
+            showTourBooking: true,
+            showPhoneButton: true
           }}
         />
       </div>

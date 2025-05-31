@@ -233,7 +233,7 @@ const ChatLauncher = () => {
 
       {/* Unified Global Pre-Loading screen for ChatLauncher - shows during session creation or if no session */}
       {open && (isCreatingSession || !currentSession) && (
-        <div className="mb-3 shadow-xl rounded-lg bg-white w-[360px] h-[675px] flex flex-col items-center justify-center">
+        <div className="mb-3 shadow-xl rounded-lg bg-white w-[360px] h-[625px] flex flex-col items-center justify-center">
           <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
           <p className="text-gray-700 text-sm">Loading Chat...</p>
         </div>

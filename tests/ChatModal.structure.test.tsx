@@ -22,9 +22,9 @@ describe('ChatModal Structure and Configuration', () => {
   });
 
   describe('Component Sizing and Layout', () => {
-    it('should have correct modal dimensions (w-[360px] and h-[675px])', () => {
+    it('should have correct modal dimensions (w-[360px] and h-[625px])', () => {
       // Check for the main modal container with proper sizing
-      const sizingClassRegex = /<div className=.*bg-white.*shadow-xl(?=.*w-\[360px\])(?=.*h-\[675px\]).*>/;
+      const sizingClassRegex = /<div className=.*bg-white.*shadow-xl(?=.*w-\[360px\])(?=.*h-\[625px\]).*>/;
       
       expect(chatModalContent).toMatch(sizingClassRegex);
     });
