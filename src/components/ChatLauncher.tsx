@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import ChatModal from './ChatModal';
 import { ApiService, Session as AkoolSessionType } from '../services/apiService'; // Adjusted path
+import '@/lib/akool-force-close'; // Load the force close utility
 
 // Define the expected structure of the token API response (can be moved to a types file)
 interface TokenResponse {
@@ -15,36 +16,14 @@ const DEFAULT_SESSION_DURATION = 600; // 10 minutes in seconds
 const DEFAULT_AVATAR_ID = 'Alinna_background_st01_Domiq'; // Changed to the working avatar ID
 
 const ChatLauncher = () => {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   
-  // Track recent mailto clicks to ignore beforeunload events
+  // Track recent mailto/phone clicks to ignore beforeunload events
   const lastMailtoClickTime = useRef<number>(0);
 
   const [apiService, setApiService] = useState<ApiService | null>(null);
-  const [currentSession, setCurrentSession] = useState<AkoolSessionType | null>(() => {
-    // Try to restore session from localStorage
-    if (typeof window !== 'undefined') {
-      try {
-        const savedSession = localStorage.getItem('akool-session');
-        if (savedSession) {
-          const session = JSON.parse(savedSession);
-          // Check if session is still valid (not older than 9 minutes for 10-minute sessions)
-          const sessionAge = Date.now() - (session.createdAt || 0);
-          if (sessionAge < 540000) { // 9 minutes in milliseconds
-            console.log('Restored AKOOL session from localStorage:', session);
-            return session;
-          } else {
-            localStorage.removeItem('akool-session'); // Clean up old session
-          }
-        }
-      } catch (error) {
-        console.error('Failed to restore session from localStorage:', error);
-        localStorage.removeItem('akool-session');
-      }
-    }
-    return null;
-  });
+  const [currentSession, setCurrentSession] = useState<AkoolSessionType | null>(null);
   const [sessionError, setSessionError] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
 
@@ -53,7 +32,6 @@ const ChatLauncher = () => {
       const newOpenState = !prevOpen;
       if (newOpenState) {
         setUnreadCount(0);
-        // Don't automatically create session here - let the useEffect handle it
       } else {
         // Close session properly
         closeCurrentSession();
@@ -65,22 +43,14 @@ const ChatLauncher = () => {
   const closeCurrentSession = useCallback(async () => {
     if (currentSession && apiService) {
       console.log("ChatLauncher: Closing AKOOL session:", currentSession._id);
+      
       try {
         await apiService.closeSession(currentSession._id);
         console.log("ChatLauncher: AKOOL session closed successfully.");
       } catch (err) {
         console.error("ChatLauncher: Error closing AKOOL session:", err);
-        
-        // Check if it's a server unavailable error
-        const errorMessage = err instanceof Error ? err.message : String(err);
-        if (errorMessage.includes('unavailable') || errorMessage.includes('server')) {
-          console.log("ChatLauncher: AKOOL server unavailable - session will auto-expire");
-        } else {
-          console.warn("ChatLauncher: Unexpected session close error, but continuing cleanup");
-        }
       } finally {
-        // Always clean up locally regardless of API success/failure
-        localStorage.removeItem('akool-session');
+        // Always clean up locally
         setCurrentSession(null);
         console.log("ChatLauncher: Local session cleanup completed");
       }
@@ -90,10 +60,10 @@ const ChatLauncher = () => {
   // Handle page unload/refresh - close session
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      // Check if this is a mailto link navigation - don't close session for these
-      const timeSinceMailtoClick = Date.now() - lastMailtoClickTime.current;
-      if (timeSinceMailtoClick < 2000) { // Within 2 seconds of mailto click
-        console.log('ChatLauncher: Ignoring beforeunload for recent mailto click');
+      // Check if this is a mailto or phone link navigation - don't close session for these
+      const timeSinceClickAction = Date.now() - lastMailtoClickTime.current;
+      if (timeSinceClickAction < 2000) { // Within 2 seconds of mailto/phone click
+        console.log('ChatLauncher: Ignoring beforeunload for recent mailto/phone click');
         return;
       }
       
@@ -101,13 +71,14 @@ const ChatLauncher = () => {
         // Use sendBeacon for reliable cleanup on page unload
         const sessionData = JSON.stringify({ id: currentSession._id });
         navigator.sendBeacon('/api/avatar/session/close', sessionData);
-        localStorage.removeItem('akool-session');
       }
     };
 
     const handleUnload = () => {
       if (currentSession && apiService) {
-        localStorage.removeItem('akool-session');
+        // Final cleanup attempt
+        const sessionData = JSON.stringify({ id: currentSession._id });
+        navigator.sendBeacon('/api/avatar/session/close', sessionData);
       }
     };
 
@@ -127,7 +98,6 @@ const ChatLauncher = () => {
         console.log("ChatLauncher: Component unmounting, closing session");
         apiService.closeSession(currentSession._id)
           .catch(err => console.error("Error closing session on unmount:", err));
-        localStorage.removeItem('akool-session');
       }
     };
   }, [currentSession, apiService]);
@@ -163,36 +133,85 @@ const ChatLauncher = () => {
       setSessionError('ApiService not initialized yet for session creation.');
       return;
     }
+
     setIsCreatingSession(true);
     setSessionError(null);
-    console.log(`Attempting to create AKOOL session for avatar: ${DEFAULT_AVATAR_ID}`);
+    console.log(`Creating AKOOL session for avatar: ${DEFAULT_AVATAR_ID}`);
+    
     try {
       const sessionData = await apiService.createSession({ avatar_id: DEFAULT_AVATAR_ID, duration: DEFAULT_SESSION_DURATION });
       
-      // Save session to localStorage with timestamp
-      const sessionWithTimestamp = {
-        ...sessionData,
-        createdAt: Date.now()
-      };
-      localStorage.setItem('akool-session', JSON.stringify(sessionWithTimestamp));
-      
       setCurrentSession(sessionData);
       console.log("AKOOL Session created successfully:", sessionData);
+      
     } catch (err) {
       console.error('Error creating AKOOL session:', err);
-      setSessionError(err instanceof Error ? err.message : String(err));
-      setCurrentSession(null); // Clear session on error
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      
+      // If avatar is busy, try force-close once and retry
+      if (errorMessage.includes('currently busy') || errorMessage.includes('busy')) {
+        console.log('🚨 Avatar busy - attempting force close and retry...');
+        setSessionError('Avatar busy. Clearing all sessions and retrying...');
+        
+        try {
+          // Call the force-close API
+          const response = await fetch('/api/avatar/session/close', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              id: 'force-close-all', 
+              avatar_id: DEFAULT_AVATAR_ID,
+              force: true
+            }),
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            console.log('✅ Force close result:', result);
+            
+            // Wait 5 seconds for AKOOL to process the closures
+            setTimeout(async () => {
+              try {
+                console.log('🔄 Attempting retry after force close...');
+                const retrySessionData = await apiService.createSession({ avatar_id: DEFAULT_AVATAR_ID, duration: DEFAULT_SESSION_DURATION });
+                setCurrentSession(retrySessionData);
+                setSessionError(null);
+                console.log("AKOOL Session created successfully on retry:", retrySessionData);
+              } catch (retryErr) {
+                console.error('Retry failed:', retryErr);
+                setSessionError('Avatar still busy after cleanup. Please refresh the page.');
+              } finally {
+                setIsCreatingSession(false);
+              }
+            }, 5000); // Increased from 2s to 5s
+            return; // Don't set isCreatingSession to false yet
+          } else {
+            const errorData = await response.json();
+            throw new Error(`Force close failed: ${errorData.error || response.statusText}`);
+          }
+        } catch (forceCloseErr) {
+          console.error('Force close failed:', forceCloseErr);
+          setSessionError('Avatar busy and cleanup failed. Please refresh the page.');
+        }
+      } else {
+        setSessionError(errorMessage);
+      }
+      
+      setCurrentSession(null);
     } finally {
-      setIsCreatingSession(false);
+      // Only set to false if we're not waiting for a retry
+      if (!sessionError?.includes('retrying')) {
+        setIsCreatingSession(false);
+      }
     }
   }, [apiService]);
 
-  // Auto-create session ONLY when manually opened, not automatically
+  // Auto-create session when opened
   useEffect(() => {
     if (open && apiService && !currentSession && !isCreatingSession) {
       handleCreateAkoolSession();
     }
-  }, [open, handleCreateAkoolSession]); // Removed apiService and currentSession from deps to prevent loops
+  }, [open, handleCreateAkoolSession]);
 
   // Handle visibility change to clear unread count when tab becomes visible
   useEffect(() => {
@@ -223,24 +242,89 @@ const ChatLauncher = () => {
       {sessionError && (
         <div style={{ position: 'fixed', bottom: '100px', right: '20px', backgroundColor: 'red', color: 'white', padding: '10px', borderRadius: '5px', zIndex: 1000}}>
           AKOOL Error: {sessionError}
+          {sessionError.includes('refresh the page') && (
+            <div style={{ marginTop: '10px' }}>
+              <button 
+                onClick={() => {
+                  console.log('🔄 Manual page refresh triggered');
+                  window.location.reload();
+                }}
+                style={{ 
+                  backgroundColor: 'white', 
+                  color: 'red', 
+                  padding: '8px 12px', 
+                  border: 'none', 
+                  borderRadius: '4px', 
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                🔄 Refresh Page
+              </button>
+            </div>
+          )}
         </div>
       )}
-      {/* {isCreatingSession && (
-         <div style={{ position: 'fixed', bottom: '150px', right: '20px', backgroundColor: 'orange', color: 'white', padding: '10px', borderRadius: '5px', zIndex: 100}}>
-          Starting AKOOL Session...
-        </div>
-      )} */}
 
-      {/* Unified Global Pre-Loading screen for ChatLauncher - shows during session creation or if no session */}
+      {/* Professional Loading Screen for ChatLauncher */}
       {open && (isCreatingSession || !currentSession) && (
-        <div className="mb-3 shadow-xl rounded-lg bg-white w-[360px] h-[625px] flex flex-col items-center justify-center">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-700 text-sm">Loading Chat...</p>
+        <div className="mb-3 shadow-xl rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 w-[360px] h-[625px] flex flex-col relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-200/20 to-transparent rounded-full -mr-16 -mt-16"></div>
+          <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-purple-200/20 to-transparent rounded-full -ml-20 -mb-20"></div>
+          
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center justify-center h-full px-8 text-center">
+            {/* Logo/Brand Area */}
+            <div className="mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg">
+                <span className="text-white text-2xl font-bold">GO</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Welcome to Grand Oaks
+              </h2>
+              <h3 className="text-lg text-gray-600 font-medium">
+                Luxury Apartments
+              </h3>
+            </div>
+
+            {/* Loading Animation */}
+            <div className="mb-6">
+              <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+            </div>
+
+            {/* Loading Messages */}
+            <div className="space-y-3">
+              <p className="text-lg font-semibold text-gray-800">
+                Connecting you with Alinna
+              </p>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Your personal leasing assistant is being prepared.<br />
+                This will just take a moment...
+              </p>
+            </div>
+
+            {/* Features Preview */}
+            <div className="mt-8 space-y-2">
+              <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>Live Video Chat</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
+                <span>Instant Answers</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                <span>Tour Scheduling</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* ChatModal card - Render if open, session exists, AND not in initial API creation phase.
-          ChatModal will now handle its own full loading state until video is ready. */}
+      {/* ChatModal card - Render if open, session exists, AND not in initial API creation phase. */}
       {open && currentSession && !isCreatingSession && (
         <div className="mb-3" style={{ overflow: 'visible' }}>
           <ChatModal
@@ -266,8 +350,8 @@ const ChatLauncher = () => {
       >
         {!open && ( /* banner text only when closed */
           <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
-            Contact
-            <span className="font-semibold"> Live Leasing Agent Now</span>!
+            Chat with
+            <span className="font-semibold"> Alinna</span>
           </span>
         )}
 

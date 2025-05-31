@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Lead, LeadActivity, leads as initialLeads } from '@/lib/dummy-data';
 
 interface LeadContextType {
@@ -17,6 +17,9 @@ interface LeadContextType {
     byStage: Record<Lead['currentStage'], number>;
     recentActivity: number;
   };
+  refreshAmplitudeData: () => Promise<void>;
+  isLoadingAmplitudeData: boolean;
+  forceCloseSession: () => void;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
@@ -24,8 +27,15 @@ const LeadContext = createContext<LeadContextType | undefined>(undefined);
 export function LeadProvider({ children }: { children: React.ReactNode }) {
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isLoadingAmplitudeData, setIsLoadingAmplitudeData] = useState(false);
+  
+  // Track active fetch request for cleanup
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isUnmountedRef = useRef(false);
 
   const updateLead = (leadId: string, updates: Partial<Lead>) => {
+    if (isUnmountedRef.current) return;
+    
     setLeads(prevLeads => 
       prevLeads.map(lead => 
         lead.id === leadId 
@@ -36,6 +46,8 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addActivity = (leadId: string, activity: Omit<LeadActivity, 'id' | 'leadId'>) => {
+    if (isUnmountedRef.current) return;
+    
     const newActivity: LeadActivity = {
       ...activity,
       id: `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -80,11 +92,15 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
       ]
     };
 
-    setLeads(prevLeads => [...prevLeads, newLead]);
+    if (!isUnmountedRef.current) {
+      setLeads(prevLeads => [...prevLeads, newLead]);
+    }
     return newLead;
   };
 
   const deleteLead = (leadId: string) => {
+    if (isUnmountedRef.current) return;
+    
     setLeads(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
     
     // Clear selection if the deleted lead was selected
@@ -114,6 +130,122 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     return { total, byStage, recentActivity };
   };
 
+  const forceCloseSession = () => {
+    console.log('🔄 Force closing lead context session...');
+    
+    // Abort any active fetch request
+    if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+      console.log('❌ Aborting active Amplitude API request');
+      abortControllerRef.current.abort();
+    }
+    
+    // Reset loading state
+    if (!isUnmountedRef.current) {
+      setIsLoadingAmplitudeData(false);
+    }
+    
+    // Force close Amplitude service sessions
+    try {
+      // Dynamic import to avoid circular dependency
+      import('@/lib/amplitude-data-service').then(({ amplitudeDataService }) => {
+        amplitudeDataService.forceCloseAllSessions();
+      });
+    } catch (error) {
+      console.warn('Could not force close Amplitude sessions:', error);
+    }
+    
+    console.log('✅ Lead context session forcefully closed');
+  };
+
+  const refreshAmplitudeData = async () => {
+    // Abort any existing request first
+    if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+
+    if (isUnmountedRef.current) return;
+    setIsLoadingAmplitudeData(true);
+    
+    try {
+      // Fetch real Amplitude data for all leads
+      const leadIds = leads.map(lead => lead.id);
+      
+      const response = await fetch('/api/amplitude-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ leadIds }),
+        signal, // Add abort signal
+      });
+
+      // Check if request was aborted
+      if (signal.aborted) {
+        console.log('Amplitude data fetch was aborted');
+        return;
+      }
+
+      if (response.ok) {
+        const { data } = await response.json();
+        
+        // Only update state if component is still mounted
+        if (!isUnmountedRef.current) {
+          setLeads(prev => prev.map(lead => ({
+            ...lead,
+            amplitudeData: data[lead.id] || lead.amplitudeData
+          })));
+
+          console.log('✅ Successfully updated Amplitude data for', Object.keys(data).length, 'leads');
+        }
+      } else {
+        console.warn('Failed to fetch Amplitude data, using dummy data');
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.log('Amplitude data fetch was cancelled');
+      } else {
+        console.error('Error fetching Amplitude data:', error);
+      }
+    } finally {
+      // Only update loading state if component is still mounted
+      if (!isUnmountedRef.current) {
+        setIsLoadingAmplitudeData(false);
+      }
+      
+      // Clear the abort controller reference
+      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+        abortControllerRef.current = null;
+      }
+    }
+  };
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('🧹 LeadProvider unmounting, cleaning up...');
+      isUnmountedRef.current = true;
+      
+      // Abort any active request
+      if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
+        abortControllerRef.current.abort();
+      }
+      
+      console.log('✅ LeadProvider cleanup completed');
+    };
+  }, []);
+
+  // Automatically try to fetch real data on mount (but don't block the UI)
+  useEffect(() => {
+    // Only auto-fetch in production or when explicitly testing
+    if (process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_ENABLE_AMPLITUDE_FETCH === 'true') {
+      refreshAmplitudeData();
+    }
+  }, []); // Only run once on mount
+
   return (
     <LeadContext.Provider value={{
       leads,
@@ -125,6 +257,9 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
       deleteLead,
       getLeadsByStage,
       getLeadStats,
+      refreshAmplitudeData,
+      isLoadingAmplitudeData,
+      forceCloseSession,
     }}>
       {children}
     </LeadContext.Provider>

@@ -596,3 +596,47 @@ src/
 ✅ **Phone Integration:** Direct tel: functionality with full tracking coverage
 
 **Business Value:** Property managers now have complete visibility into every user interaction with a visually consistent interface that encourages engagement and conversion.
+
+## AKOOL Session Management Crisis Resolution & Dashboard Data Integration
+
+### Critical AKOOL Session Bug Fix
+- **Root Cause:** Token API returning `data.token` but cleanup code accessing `data.data.token` causing undefined errors
+- **Fixed Token Path:** Updated `src/app/api/avatar/session/close/route.ts` to correctly access token from response
+- **Session ID Tracking:** Enhanced ChatLauncher to store real session IDs in `akool-last-session-id` for targeted cleanup
+- **Eliminated Complex Retries:** Replaced infinite retry loops with simple 2-attempt limit (2s/4s delays)
+
+### Simplified Force Close System
+- **Created** `src/lib/akool-force-close.ts` - Lightweight cleanup focused on localStorage clearing + specific session closure
+- **Removed Complex Manager:** Deleted overcomplicated `akool-session-manager.ts` with exponential backoff and emergency controls
+- **Targeted Cleanup:** Close specific problematic sessions instead of generic force-close operations
+- **Page Refresh Strategy:** Aggressive session ID clearing on page load to prevent carryover issues
+
+### Professional Loading Screen Enhancement
+- **Grand Oaks Branded Interface:** Created luxury apartment loading screen with "GO" logo and professional messaging
+- **Feature Preview Dots:** Animated indicators for Live Video Chat, Instant Answers, Tour Scheduling
+- **Clean Design:** Blue-purple gradient theme matching chat interface with single spinner (removed dual loading elements)
+- **Connecting Messaging:** "Connecting you with Alinna" with professional leasing context
+
+### Amplitude Dashboard Data Aggregation
+- **Missing KPI Issue:** 4 Amplitude metrics (`answer_button_clicked`, `fallback_occurred`, `phone_call_clicked`, `incentive_accepted`) missing from dashboard
+- **Root Cause:** Dashboard used dummy data instead of real Amplitude events
+- **Solution:** Created `src/lib/amplitude-data-service.ts` to fetch and aggregate real Amplitude events
+- **API Endpoint:** Added `/api/amplitude-data` for secure server-side data fetching
+- **Refresh Functionality:** Enhanced `LeadContext` with manual "🔄 Refresh Data" button and loading states
+
+### Files Modified:
+- `src/app/api/avatar/session/close/route.ts` - Fixed token access path
+- `src/lib/akool-force-close.ts` - Simplified session cleanup
+- `src/components/ChatLauncher.tsx` - Enhanced loading screen + session tracking
+- `src/lib/amplitude-data-service.ts` - Real data aggregation service
+- `src/app/api/amplitude-data/route.ts` - Server-side data endpoint
+- `src/lib/lead-context.tsx` - Added refresh functionality
+
+### Production Impact:
+✅ **Session Management:** Reliable AKOOL avatar sessions with proper cleanup  
+✅ **User Experience:** Professional loading screen matching luxury apartment branding  
+✅ **Data Accuracy:** Dashboard now shows real Amplitude analytics instead of dummy data  
+✅ **Simplified Architecture:** Removed complex retry mechanisms for maintainable solution  
+✅ **Emergency Recovery:** Session cleanup works without infinite loops or user frustration
+
+**Business Value:** Property managers can now rely on stable avatar sessions and accurate analytics dashboards, while prospects see a professional loading experience that reinforces the luxury apartment brand.
