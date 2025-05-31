@@ -1263,12 +1263,12 @@ const ChatModal: FC<ChatModalProps> = ({
           analytics={analytics}
           onContactFormOpen={() => setShowContactForm(true)}
           onTourBookingOpen={() => setShowTourBooking(true)}
+          lastMailtoClickTime={lastMailtoClickTime}
           config={{
             email: 'leasing@grandoaks.com',
             phone: '+1-555-123-4567',
             showContactForm: true,
             showTourBooking: true,
-            showPhoneButton: true
           }}
         />
       </div>
