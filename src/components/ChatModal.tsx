@@ -411,7 +411,8 @@ const ChatModal: FC<ChatModalProps> = ({
   const [lastActivityType, setLastActivityType] = useState<string>('session_start');
   const [inactivityTimeout, setInactivityTimeout] = useState<NodeJS.Timeout | null>(null);
   const [conversationStage, setConversationStage] = useState<'initial' | 'engaged' | 'qualified' | 'converted'>('initial');
-
+  const [turnId, setTurnId] = useState(0);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   // AKOOL/Agora specific state
   const [AgoraRTCModule, setAgoraRTCModule] = useState<any>(null);
   const agoraClientRef = useRef<IAgoraRTCClient | null>(null);
@@ -589,22 +590,22 @@ const ChatModal: FC<ChatModalProps> = ({
         const messageStr = typeof data === 'string' ? data : new TextDecoder().decode(data as Uint8Array);
         console.log('ChatModal: Received stream message from UID:', uid, 'Data:', messageStr);
         const parsedMessage = JSON.parse(messageStr);
-
-        if (parsedMessage.type === 'chat' && parsedMessage.pld?.from === 'bot' && parsedMessage.pld?.text) {
-          const displayBotMessageId = `bot-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-          setMessages(prev => [
-            ...prev,
-            {
-              id: displayBotMessageId,
-              from: 'agent',
-              text: parsedMessage.pld.text,
-              sentAt: new Date(),
-            },
-          ]);
+        // Existing logic: Handle bot messages (avatar confirmations/TTS confirmations)
+        // if (parsedMessage.type === 'chat' && parsedMessage.pld?.from === 'bot' && parsedMessage.pld?.text) {
+        //   const displayBotMessageId = `bot-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        //   setMessages(prev => [
+        //     ...prev,
+        //     {
+        //       id: displayBotMessageId,
+        //       from: 'agent',
+        //       text: parsedMessage.pld.text,
+        //       sentAt: new Date(),
+        //     },
+        //   ]);
           
-          // Track bot message received
-          analytics.trackBotMessage();
-        }
+        //   // Track bot message received
+        //   analytics.trackBotMessage();
+        // }
       } catch (e) {
         console.error('ChatModal: Error processing stream message:', e, 'Raw data:', data);
       }
@@ -740,13 +741,35 @@ const ChatModal: FC<ChatModalProps> = ({
     
     console.log("ChatModal: Joining Agora channel...", {agora_app_id, agora_channel, agora_uid});
     currentActiveClient.join(agora_app_id, agora_channel, agora_token, agora_uid)
-      .then(() => {
-        setIsAgoraConnected(true);
-        hasJoined = true;
-        console.log("ChatModal: Successfully joined Agora channel.");
-        // Set up dialogue mode immediately after joining
-        setupAvatarDialogueMode();
-      })
+  .then(() => {
+    setIsAgoraConnected(true);
+    hasJoined = true;
+    console.log('ChatModal: Successfully joined Agora channel');
+    
+    // DISABLE avatar's built-in AI responses
+    const disableDialogueMessage = {
+      v: 2,
+      type: "command",
+      mid: `set-mode-${Date.now()}`,
+      pld: {
+        cmd: "set-params",
+        data: {
+          mode: 1  // Try retelling mode instead of dialogue mode
+        }
+      }
+    };
+
+    try {
+      // @ts-ignore
+      currentActiveClient.sendStreamMessage(JSON.stringify(disableDialogueMessage), false);
+      console.log('ChatModal: Disabled avatar dialogue mode');
+    } catch (error) {
+      console.error('ChatModal: Failed to disable dialogue mode:', error);
+    }
+    
+    // Setup avatar dialogue mode after successful connection
+    // setupAvatarDialogueMode();
+  })
       .catch(err => {
         setAkoolSessionError(`Agora join error: ${err.message}`);
         setIsAgoraConnected(false);
@@ -866,6 +889,7 @@ const ChatModal: FC<ChatModalProps> = ({
   }, [messages.length, qualified, offerExpired]);
   const handleOfferExpire = () => { setOfferExpired(true); setShowOffer(false); };
 
+
   // sendMessage function: decides whether to send to backend agent or AKOOL
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -915,11 +939,81 @@ const ChatModal: FC<ChatModalProps> = ({
         isSendingRef.current = false;
         return;
       }
+const currentConversationId = conversationId || `conv-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const currentTurnId = turnId + 1;
 
-      const agoraMessage = {
-        v: 2, type: "chat", mid: userMessageId, idx: 0, fin: true,
-        pld: { text: text.trim() },
-      };
+console.log("ChatModal: Processing message through LLM API:", text.trim());
+
+let llmResponse = text.trim(); // fallback to original message
+
+try {
+  console.log("ChatModal: About to call LLM, AKOOL active:", !!akoolSession);
+  const response = await fetch('/api/llm/stream', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      conversation_id: currentConversationId,
+      turn_id: currentTurnId,
+      user_message: text.trim(),
+      end_signal: false
+    }),
+  });
+
+  if (response.ok && response.body) {
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n').filter(line => line.trim());
+      
+      for (const line of lines) {
+        try {
+          const data = JSON.parse(line);
+          if (data.completed_reply) {
+            llmResponse = data.completed_reply;
+            console.log("ChatModal: Got LLM response:", llmResponse);
+            setMessages(prev => [...prev, {
+              id: `llm-${Date.now()}`,
+              from: 'agent',
+              text: llmResponse,
+              sentAt: new Date()
+            }]);
+          }
+        } catch (parseError) {
+          // Ignore parsing errors for individual lines
+        }
+      }
+    }
+    
+    // Update conversation tracking
+    if (!conversationId) {
+      setConversationId(currentConversationId);
+    }
+    setTurnId(currentTurnId);
+    
+  } else {
+    console.error("ChatModal: LLM API failed:", response.statusText);
+  }
+} catch (error) {
+  console.error("ChatModal: Error calling LLM API:", error);
+}
+
+console.log("THIS IS ChatModal: LLM response:", llmResponse);
+
+// Step 2: Send LLM response to avatar (not user's original message)
+const agoraMessage = {
+  v: 2, type: "chat", mid: userMessageId, idx: 0, fin: true,
+  pld: { 
+    text: llmResponse,
+    from: "bot"  // This tells avatar to SPEAK this, not respond to it
+  },
+};
 
       try {
         console.log("ChatModal: Sending message to AKOOL avatar:", agoraMessage);
