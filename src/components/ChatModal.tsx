@@ -31,7 +31,9 @@ interface ChatModalProps {
   unreadCount?: number;
   onClearUnread?: () => void;
   config?: typeof DEFAULT_APARTMENT_CONFIG;
-  akoolSession: AkoolSessionType | null;
+  akoolSession?: AkoolSessionType | null;
+  isSessionLoading?: boolean;
+  sessionError?: string | null;
   lastMailtoClickTime?: React.MutableRefObject<number>;
 }
 
@@ -381,6 +383,8 @@ const ChatModal: FC<ChatModalProps> = ({
   onClearUnread,
   config = DEFAULT_APARTMENT_CONFIG,
   akoolSession,
+  isSessionLoading,
+  sessionError,
   lastMailtoClickTime
 }) => {
   const [messages, setMessages] = useState<ChatMessageForDisplay[]>(() => {

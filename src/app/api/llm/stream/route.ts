@@ -1,4 +1,5 @@
 export async function POST(request: Request) {
+  try {
     const body = await request.json();
     
     // Your Next.js server calls the LLM (no CORS restrictions)
@@ -10,4 +11,8 @@ export async function POST(request: Request) {
     
     // Pass streaming response back to frontend
     return response;
+  } catch (error) {
+    console.error('API Error:', error);
+    return new Response('Error', { status: 500 });
   }
+}
