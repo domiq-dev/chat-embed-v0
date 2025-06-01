@@ -103,7 +103,7 @@ const FloatingVoiceChatWidget = () => {
             }`}>
             <CardHeader className="text-center pb-2">
               <CardTitle className="text-lg font-semibold text-gray-900">
-                Speak With Alinna
+                Speak With Ava
               </CardTitle>
               <p className="text-sm text-muted-foreground">
                 Your real-time leasing agent

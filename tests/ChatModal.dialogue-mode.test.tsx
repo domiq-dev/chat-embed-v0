@@ -417,7 +417,7 @@ describe('AKOOL Avatar Dialogue Mode Setup', () => {
       expect(input).toBeTruthy();
       
       // Type message and press Enter
-      fireEvent.change(input, { target: { value: 'Hello Alinna' } });
+      fireEvent.change(input, { target: { value: 'Hello Ava' } });
       fireEvent.keyPress(input, { key: 'Enter', code: 'Enter', charCode: 13 });
 
       // Wait for chat message to be sent
@@ -443,7 +443,7 @@ describe('AKOOL Avatar Dialogue Mode Setup', () => {
           idx: 0,
           fin: true,
           pld: {
-            text: "Hello Alinna"
+            text: "Hello Ava"
           }
         });
       } else {

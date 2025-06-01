@@ -45,14 +45,6 @@ export const dashboardRoutes: Route[] = [
     label: 'Specials',
   },
   {
-    path: '/dashboard',
-    label: 'Dashboard',
-  },
-  {
-    path: '/dashboard/deep-insights',
-    label: 'Deep Insights',
-  },
-  {
     path: '/embed/radial-test',
     label: 'Chat Interface',
   },

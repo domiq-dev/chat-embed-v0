@@ -27,12 +27,12 @@ const LeadOverview = () => {
     const qualified = leads.filter(lead => 
       lead.amplitudeData?.qualified && !lead.amplitudeData?.signed
     );
-    const engaged = leads.filter(lead => 
-      lead.amplitudeData?.engaged && !lead.amplitudeData?.qualified
+    const hot = leads.filter(lead => 
+      lead.amplitudeData?.hot && !lead.amplitudeData?.qualified
     );
     const active = leads.filter(lead => 
       lead.amplitudeData?.chatSessionStarted && 
-      !lead.amplitudeData?.engaged &&
+      !lead.amplitudeData?.hot &&
       !lead.amplitudeData?.conversationAbandoned
     );
     const abandoned = leads.filter(lead => 
@@ -58,12 +58,12 @@ const LeadOverview = () => {
         leads: qualified
       },
       {
-        name: 'Engaged',
-        value: engaged.length,
+        name: 'Hot',
+        value: hot.length,
         color: '#8B5CF6', // violet-500
         icon: <Users className="w-4 h-4" />,
         description: 'Actively engaged prospects',
-        leads: engaged
+        leads: hot
       },
       {
         name: 'Active',

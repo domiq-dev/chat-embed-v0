@@ -53,7 +53,7 @@ interface AggregatedAmplitudeData {
   qualified?: boolean;
   preLease?: boolean;
   tourIntent?: boolean;
-  engaged?: boolean;
+  hot?: boolean;
   signed?: boolean;
 }
 
@@ -196,7 +196,7 @@ class AmplitudeDataService {
     // Calculate qualification flags
     data.qualified = data.contactCaptured && (data.userMessagesSent || 0) > 5;
     data.tourIntent = data.tourBooked || eventCounts['tour_intent_expressed'] > 0;
-    data.engaged = (data.userMessagesSent || 0) > 3 && (data.answerButtonClicks || 0) > 1;
+    data.hot = (data.userMessagesSent || 0) > 3 && (data.answerButtonClicks || 0) > 1;
     data.preLease = data.qualified && data.tourBooked;
     data.signed = eventCounts['lease_signed'] > 0;
 

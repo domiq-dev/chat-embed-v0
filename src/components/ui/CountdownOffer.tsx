@@ -11,13 +11,17 @@ interface CountdownOfferProps {
     trackIncentiveExpired?: (incentiveType: string) => void;
     trackIncentiveAccepted?: (incentiveType: string) => void;
   };
+  tourBooked?: boolean;
+  onPromptTour?: () => void;
 }
 
 const CountdownOffer: FC<CountdownOfferProps> = ({
   initialMinutes = 15,
   onExpire,
   offerText = "Lock in your special rate",
-  analytics
+  analytics,
+  tourBooked = false,
+  onPromptTour,
 }) => {
   const [timeLeft, setTimeLeft] = useState(initialMinutes * 60);
   const [isVisible, setIsVisible] = useState(true);
@@ -93,12 +97,13 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
           💰 <strong>$25 Application Fee Waiver</strong>
         </div>
         <motion.button
-          onClick={handleClaimOffer}
+          onClick={tourBooked ? handleClaimOffer : (onPromptTour ? onPromptTour : undefined)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-semibold rounded-full hover:from-blue-600 hover:to-purple-600 transition-all shadow-sm"
+          className={`px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs font-semibold rounded-full transition-all shadow-sm ${!tourBooked ? 'opacity-60 cursor-not-allowed' : 'hover:from-blue-600 hover:to-purple-600'}`}
+          disabled={!tourBooked}
         >
-          Claim $25
+          {tourBooked ? 'Claim $25' : 'Schedule a Tour to Claim'}
         </motion.button>
       </div>
       
