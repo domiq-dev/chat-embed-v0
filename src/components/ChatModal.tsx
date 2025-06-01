@@ -86,7 +86,7 @@ const TypingIndicator: FC = () => (
         transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
       />
     </div>
-    <span className="text-sm text-gray-500">Alinna is typing</span>
+    <span className="text-sm text-gray-500">Ava is typing</span>
   </div>
 );
 
@@ -349,7 +349,7 @@ const MessagingInput: FC<MessagingInputProps> = ({
         <input
           type="text"
           placeholder={akoolSession && isAgoraConnected ? 
-            (isDialogueModeReady ? "Chat with Avatar..." : "Preparing avatar...") : 
+            (isDialogueModeReady ? "Chat with Us..." : "Preparing Leasing Agent...") : 
             "Type your message..."}
           className="flex-1 px-3 py-1.5 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all bg-white/70 text-sm"
           value={inputText}
@@ -392,7 +392,7 @@ const ChatModal: FC<ChatModalProps> = ({
       { 
         id: `agent-initial-${Date.now()}`,
         from: 'agent', 
-        text: "🎉 Welcome to Grand Oaks Apartments! I'm Alinna. We have some beautiful apartment homes and great deals right now! Ready to begin?\n",
+        text: "🎉 Welcome to Grand Oaks Apartments! I'm Ava. We have some beautiful apartment homes and great deals right now! Ready to begin?\n",
         sentAt: new Date()
       }
     ];
@@ -1424,7 +1424,7 @@ const ChatModal: FC<ChatModalProps> = ({
 
         {isAvatarBuffering && !showSessionEndedOverlay && (
           <div className="absolute inset-0 bg-white z-20 flex flex-col items-center justify-center">
-            <AvatarLoadingScreen message="Connecting to Alinna..." />
+            <AvatarLoadingScreen message="Connecting to Ava..." />
           </div>
         )}
 
@@ -1434,7 +1434,7 @@ const ChatModal: FC<ChatModalProps> = ({
             <p className="text-xl font-semibold mb-2">Session Ended</p>
             <p className="mb-4">Your live video session has ended. This might be due to inactivity.</p>
             <p className="text-sm">
-              Please close and reopen the chat window to start a new session with Alinna.
+              Please close and reopen the chat window to start a new session with Ava.
             </p>
             <button 
               onClick={handleClose} 

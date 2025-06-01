@@ -297,7 +297,7 @@ const ChatLauncher = () => {
             {/* Loading Messages */}
             <div className="space-y-3">
               <p className="text-lg font-semibold text-gray-800">
-                Connecting you with Alinna
+                Connecting you with Ava
               </p>
               <p className="text-sm text-gray-600 leading-relaxed">
                 Your personal leasing assistant is being prepared.<br />
@@ -351,7 +351,7 @@ const ChatLauncher = () => {
         {!open && ( /* banner text only when closed */
           <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
             Chat with
-            <span className="font-semibold"> Alinna</span>
+            <span className="font-semibold"> Ava</span>
           </span>
         )}
 
