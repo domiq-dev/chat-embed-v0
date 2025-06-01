@@ -7,8 +7,8 @@ export type QuickReplyHint = {
   type: QuickReplyType;
   options?: string[];
   placeholder: string;  // Make placeholder required
-  min?: number;
-  max?: number;
+  min?: number | string;  // ✨ Allow both numbers and strings
+  max?: number | string;  // ✨ Allow both numbers and strings
   format?: string;
 };
 
