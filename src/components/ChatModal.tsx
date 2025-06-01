@@ -70,25 +70,25 @@ const SparkleBurst: FC = () => (
 
 // Typing indicator component
 const TypingIndicator: FC = () => (
-  <div className="flex items-center gap-1 px-4 py-2">
-    <div className="flex gap-1">
+  <div className="flex items-center gap-1 px-2 py-1">
+    <div className="flex gap-x-1">
       <motion.div
-        className="w-2 h-2 bg-blue-400 rounded-full"
-        animate={{ y: [0, -5, 0] }}
+        className="w-1.5 h-1.5 bg-blue-300 rounded-full"
+        animate={{ y: [0, -3, 0] }}
         transition={{ duration: 1, repeat: Infinity, delay: 0 }}
       />
       <motion.div
-        className="w-2 h-2 bg-blue-400 rounded-full"
-        animate={{ y: [0, -5, 0] }}
+        className="w-1.5 h-1.5 bg-blue-300 rounded-full"
+        animate={{ y: [0, -3, 0] }}
         transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
       />
       <motion.div
-        className="w-2 h-2 bg-blue-400 rounded-full"
-        animate={{ y: [0, -5, 0] }}
+        className="w-1.5 h-1.5 bg-blue-300 rounded-full"
+        animate={{ y: [0, -3, 0] }}
         transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
       />
     </div>
-    <span className="text-sm text-gray-500">Ava is typing</span>
+    <span className="text-sm text-gray-500">Ava is typing...</span>
   </div>
 );
 
@@ -238,8 +238,22 @@ const ChatBody: FC<ChatBodyProps> = ({
               </div>
             </motion.div>
           ))}
+          {/* Typing indicator as agent bubble */}
+          {isTyping && (
+            <motion.div
+              key="typing-indicator-bubble"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="flex justify-start items-end gap-2"
+            >
+              <img src={config.agent.avatar} alt="Agent" className="w-8 h-8 rounded-full" />
+              <div className="max-w-[75%] rounded-2xl px-4 py-2 shadow-md bg-white/90 text-black rounded-bl-none">
+                <TypingIndicator />
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
-        {isTyping && <TypingIndicator />}
       </div>
     </div>
   );
@@ -263,6 +277,8 @@ interface TimerSectionProps {
   };
   setCurrentHint: (hint: QuickReplyHint | null) => void;
   setCurrentQuestion: (question: string | null) => void;
+  tourBooked: boolean;
+  onPromptTour: () => void;
 }
 const TimerSection: FC<TimerSectionProps> = ({
   isTyping,
@@ -276,7 +292,9 @@ const TimerSection: FC<TimerSectionProps> = ({
   trackAnswerButtonClick,
   analytics,
   setCurrentHint,
-  setCurrentQuestion
+  setCurrentQuestion,
+  tourBooked,
+  onPromptTour
 }) => {
   return (
     <div className="relative z-10 bg-white/80 backdrop-blur-sm">
@@ -609,7 +627,12 @@ const ChatModal: FC<ChatModalProps> = ({
         console.log('ChatModal: Received stream message from UID:', uid, 'Data:', messageStr);
         const parsedMessage = JSON.parse(messageStr);
 
-        if (parsedMessage.type === 'chat' && parsedMessage.pld?.from === 'bot' && parsedMessage.pld?.text) {
+        // Only process agent/bot messages, ignore user echoes
+        if (
+          parsedMessage.type === 'chat' &&
+          (parsedMessage.pld?.from === 'bot' || parsedMessage.pld?.from === undefined || parsedMessage.pld?.from === null) &&
+          parsedMessage.pld?.text
+        ) {
           const displayBotMessageId = `bot-${Date.now()}-${Math.random().toString(16).slice(2)}`;
           setMessages(prev => [
             ...prev,
@@ -620,9 +643,10 @@ const ChatModal: FC<ChatModalProps> = ({
               sentAt: new Date(),
             },
           ]);
-          
-          // Track bot message received
           analytics.trackBotMessage();
+        } else {
+          // Ignore user messages or unknown types
+          console.log('ChatModal: Ignored stream message:', parsedMessage);
         }
       } catch (e) {
         console.error('ChatModal: Error processing stream message:', e, 'Raw data:', data);
@@ -686,7 +710,7 @@ const ChatModal: FC<ChatModalProps> = ({
           type: "command", 
           mid: `setup-${Date.now()}`, 
           pld: {
-            mode: 1, // Retelling mode only
+            mode: 1, // Dialogue mode
           }
         };
         
@@ -1028,11 +1052,13 @@ const ChatModal: FC<ChatModalProps> = ({
       }
       isSendingRef.current = true;
       
+      setIsTyping(true); // Show typing indicator for LLM/AKOOL
       const localAgoraClient = agoraClientRef.current;
       if (typeof (localAgoraClient as any).sendStreamMessage !== 'function') {
         console.error('ChatModal: sendStreamMessage method does not exist on Agora client.');
         setAkoolSessionError('Cannot send message to avatar: method not found.');
         isSendingRef.current = false;
+        setIsTyping(false);
         return;
       }
 
@@ -1130,6 +1156,7 @@ const ChatModal: FC<ChatModalProps> = ({
         setMessages(prev => [...prev, { id: `err-${Date.now()}`, from: 'agent', text: "Sorry, I couldn't say that.", sentAt: new Date()}]);
       } finally {
           setTimeout(() => { isSendingRef.current = false; }, 100); 
+          setIsTyping(false); // Hide typing indicator after response
       }
     } else {
       // Fallback to existing backend agent if AKOOL is not active
@@ -1297,6 +1324,7 @@ const ChatModal: FC<ChatModalProps> = ({
     
     // Could also trigger a backend API call here to save the tour booking
     toast.success('Tour scheduled successfully!');
+    setTourBooked(true);
   };
 
   // NEW: Periodic dialogue mode reinforcement to prevent echoing
@@ -1312,7 +1340,7 @@ const ChatModal: FC<ChatModalProps> = ({
           type: "command",
           mid: `reinforce-${Date.now()}`,
           pld: {
-            mode: 1, // Retelling mode only
+            mode: 1, // Dialogue mode
           }
         };
         
@@ -1362,6 +1390,8 @@ const ChatModal: FC<ChatModalProps> = ({
       }
     };
   }, [analytics, sessionStartTime, messages.length, inactivityTimeout]);
+
+  const [tourBooked, setTourBooked] = useState(false);
 
   return (
     <div className="fixed bottom-20 right-6 z-50">
@@ -1414,6 +1444,8 @@ const ChatModal: FC<ChatModalProps> = ({
           analytics={analytics}
           setCurrentHint={setCurrentHint}
           setCurrentQuestion={setCurrentQuestion}
+          tourBooked={tourBooked}
+          onPromptTour={() => setShowTourBooking(true)}
         />
         
         <MessagingInput

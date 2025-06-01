@@ -195,14 +195,14 @@ const WelcomeHomeModal: React.FC<WelcomeHomeModalProps> = ({ onDoneText, onDoneV
             onClick={onDoneText}
             className="w-full py-3 bg-gradient-to-r from-blue-500 to-green-400 text-white font-bold rounded-full shadow-lg"
           >
-            💬 Chat with Alinna
+            💬 Chat with Ava
           </button>
 
           <button
             onClick={onDoneVoice}
             className="w-full py-3 bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold rounded-full shadow-lg"
           >
-            🎤 Call Alinna
+            🎤 Call Ava
           </button>
         </div>
 

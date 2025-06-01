@@ -65,7 +65,7 @@ export interface Lead {
     qualified?: boolean;
     preLease?: boolean;
     tourIntent?: boolean;
-    engaged?: boolean;
+    hot?: boolean;
     signed?: boolean;
   };
 }
@@ -167,7 +167,7 @@ export const leads: Lead[] = [
       qualified: false,
       preLease: false,
       tourIntent: true,
-      engaged: true,
+      hot: true,
       signed: false,
     },
     timeline: [
@@ -263,7 +263,7 @@ export const leads: Lead[] = [
       qualified: true,
       preLease: true,
       tourIntent: true,
-      engaged: true,
+      hot: true,
       signed: true,
     },
     timeline: [
@@ -363,7 +363,7 @@ export const leads: Lead[] = [
       qualified: false,
       preLease: false,
       tourIntent: false,
-      engaged: false,
+      hot: false,
       signed: false,
     },
     timeline: [
@@ -429,7 +429,7 @@ export const leads: Lead[] = [
       qualified: false,
       preLease: false,
       tourIntent: false,
-      engaged: false,
+      hot: false,
       signed: false,
     },
     timeline: [
@@ -492,7 +492,7 @@ export const leads: Lead[] = [
       qualified: true,
       preLease: false,
       tourIntent: true,
-      engaged: true,
+      hot: true,
       signed: false,
     },
     timeline: [
@@ -587,7 +587,7 @@ export const leads: Lead[] = [
       qualified: true,
       preLease: true,
       tourIntent: true,
-      engaged: true,
+      hot: true,
       signed: false,
     },
     timeline: [
@@ -683,7 +683,7 @@ export const leads: Lead[] = [
       qualified: true,
       preLease: true,
       tourIntent: true,
-      engaged: true,
+      hot: true,
       signed: true,
     },
     timeline: [
@@ -769,7 +769,7 @@ export const leads: Lead[] = [
       qualified: false,
       preLease: false,
       tourIntent: false,
-      engaged: false,
+      hot: false,
       signed: false,
     },
     timeline: [
@@ -827,7 +827,7 @@ export const leads: Lead[] = [
       qualified: false,
       preLease: false,
       tourIntent: true,
-      engaged: true,
+      hot: true,
       signed: false,
     },
     timeline: [
@@ -897,7 +897,7 @@ export const leads: Lead[] = [
       qualified: true,
       preLease: false,
       tourIntent: true,
-      engaged: true,
+      hot: true,
       signed: false,
     },
     timeline: [

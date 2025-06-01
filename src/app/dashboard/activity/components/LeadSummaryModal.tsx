@@ -217,9 +217,9 @@ const LeadSummaryModal: React.FC<LeadSummaryModalProps> = ({ isOpen, lead, onClo
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-semibold">
-                    {amplitudeData?.engaged ? '✅' : '❌'}
+                    {amplitudeData?.hot ? '✅' : '❌'}
                   </div>
-                  <div className="text-xs text-gray-500">Engaged</div>
+                  <div className="text-xs text-gray-500">Hot</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-semibold">
@@ -332,7 +332,7 @@ const LeadSummaryModal: React.FC<LeadSummaryModalProps> = ({ isOpen, lead, onClo
                     <BooleanDisplay value={amplitudeData?.qualified} label="Qualified" />
                     <BooleanDisplay value={amplitudeData?.preLease} label="Pre-Lease" />
                     <BooleanDisplay value={amplitudeData?.tourIntent} label="Tour Intent" />
-                    <BooleanDisplay value={amplitudeData?.engaged} label="Engaged" />
+                    <BooleanDisplay value={amplitudeData?.hot} label="Hot" />
                     <BooleanDisplay value={amplitudeData?.signed} label="Signed" />
                   </div>
                 </div>
