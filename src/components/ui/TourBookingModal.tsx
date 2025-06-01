@@ -7,12 +7,12 @@ interface TourBookingModalProps {
   onSubmit: (tourData: { 
     name: string; 
     email: string; 
-    tourType: 'in_person' | 'self_guided' | 'video';
+    tourType: 'in_person' | 'self_guided' | 'virtual';
     preferredDate?: string;
     preferredTime?: string;
   }) => void;
   analytics: {
-    trackTourBooked: (tourType: 'in_person' | 'self_guided' | 'video') => void;
+    trackTourBooked: (tourType: 'in_person' | 'self_guided' | 'virtual') => void;
   };
 }
 
@@ -25,7 +25,7 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    tourType: 'in_person' as 'in_person' | 'self_guided' | 'video',
+    tourType: 'in_person' as 'in_person' | 'self_guided' | 'virtual',
     preferredDate: '',
     preferredTime: ''
   });
@@ -48,7 +48,7 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
       duration: '15-30 minutes'
     },
     {
-      type: 'video' as const,
+      type: 'virtual' as const,
       title: 'Virtual Tour',
       description: 'Live video tour with our leasing specialist',
       icon: Calendar,
@@ -74,11 +74,11 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
       newErrors.email = 'Please enter a valid email';
     }
     
-    if (formData.tourType !== 'video' && !formData.preferredDate) {
+    if (formData.tourType !== 'virtual' && !formData.preferredDate) {
       newErrors.preferredDate = 'Please select a preferred date';
     }
     
-    if (formData.tourType !== 'video' && !formData.preferredTime) {
+    if (formData.tourType !== 'virtual' && !formData.preferredTime) {
       newErrors.preferredTime = 'Please select a preferred time';
     }
     
@@ -219,7 +219,7 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
           </div>
 
           {/* Scheduling (for in-person and self-guided only) */}
-          {formData.tourType !== 'video' && (
+          {formData.tourType !== 'virtual' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -261,7 +261,7 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
           )}
 
           {/* Video Tour Note */}
-          {formData.tourType === 'video' && (
+          {formData.tourType === 'virtual' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-start">
                 <Calendar className="w-5 h-5 text-blue-600 mr-2 mt-0.5" />

@@ -1296,7 +1296,7 @@ const ChatModal: FC<ChatModalProps> = ({
   const handleTourBookingSubmit = (tourData: { 
     name: string; 
     email: string; 
-    tourType: 'in_person' | 'self_guided' | 'video';
+    tourType: 'in_person' | 'self_guided' | 'virtual';
     preferredDate?: string;
     preferredTime?: string;
   }) => {
