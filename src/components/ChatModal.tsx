@@ -259,6 +259,8 @@ interface TimerSectionProps {
     trackIncentiveExpired: (incentiveType: string) => void;
     trackIncentiveAccepted: (incentiveType: string) => void;
   };
+  setCurrentHint: (hint: QuickReplyHint | null) => void;
+  setCurrentQuestion: (question: string | null) => void;
 }
 const TimerSection: FC<TimerSectionProps> = ({
   isTyping,
@@ -270,7 +272,9 @@ const TimerSection: FC<TimerSectionProps> = ({
   onOfferExpire,
   savings,
   trackAnswerButtonClick,
-  analytics
+  analytics,
+  setCurrentHint,
+  setCurrentQuestion
 }) => {
   return (
     <div className="relative z-10 bg-white/80 backdrop-blur-sm">
@@ -279,7 +283,14 @@ const TimerSection: FC<TimerSectionProps> = ({
           <QuickReplyButtons 
             currentQuestion={currentQuestion} 
             hint={currentHint || undefined} 
-            onSelect={(value) => sendMessage(value)}
+            onSelect={(value: string) => {
+              // Clear the quick reply state immediately when user clicks
+              setCurrentHint(null);
+              setCurrentQuestion(null);
+              
+              // Send the message
+              sendMessage(value);
+            }}
             trackAnswerButtonClick={trackAnswerButtonClick} 
           />
         </motion.div>
@@ -864,6 +875,113 @@ const ChatModal: FC<ChatModalProps> = ({
   }, [messages.length, qualified, offerExpired]);
   const handleOfferExpire = () => { setOfferExpired(true); setShowOffer(false); };
 
+  // Expand the helper function to include all variable types
+  const getQuickReplyHint = (variable: string): QuickReplyHint | null => {
+    switch (variable) {
+      case 'Full_name':
+        return {
+          type: QuickReplyType.TEXT_INPUT,
+          placeholder: 'Enter your full name'
+        };
+        
+      case 'Bedroom_size':
+        return {
+          type: QuickReplyType.MULTIPLE_CHOICE,
+          options: ['1 BR', '2 BR', '3 BR'],
+          placeholder: 'What size apartment are you looking for?'
+        };
+        
+      case 'Calendar':
+        return {
+          type: QuickReplyType.DATE,
+          placeholder: 'When are you planning to move?',
+          min: new Date().toISOString().split('T')[0],
+          max: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        };
+        
+      case 'User_action':
+        return {
+          type: QuickReplyType.MULTIPLE_CHOICE,
+          options: ['Ask Some Questions', 'Schedule A Tour', 'Get Pre-Qualified', 'Apply Now'],
+          placeholder: 'How can I best help you, what would you like to do now?'
+        };
+        
+      case 'Faq':
+        return {
+          type: QuickReplyType.MULTIPLE_CHOICE,
+          options: ['What is Grand Oaks near?', 'What are the amenities?', 'What\'s available/pricing?'],
+          placeholder: 'What would you like to know?'
+        };
+        
+      case 'YES/NO':
+        return {
+          type: QuickReplyType.BOOLEAN,
+          options: ['Yes', 'No'],
+          placeholder: 'Please choose:'
+        };
+        
+      case 'Incentive':
+        return {
+          type: QuickReplyType.INCENTIVE,
+          options: ['Sign Me Up!', 'Turn it Down'],
+          placeholder: 'Would you like to save money?'
+        };
+        
+      case 'Price_range':
+        return {
+          type: QuickReplyType.RANGE,
+          placeholder: 'Do you have a price range in mind?',
+          min: 1000,
+          max: 5000
+        };
+        
+      case 'Work_place':
+        return {
+          type: QuickReplyType.TEXT_INPUT,
+          placeholder: 'Enter your company name'
+        };
+        
+      case 'Occupancy':
+        return {
+          type: QuickReplyType.MULTIPLE_CHOICE,
+          options: ['1', '2', '3', '4'],
+          placeholder: 'How many people will be living at your apartment home?'
+        };
+        
+      case 'Pet':
+        return {
+          type: QuickReplyType.PET_INPUT,
+          options: ['Yes', 'No'],
+          placeholder: 'Are you bringing any furry friends with you?'
+        };
+        
+      case 'Features':
+        return {
+          type: QuickReplyType.MULTIPLE_CHOICE,
+          options: [
+            'Cable & Wifi incl.',
+            'Spacious Units', 
+            'W/D Connections',
+            'W/D Included',
+            'Quiet and Great Location',
+            'Pool & Clubhouse',
+            'Business Ctr'
+          ],
+          placeholder: 'Are you looking for any special features in your home?'
+        };
+        
+      case 'Tour':
+        return {
+          type: QuickReplyType.MULTIPLE_CHOICE,
+          options: ['In-Person Tour', 'Self-guided Tour', 'Virtual Tour'],
+          placeholder: 'What type of tour would you prefer?'
+        };
+        
+      default:
+        return null;
+    }
+  };
+
   // sendMessage function: decides whether to send to backend agent or AKOOL
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -949,6 +1067,32 @@ const ChatModal: FC<ChatModalProps> = ({
                 const data = JSON.parse(line);
                 if (data.completed_reply) {
                   llmResponse = data.completed_reply;
+                }
+                
+                // ✨ NEW: Add this parsing logic only
+                if (data.final_variables_update) {
+                  console.log("🎯 Variables update:", data.final_variables_update);
+                  
+                  // Find which variable is currently true (being asked for)
+                  const activeVariable = Object.keys(data.final_variables_update).find(
+                    key => data.final_variables_update[key] === true
+                  );
+                  
+                  if (activeVariable) {
+                    setCurrentQuestion(activeVariable);
+                    console.log("📝 Active question:", activeVariable);
+                    
+                    // Set appropriate quick reply hint based on the variable
+                    const hint = getQuickReplyHint(activeVariable);
+                    if (hint) {
+                      setCurrentHint(hint);
+                      console.log("💡 Quick reply hint:", hint);
+                    }
+                  } else {
+                    // No active variables - clear quick replies
+                    setCurrentQuestion(null);
+                    setCurrentHint(null);
+                  }
                 }
               } catch (parseError) {
                 // ignore parsing errors
@@ -1264,6 +1408,8 @@ const ChatModal: FC<ChatModalProps> = ({
           savings={savings}
           trackAnswerButtonClick={analytics.trackAnswerButtonClick}
           analytics={analytics}
+          setCurrentHint={setCurrentHint}
+          setCurrentQuestion={setCurrentQuestion}
         />
         
         <MessagingInput

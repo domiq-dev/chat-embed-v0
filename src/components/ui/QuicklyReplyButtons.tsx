@@ -17,7 +17,11 @@ export enum QuickReplyType {
   DATE = 'DATE',
   NUMBER = 'NUMBER',
   BOOLEAN = 'BOOLEAN',
-  CONFIRMATION = 'CONFIRMATION'
+  CONFIRMATION = 'CONFIRMATION',
+  TEXT_INPUT = 'TEXT_INPUT',        // For Full_name, Work_place
+  INCENTIVE = 'INCENTIVE',          // Special styling for Sign Me Up vs Turn it Down
+  RANGE = 'RANGE',                  // For Price_range slider
+  PET_INPUT = 'PET_INPUT'           // Special pet input with name/type/size
 }
 
 // Placeholder data - in real app, this would come from backend
