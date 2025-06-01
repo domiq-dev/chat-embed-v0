@@ -41,7 +41,7 @@ export interface Lead {
     contactCaptured?: boolean;
     contactMethod?: 'email' | 'phone';
     tourBooked?: boolean;
-    tourType?: 'in_person' | 'self_guided' | 'video';
+    tourType?: 'in_person' | 'self_guided' | 'virtual';
     
     // CTA Interactions
     emailOfficeClicked?: number;
@@ -563,7 +563,7 @@ export const leads: Lead[] = [
       contactCaptured: true,
       contactMethod: 'email',
       tourBooked: true,
-      tourType: 'video',
+      tourType: 'virtual',
       
       // CTA Interactions
       emailOfficeClicked: 3,

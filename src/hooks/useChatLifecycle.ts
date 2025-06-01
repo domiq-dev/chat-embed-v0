@@ -202,7 +202,7 @@ export function useChatLifecycle({
         console.warn('trackContactCapture error:', error);
       }
     },
-    trackTourBooked: (tourType: 'in_person' | 'self_guided' | 'video') => {
+    trackTourBooked: (tourType: 'in_person' | 'self_guided' | 'virtual') => {
       try {
         const { sessionId } = getIds();
         track('tour_booked', {

@@ -29,7 +29,7 @@ interface AggregatedAmplitudeData {
   contactCaptured?: boolean;
   contactMethod?: 'email' | 'phone';
   tourBooked?: boolean;
-  tourType?: 'in_person' | 'self_guided' | 'video';
+  tourType?: 'in_person' | 'self_guided' | 'virtual';
   
   // CTA Interactions
   emailOfficeClicked?: number;
@@ -164,7 +164,7 @@ class AmplitudeDataService {
 
     const tourEvents = events.filter(e => e.event_type === 'tour_booked');
     data.tourBooked = tourEvents.length > 0;
-    data.tourType = tourEvents[0]?.event_properties?.tour_type as 'in_person' | 'self_guided' | 'video';
+    data.tourType = tourEvents[0]?.event_properties?.tour_type as 'in_person' | 'self_guided' | 'virtual';
 
     // CTA Interactions  
     data.emailOfficeClicked = eventCounts['email_office_clicked'] || 0;
