@@ -15,7 +15,6 @@ import { DEFAULT_APARTMENT_CONFIG } from "@/types/apartment";
 import { Session as AkoolSessionType } from '../services/apiService';
 import { useChatLifecycle } from '@/hooks/useChatLifecycle';
 import { useLeadDataCollection } from '@/hooks/useLeadDataCollection';
-import { ApiService } from '@/services/apiService';
 
 // Dynamically import AgoraRTC types
 import type { IAgoraRTCClient, IRemoteVideoTrack, IRemoteAudioTrack, UID, SDK_MODE, SDK_CODEC } from 'agora-rtc-sdk-ng';
@@ -432,14 +431,8 @@ const ChatModal: FC<ChatModalProps> = ({
     if (typeof window !== 'undefined') {
       localStorage.removeItem('chatbotState');
     }
-    return [
-      { 
-        id: `agent-initial-${Date.now()}`,
-        from: 'agent', 
-        text: "🎉 Welcome to Grand Oaks Apartments! I'm Ava. We have some beautiful apartment homes and great deals right now! Ready to begin?\n",
-        sentAt: new Date()
-      }
-    ];
+    // Start with empty messages - avatar will deliver opening statement
+    return [];
   });
   const [inputText, setInputText] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -460,8 +453,6 @@ const ChatModal: FC<ChatModalProps> = ({
   // Modal states for new components
   const [showContactForm, setShowContactForm] = useState(false);
   const [showTourBooking, setShowTourBooking] = useState(false);
-  const playerRef = useRef<any>(null);
-
 
   // NEW: Session tracking state for 18/18 analytics completion
   const [sessionStartTime] = useState(Date.now());
@@ -486,9 +477,9 @@ const ChatModal: FC<ChatModalProps> = ({
 
   // Add this state near the other state variables in ChatModal
   const [afterTypingCallback, setAfterTypingCallback] = useState<(() => void) | null>(null);
-
-  // default voice for every session
-  const [voiceId] = useState('Xb7hH8MSUJpSbSDYk0k2');
+  
+  // Track if opening statement has been delivered to prevent duplicates
+  const [hasDeliveredOpening, setHasDeliveredOpening] = useState(false);
 
   // Determine video player background - now always black when session is active
   const videoPlayerBgColor = akoolSession ? '#222' : 'white';
@@ -513,6 +504,55 @@ const ChatModal: FC<ChatModalProps> = ({
     addMessage,
     sendLeadData
   } = useLeadDataCollection('your-chatbot-uuid-here'); // We'll use real ID later
+
+  // Helper function to set avatar parameters
+  const setAvatarParams = async (client: any, params: {
+    vid: string; // voice ID
+    lang: string; // language 
+    mode: number; // mode (1 or 2)
+  }) => {
+    if (!client || typeof client.sendStreamMessage !== 'function') {
+      throw new Error('Client does not support sendStreamMessage');
+    }
+    
+    const message = {
+      v: 2,
+      type: "command",
+      mid: `set-params-${Date.now()}`,
+      pld: {
+        cmd: "set-params",
+        data: {
+          vid: params.vid,
+          lang: params.lang,
+          mode: params.mode
+        }
+      }
+    };
+    
+    console.log("ChatModal: Setting avatar parameters:", message);
+    await client.sendStreamMessage(JSON.stringify(message), false);
+    console.log("ChatModal: Avatar parameters set successfully");
+  };
+
+  // Helper function to send message to avatar
+  const sendMessageToAvatar = async (client: any, messageId: string, text: string) => {
+    if (!client || typeof client.sendStreamMessage !== 'function') {
+      throw new Error('Client does not support sendStreamMessage');
+    }
+    
+    const message = {
+      v: 2,
+      type: "chat",
+      mid: messageId,
+      idx: 0,
+      fin: true,
+      pld: { text: text }
+    };
+    
+    console.log("ChatModal: Sending message to avatar:", message);
+    await client.sendStreamMessage(JSON.stringify(message), false);
+    console.log("ChatModal: Message sent to avatar successfully");
+  };
 
   // NEW: Activity tracking and session management for 18/18 analytics completion
   const updateActivity = (activityType: string) => {
@@ -585,6 +625,7 @@ const ChatModal: FC<ChatModalProps> = ({
             setHasVideoStarted(false);
             setIsAvatarBuffering(false);
             setIsDialogueModeReady(false); // Reset dialogue mode status
+            setHasDeliveredOpening(false); // Reset opening statement flag
             agoraClientRef.current = null; 
           })
           .catch(e => console.error('Error leaving Agora channel during cleanup:', e));
@@ -592,12 +633,14 @@ const ChatModal: FC<ChatModalProps> = ({
       setIsAvatarBuffering(false);
       setShowSessionEndedOverlay(false);
       setIsDialogueModeReady(false); // Reset dialogue mode status
+      setHasDeliveredOpening(false); // Reset opening statement flag
       return;
     }
 
     console.log("ChatModal: AgoraRTCModule and akoolSession credentials present. Setting up Agora client.");
     setIsAvatarBuffering(true);
     setShowSessionEndedOverlay(false);
+    setHasDeliveredOpening(false); // Reset opening statement flag for new session
     let clientInstance: IAgoraRTCClient | null = null;
     try {
       clientInstance = AgoraRTCModule.createClient({ mode: 'rtc' as SDK_MODE, codec: 'vp8' as SDK_CODEC });
@@ -740,11 +783,13 @@ const ChatModal: FC<ChatModalProps> = ({
         setAkoolSessionError(null); // Clear any previous errors
         setShowSessionEndedOverlay(false);
         
-        // IMPORTANT: Re-establish dialogue mode whenever we reconnect
-        console.log('ChatModal: Reconnected - re-establishing dialogue mode');
-        setTimeout(() => {
-          setupAvatarDialogueMode();
-        }, 1000); // Give connection a moment to stabilize
+        // Only re-establish dialogue mode for RECONNECTIONS, not initial connections
+        if (revState === 'RECONNECTING') {
+          console.log('ChatModal: Reconnected - re-establishing dialogue mode');
+          setTimeout(() => {
+            setupAvatarDialogueMode();
+          }, 1000); // Give connection a moment to stabilize
+        }
         
       } else if (curState === 'CONNECTING' || curState === 'RECONNECTING') {
         setIsAvatarBuffering(true);
@@ -753,47 +798,61 @@ const ChatModal: FC<ChatModalProps> = ({
       }
     };
 
-    // Set up avatar for dialogue mode once connected
+    // Set up avatar for dialogue mode with opening statement once connected
     const setupAvatarDialogueMode = async (isRetry = false) => {
       if (currentActiveClient && typeof (currentActiveClient as any).sendStreamMessage === 'function') {
-        const setupMessage = {
-          v: 2, 
-          type: "command", 
-          mid: `setup-${Date.now()}`, 
-          pld: {
-            mode: 1, // Dialogue mode
-          }
-        };
-        
         try {
-          console.log("ChatModal: Setting up avatar dialogue mode:", setupMessage);
-          // @ts-ignore - sendStreamMessage method exists at runtime despite type definitions
-          await (currentActiveClient as IAgoraRTCClient).sendStreamMessage(JSON.stringify(setupMessage), false);
+          // Define voice and language settings
+          const voiceId = "Xb7hH8MSUJpSbSDYk0k2"; // Alice voice
+          const language = "en"; // English
+          
+          console.log("ChatModal: Setting up avatar with voice ID and opening statement");
+          
+          // Initial setup with dialogue mode
+          await setAvatarParams(currentActiveClient, {
+            vid: voiceId,
+            lang: language,
+            mode: 1, // Start with dialogue mode
+          });
+          
+          setIsDialogueModeReady(true);
           console.log("ChatModal: Avatar dialogue mode configured successfully");
           
-          // Verify dialogue mode with a status check
-          setTimeout(async () => {
-            try {
-              const verifyMessage = {
-                v: 2,
-                type: "command",
-                mid: `verify-${Date.now()}`,
-                pld: {
-                  cmd: "get-status",
-                  data: {}
-                }
-              };
-              console.log("ChatModal: Verifying dialogue mode setup:", verifyMessage);
-              // @ts-ignore
-              await (currentActiveClient as IAgoraRTCClient).sendStreamMessage(JSON.stringify(verifyMessage), false);
-              
-              setIsDialogueModeReady(true);
-              console.log("ChatModal: Dialogue mode verified and ready");
-            } catch (verifyError) {
-              console.warn("ChatModal: Failed to verify dialogue mode:", verifyError);
-              setIsDialogueModeReady(true); // Set ready anyway
-            }
-          }, 500);
+          // Only deliver opening statement once
+          if (!hasDeliveredOpening) {
+            setHasDeliveredOpening(true);
+            
+            // Opening statement with voice configuration sequence
+            setTimeout(async () => {
+              try {
+                // Temporarily switch to mode 1 for welcome message
+                await setAvatarParams(currentActiveClient, {
+                  vid: voiceId,
+                  lang: language,
+                  mode: 1,
+                });
+
+                // Send welcome message (will appear in chat once)
+                await sendMessageToAvatar(
+                  currentActiveClient,
+                  `welcome-${Date.now()}`,
+                  'Hi! Welcome to Grand Oaks Apartments! I\'m Ava, your leasing specialist. How can I help you today?'
+                );
+
+                // Switch back to dialogue mode
+                await setAvatarParams(currentActiveClient, {
+                  vid: voiceId,
+                  lang: language,
+                  mode: 1,
+                });
+                
+                console.log("ChatModal: Opening statement delivered and switched back to dialogue mode");
+                
+              } catch (error) {
+                console.warn("ChatModal: Failed to deliver opening statement:", error);
+              }
+            }, 2000);
+          }
           
         } catch (error) {
           console.error("ChatModal: Failed to setup avatar dialogue mode:", error);
@@ -1581,27 +1640,6 @@ const ChatModal: FC<ChatModalProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]); // Scroll when messages change or typing state changes
-
-  // NEW effect – sets the voice once the player exists
-  useEffect(() => {
-    console.log('Chatmodal: VoiceID', voiceId);
-    // need a session and a ready player
-    if (!akoolSession || !playerRef.current || typeof playerRef.current.setAvatarParams !== 'function') {
-      return;
-    }
-
-    (async () => {
-      try {
-        await playerRef.current.setAvatarParams({
-          voice_id: voiceId,     
-        });
-        console.log('ChatModal: voice_id set to', voiceId);
-      } catch (err) {
-        console.warn('ChatModal: failed to set voice_id', err);
-      }
-    })();
-  }, [akoolSession, voiceId]);
-
 
   return (
     <div className="fixed bottom-20 right-6 z-50">
