@@ -1,0 +1,3 @@
+[submodule "database-api"]
+	path = database-api
+	url = https://github.com/domiq-dev/database-api.git
