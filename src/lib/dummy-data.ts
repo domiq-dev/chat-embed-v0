@@ -11,6 +11,7 @@ export interface DummyProspect {
   email: string;
   phone: string;
   status: 'prospect' | 'toured' | 'leased';
+  moveInDate?: string; // Optional move-in date
   // toursCount?: number; // For contacts page if needed
 }
 
@@ -943,6 +944,7 @@ export const dummyProspects: DummyProspect[] = [
     email: 'alex.johnson@example.com',
     phone: '(555) 111-2222',
     status: 'toured',
+    moveInDate: '2024-05-01',
   },
   {
     id: 'prospect2',
@@ -950,6 +952,7 @@ export const dummyProspects: DummyProspect[] = [
     email: 'maria.garcia@example.com',
     phone: '(555) 333-4444',
     status: 'leased',
+    moveInDate: '2024-04-15',
   },
   {
     id: 'prospect3',
@@ -957,6 +960,7 @@ export const dummyProspects: DummyProspect[] = [
     email: 'david.kim@example.com',
     phone: '(555) 555-6666',
     status: 'toured',
+    moveInDate: 'N/A',
   },
   {
     id: 'prospect4',
@@ -964,13 +968,15 @@ export const dummyProspects: DummyProspect[] = [
     email: 'chloe.dubois@example.com',
     phone: '(555) 777-8888',
     status: 'prospect',
+    moveInDate: 'N/A',
   },
-    {
+  {
     id: 'prospect5',
     name: 'Ben Carter',
     email: 'ben.carter@example.com',
     phone: '(555) 999-0000',
     status: 'toured',
+    moveInDate: '2024-06-01',
   },
 ];
 
