@@ -142,6 +142,7 @@ const ChatLauncher = () => {
       const sessionData = await apiService.createSession({ 
         avatar_id: DEFAULT_AVATAR_ID, 
         duration: DEFAULT_SESSION_DURATION,
+        voice_id: 'Xb7hH8MSUJpSbSDYk0k2',
       });
       
       setCurrentSession(sessionData);
@@ -179,6 +180,7 @@ const ChatLauncher = () => {
                 const retrySessionData = await apiService.createSession({ 
                   avatar_id: DEFAULT_AVATAR_ID, 
                   duration: DEFAULT_SESSION_DURATION,
+                  voice_id: 'Xb7hH8MSUJpSbSDYk0k2',
                 });
                 setCurrentSession(retrySessionData);
                 setSessionError(null);

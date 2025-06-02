@@ -15,6 +15,7 @@ import { DEFAULT_APARTMENT_CONFIG } from "@/types/apartment";
 import { Session as AkoolSessionType } from '../services/apiService';
 import { useChatLifecycle } from '@/hooks/useChatLifecycle';
 import { useLeadDataCollection } from '@/hooks/useLeadDataCollection';
+import { ApiService } from '@/services/apiService';
 
 // Dynamically import AgoraRTC types
 import type { IAgoraRTCClient, IRemoteVideoTrack, IRemoteAudioTrack, UID, SDK_MODE, SDK_CODEC } from 'agora-rtc-sdk-ng';
@@ -459,6 +460,8 @@ const ChatModal: FC<ChatModalProps> = ({
   // Modal states for new components
   const [showContactForm, setShowContactForm] = useState(false);
   const [showTourBooking, setShowTourBooking] = useState(false);
+  const playerRef = useRef<any>(null);
+
 
   // NEW: Session tracking state for 18/18 analytics completion
   const [sessionStartTime] = useState(Date.now());
@@ -483,6 +486,9 @@ const ChatModal: FC<ChatModalProps> = ({
 
   // Add this state near the other state variables in ChatModal
   const [afterTypingCallback, setAfterTypingCallback] = useState<(() => void) | null>(null);
+
+  // default voice for every session
+  const [voiceId] = useState('Xb7hH8MSUJpSbSDYk0k2');
 
   // Determine video player background - now always black when session is active
   const videoPlayerBgColor = akoolSession ? '#222' : 'white';
@@ -1575,6 +1581,27 @@ const ChatModal: FC<ChatModalProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]); // Scroll when messages change or typing state changes
+
+  // NEW effect – sets the voice once the player exists
+  useEffect(() => {
+    console.log('Chatmodal: VoiceID', voiceId);
+    // need a session and a ready player
+    if (!akoolSession || !playerRef.current || typeof playerRef.current.setAvatarParams !== 'function') {
+      return;
+    }
+
+    (async () => {
+      try {
+        await playerRef.current.setAvatarParams({
+          voice_id: voiceId,     
+        });
+        console.log('ChatModal: voice_id set to', voiceId);
+      } catch (err) {
+        console.warn('ChatModal: failed to set voice_id', err);
+      }
+    })();
+  }, [akoolSession, voiceId]);
+
 
   return (
     <div className="fixed bottom-20 right-6 z-50">
