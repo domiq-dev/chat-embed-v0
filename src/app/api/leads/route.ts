@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import axios from 'axios';
+import { mapToLead } from '@/lib/data-mappers';
 
 // Get the FastAPI URL from environment variables
 const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://localhost:8000';
+
+// Get the database API URL from environment variables
+const DATABASE_API_URL = process.env.DATABASE_API_URL || 'http://127.0.0.1:8000';
 
 // Lead submission interface matching your FastAPI backend
 interface LeadSubmission {
@@ -96,50 +101,75 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
+    console.log('🔍 Fetching leads from database API...');
+    console.log(`📡 Request URL: ${DATABASE_API_URL}/api/v1/conversations?expand=user,property_manager`);
     
-    // Build query string for FastAPI
-    const queryString = searchParams.toString();
-    const url = queryString 
-      ? `${PYTHON_API_URL}/api/leads/?${queryString}`
-      : `${PYTHON_API_URL}/api/leads/`;
-    
-    console.log('📤 Fetching leads from FastAPI...');
-    
-    // Forward to FastAPI
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: { 
-        'Accept': 'application/json'
-      },
-      signal: AbortSignal.timeout(30000) // 30 second timeout
+    // Fetch conversations with expanded user data
+    const response = await axios.get(`${DATABASE_API_URL}/api/v1/conversations?expand=user,property_manager`, {
+      timeout: 10000, // 10 second timeout
+      headers: {
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache',
+      }
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ FastAPI error:', errorText);
-      throw new Error(`FastAPI error: ${response.status} - ${errorText}`);
+    console.log(`✅ Got ${response.data.items?.length || 0} conversations from database`);
+    
+    if (!response.data.items || response.data.items.length === 0) {
+      console.warn('⚠️ No conversations found in the database API response');
+      return NextResponse.json([]);
     }
     
-    const result = await response.json();
-    console.log(`✅ Fetched ${result.leads?.length || 0} leads successfully`);
+    console.log('📦 First conversation sample:', JSON.stringify(response.data.items[0]).substring(0, 150) + '...');
     
-    return NextResponse.json(result);
+    // Transform the data to match our frontend model
+    const leads = await Promise.all(
+      (response.data.items || []).map(async (conversation: any) => {
+        try {
+          // Fetch activities for this conversation
+          console.log(`🔍 Fetching activities for conversation ${conversation.id}...`);
+          const activitiesResponse = await axios.get(
+            `${DATABASE_API_URL}/api/v1/conversations/${conversation.id}/activities`
+          );
+          
+          console.log(`✅ Got ${activitiesResponse.data.items?.length || 0} activities for conversation ${conversation.id}`);
+          
+          return mapToLead(
+            conversation,
+            conversation.user,
+            activitiesResponse.data.items || []
+          );
+        } catch (activityError) {
+          console.error(`❌ Error fetching activities for conversation ${conversation.id}:`, activityError);
+          // Still return the lead even if activities failed
+          return mapToLead(conversation, conversation.user, []);
+        }
+      })
+    );
     
+    console.log(`🎉 Transformed ${leads.length} leads for frontend`);
+    return NextResponse.json(leads);
   } catch (error) {
     console.error('❌ Error fetching leads:', error);
     
-    return NextResponse.json(
-      { 
-        success: false,
-        error: 'Failed to fetch leads',
-        leads: [],
-        total: 0,
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
+    // Provide more specific error information
+    if (axios.isAxiosError(error)) {
+      console.error('Network Error Details:', {
+        message: error.message,
+        code: error.code,
+        status: error.response?.status,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL,
+        }
+      });
+    }
+    
+    // Return empty array instead of error to prevent UI from breaking
+    return NextResponse.json([]);
   }
 }
