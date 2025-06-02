@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableFooter } from '@/components/ui/table';
+import { useState, useEffect, useMemo } from 'react';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
+  flexRender,
+  createColumnHelper,
+  SortDirection,
+} from '@tanstack/react-table';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { X, Plus, Trash2, Edit2, AlertTriangle } from 'lucide-react';
+import { X, Plus, Trash2, Edit2, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
 import { dummyProspects, DummyProspect, dummyTours } from '@/lib/dummy-data'; // Import dummy data
 
 // Extend DummyProspect for this page to include toursCount
@@ -30,6 +38,7 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
     email: '',
     phone: '',
     status: 'prospect',
+    moveInDate: '',
   });
 
   if (!isOpen) return null;
@@ -47,7 +56,7 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
           onSubmit={e => {
             e.preventDefault();
             onAdd(form);
-            setForm({ name: '', email: '', phone: '', status: 'prospect' });
+            setForm({ name: '', email: '', phone: '', status: 'prospect', moveInDate: '' });
             onClose();
           }}
           className="space-y-4"
@@ -80,6 +89,15 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Move-in Date</label>
+            <input
+              type="date"
+              value={form.moveInDate}
+              onChange={e => setForm(f => ({ ...f, moveInDate: e.target.value || 'N/A' }))}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
           <div>
@@ -131,6 +149,7 @@ function EditContactModal({
     email: '',
     phone: '',
     status: 'prospect',
+    moveInDate: '',
   });
 
   // Update form when contact prop changes
@@ -141,6 +160,7 @@ function EditContactModal({
         email: contact.email,
         phone: contact.phone,
         status: contact.status,
+        moveInDate: contact.moveInDate || '',
       });
     }
   }, [contact]);
@@ -195,6 +215,15 @@ function EditContactModal({
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Move-in Date</label>
+            <input
+              type="date"
+              value={form.moveInDate}
+              onChange={e => setForm(f => ({ ...f, moveInDate: e.target.value || 'N/A' }))}
+              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
           <div>
@@ -275,129 +304,239 @@ function DeleteConfirmationModal({
   );
 }
 
+// Helper function to convert date to sortable value
+const getDateSortValue = (date: string | undefined): number => {
+  if (!date) return Number.MAX_SAFE_INTEGER; // Push N/A to bottom
+  return new Date(date).getTime();
+};
+
+const SortIcon = ({ direction }: { direction: false | SortDirection }) => {
+  if (!direction) {
+    return (
+      <div className="relative ml-1 h-4">
+        <ChevronUp className="w-4 h-4 absolute -top-2 text-gray-400" />
+        <ChevronDown className="w-4 h-4 absolute -bottom-2 text-gray-400" />
+      </div>
+    );
+  }
+  return direction === 'asc' ? (
+    <ChevronUp className="w-4 h-4 ml-1 text-purple-600" />
+  ) : (
+    <ChevronDown className="w-4 h-4 ml-1 text-purple-600" />
+  );
+};
+
 export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>(initialContacts);
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [deletingContact, setDeletingContact] = useState<Contact | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+
+  const columnHelper = createColumnHelper<Contact>();
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('name', {
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting()}
+            className="flex items-center gap-1"
+          >
+            Name
+            <SortIcon direction={column.getIsSorted()} />
+          </button>
+        ),
+      }),
+      columnHelper.accessor('email', {
+        header: 'Email',
+      }),
+      columnHelper.accessor('phone', {
+        header: 'Phone',
+      }),
+      columnHelper.accessor('moveInDate', {
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting()}
+            className="flex items-center gap-1"
+          >
+            Move-in Date
+            <SortIcon direction={column.getIsSorted()} />
+          </button>
+        ),
+        sortingFn: (a, b, columnId) => {
+          const rawA = a.getValue(columnId) as string;
+          const rawB = b.getValue(columnId) as string;
+        
+          const dateA = rawA === 'N/A' || !rawA ? null : new Date(rawA);
+          const dateB = rawB === 'N/A' || !rawB ? null : new Date(rawB);
+        
+          if (!dateA && !dateB) return 0;
+          if (!dateA) return 1;  // N/A goes to bottom in ascending
+          if (!dateB) return -1;
+        
+          return dateA.getTime() - dateB.getTime();
+        },
+        cell: ({ row }) => row.original.moveInDate || 'N/A',
+      }),
+      columnHelper.accessor('status', {
+        header: 'Status',
+        cell: ({ row }) => (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[row.original.status]}`}>
+            {row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('toursCount', {
+        header: ({ column }) => (
+          <button
+            onClick={() => column.toggleSorting()}
+            className="flex items-center gap-1"
+          >
+            Tours
+            <SortIcon direction={column.getIsSorted()} />
+          </button>
+        ),
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                setSelectedContact(row.original);
+                setShowEditModal(true);
+              }}
+              className="p-1 text-gray-400 hover:text-purple-600"
+              title="Edit contact"
+            >
+              <Edit2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                setSelectedContact(row.original);
+                setShowDeleteModal(true);
+              }}
+              className="p-1 text-gray-400 hover:text-red-600"
+              title="Delete contact"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ),
+      }),
+    ],
+    []
+  );
+
+  const table = useReactTable({
+    data: contacts,
+    columns,
+    state: {
+      sorting,
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+  });
 
   const handleAddContact = (contactData: Omit<Contact, 'id' | 'toursCount'>) => {
-    setContacts(prev => [
-      ...prev,
-      { ...contactData, id: Math.random().toString(36).substr(2, 9), toursCount: 0 },
-    ]);
+    const newContact: Contact = {
+      ...contactData,
+      id: `prospect${contacts.length + 1}`,
+      toursCount: 0,
+    };
+    setContacts([...contacts, newContact]);
   };
 
   const handleEditContact = (updatedContact: Contact) => {
-    setContacts(prev => 
-      prev.map(contact => 
-        contact.id === updatedContact.id ? updatedContact : contact
-      )
-    );
+    setContacts(contacts.map(c => c.id === updatedContact.id ? updatedContact : c));
   };
 
   const handleDeleteConfirm = () => {
-    if (deletingContact) {
-      setContacts(prev => prev.filter(c => c.id !== deletingContact.id));
-      setDeletingContact(null);
+    if (selectedContact) {
+      setContacts(contacts.filter(c => c.id !== selectedContact.id));
+      setShowDeleteModal(false);
+      setSelectedContact(null);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Contacts</h1>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle>Contacts</CardTitle>
         <button
-          onClick={() => setIsAddOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-1 px-3 py-1.5 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700"
         >
           <Plus className="w-4 h-4" /> Add Contact
         </button>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Prospective Clients</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableCell className="font-semibold text-gray-700">Name</TableCell>
-                  <TableCell className="font-semibold text-gray-700">Email</TableCell>
-                  <TableCell className="font-semibold text-gray-700">Phone</TableCell>
-                  <TableCell className="font-semibold text-gray-700">Tours</TableCell>
-                  <TableCell className="font-semibold text-gray-700">Status</TableCell>
-                  <TableCell className="font-semibold text-gray-700 text-center">Actions</TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {contacts.map((contact) => (
-                  <TableRow key={contact.id} className="hover:bg-purple-50 transition-colors">
-                    <TableCell className="font-medium">{contact.name}</TableCell>
-                    <TableCell>
-                      <a href={`mailto:${contact.email}`} className="text-blue-600 hover:underline">{contact.email}</a>
-                    </TableCell>
-                    <TableCell>
-                      <a href={`tel:${contact.phone.replace(/[^\d]/g, '')}`} className="text-gray-700 hover:underline">{contact.phone}</a>
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-block px-2 py-1 rounded bg-purple-100 text-purple-700 text-xs font-semibold">{contact.toursCount}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${statusColors[contact.status]}`}>{contact.status.charAt(0).toUpperCase() + contact.status.slice(1)}</span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button
-                          onClick={() => setEditingContact(contact)}
-                          className="p-2 text-blue-500 hover:text-blue-700 rounded-full hover:bg-blue-50"
-                          title="Edit Contact"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setDeletingContact(contact)}
-                          className="p-2 text-red-500 hover:text-red-700 rounded-full hover:bg-red-50"
-                          title="Delete Contact"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-              <TableFooter>
-                <TableRow>
-                  <TableCell colSpan={3} className="text-right font-semibold">Total Prospects</TableCell>
-                  <TableCell colSpan={3} className="font-semibold">{contacts.length}</TableCell>
-                </TableRow>
-              </TableFooter>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <AddContactModal 
-        isOpen={isAddOpen} 
-        onClose={() => setIsAddOpen(false)} 
-        onAdd={handleAddContact} 
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className="px-4 py-2 text-left">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map(row => (
+                <tr key={row.id} className="border-t border-gray-200 hover:bg-gray-50">
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className="px-4 py-2">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colSpan={7} className="px-4 py-2 text-right">
+                  Total Contacts: {contacts.length}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </CardContent>
+
+      <AddContactModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onAdd={handleAddContact}
       />
-      
+
       <EditContactModal
-        isOpen={!!editingContact}
-        onClose={() => setEditingContact(null)}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
         onSave={handleEditContact}
-        contact={editingContact}
+        contact={selectedContact}
       />
 
       <DeleteConfirmationModal
-        isOpen={!!deletingContact}
-        onClose={() => setDeletingContact(null)}
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedContact(null);
+        }}
         onConfirm={handleDeleteConfirm}
-        contactName={deletingContact?.name || ''}
+        contactName={selectedContact?.name || ''}
       />
-    </div>
+    </Card>
   );
 } 
