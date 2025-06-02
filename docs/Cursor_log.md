@@ -640,3 +640,36 @@ src/
 ✅ **Emergency Recovery:** Session cleanup works without infinite loops or user frustration
 
 **Business Value:** Property managers can now rely on stable avatar sessions and accurate analytics dashboards, while prospects see a professional loading experience that reinforces the luxury apartment brand.
+
+## Dashboard Data Integration & Refresh Functionality
+
+- **File: src/services/api-client.ts**
+- **Line 30-42:** Enhanced fetchLeads function with detailed logging and error handling.
+- **Reason:** Improve API call transparency and debugging capabilities for the dashboard.
+
+- **File: src/lib/data-mappers.ts**
+- **Line 7-40:** Added comprehensive null checks and fallback values in mapPropertyManagerToAgent and mapToLead functions.
+- **Reason:** Ensure robust data transformation that prevents UI crashes when API returns unexpected data structures.
+
+- **File: src/app/dashboard/activity/page.tsx**
+- **Line 17-27:** Added enhanced refresh function with loading state management.
+- **Line 36-45:** Implemented UI buttons for refresh, loading indicator, and fallback to dummy data.
+- **Reason:** Provide user feedback during data loading and testing options for development.
+
+- **File: src/app/api/leads/route.ts**
+- **Line 84-105:** Added detailed request/response logging for API calls.
+- **Line 133-149:** Enhanced error handling with specific axios error details.
+- **Line 150:** Changed error response to return empty array instead of error status.
+- **Reason:** Maintain UI stability by preventing crashes when backend API is unavailable.
+
+- **File: src/lib/lead-context.tsx**
+- **Line ~45-60:** Added refreshAmplitudeData and isLoadingAmplitudeData states.
+- **Line ~70-95:** Improved refresh function with proper try/catch and state management.
+- **Reason:** Centralize data fetching logic and provide consistent loading states across components.
+
+- **Additional Improvements:**
+- Added loading indicators during API calls to improve user experience
+- Implemented intelligent fallbacks when API data is incomplete
+- Enhanced console logging for easier debugging of API integration issues
+- Created Use Dummy Data button for testing when backend is unavailable
+- Added proper error state handling to maintain UI functionality during API failures

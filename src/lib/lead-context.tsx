@@ -2,11 +2,13 @@
 
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { Lead, LeadActivity, leads as initialLeads } from '@/lib/dummy-data';
+import { fetchLeads, fetchAgents, fetchTours } from '@/services/api-client';
 
 interface LeadContextType {
   leads: Lead[];
   selectedLead: Lead | null;
   setSelectedLead: (lead: Lead | null) => void;
+  setLeads: (leads: Lead[]) => void;
   updateLead: (leadId: string, updates: Partial<Lead>) => void;
   addActivity: (leadId: string, activity: Omit<LeadActivity, 'id' | 'leadId'>) => void;
   createNewLead: (name: string, source?: Lead['source']) => Lead;
@@ -20,18 +22,51 @@ interface LeadContextType {
   refreshAmplitudeData: () => Promise<void>;
   isLoadingAmplitudeData: boolean;
   forceCloseSession: () => void;
+  isLoading: boolean;
+  refresh: () => Promise<void>;
 }
 
 const LeadContext = createContext<LeadContextType | undefined>(undefined);
 
 export function LeadProvider({ children }: { children: React.ReactNode }) {
-  const [leads, setLeads] = useState<Lead[]>(initialLeads);
+  // Start with empty array and fetch real data on mount
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isLoadingAmplitudeData, setIsLoadingAmplitudeData] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Track active fetch request for cleanup
   const abortControllerRef = useRef<AbortController | null>(null);
   const isUnmountedRef = useRef(false);
+
+  // Function to refresh all data from the API
+  const refresh = async () => {
+    if (isUnmountedRef.current) return;
+    
+    setIsLoading(true);
+    try {
+      console.log('🔄 Refreshing leads data from API...');
+      const leadsData = await fetchLeads();
+      console.log(`✅ Successfully fetched ${leadsData.length} leads from API`);
+      
+      if (!isUnmountedRef.current) {
+        setLeads(leadsData);
+        console.log('💾 Updated leads state with fresh data');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching leads:', error);
+      // Fall back to dummy data in development
+      if (process.env.NODE_ENV === 'development' && !isUnmountedRef.current) {
+        console.warn('⚠️ Using dummy data in development mode');
+        setLeads(initialLeads);
+      }
+    } finally {
+      if (!isUnmountedRef.current) {
+        setIsLoading(false);
+        console.log('🏁 Finished refreshing leads data');
+      }
+    }
+  };
 
   const updateLead = (leadId: string, updates: Partial<Lead>) => {
     if (isUnmountedRef.current) return;
@@ -251,6 +286,7 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
       leads,
       selectedLead,
       setSelectedLead,
+      setLeads,
       updateLead,
       addActivity,
       createNewLead,
@@ -260,6 +296,8 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
       refreshAmplitudeData,
       isLoadingAmplitudeData,
       forceCloseSession,
+      isLoading,
+      refresh
     }}>
       {children}
     </LeadContext.Provider>

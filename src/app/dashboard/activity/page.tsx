@@ -5,11 +5,32 @@ import LeadOverview from './components/LeadOverview';
 import LeadFunnel from './components/LeadFunnel';
 import NewLeadModal from './components/NewLeadModal';
 import { LeadProvider, useLeadContext } from '@/lib/lead-context';
-import { dummyAgents, DummyAgent } from '@/lib/dummy-data';
+import { leads as dummyLeads } from '@/lib/dummy-data';
 
 function ActivityPageContent() {
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
-  const { refreshAmplitudeData, isLoadingAmplitudeData, forceCloseSession } = useLeadContext();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { refreshAmplitudeData, isLoadingAmplitudeData, forceCloseSession, isLoading, refresh, leads, setLeads } = useLeadContext();
+
+  // Function to force fallback to dummy data for testing
+  const forceFallback = () => {
+    console.log('🔄 Forcing fallback to dummy data for testing');
+    setLeads(dummyLeads);
+  };
+
+  // Enhanced refresh function with loading state
+  const handleRefresh = async () => {
+    console.log('🔄 Manually triggering refresh...');
+    setIsRefreshing(true);
+    try {
+      await refresh();
+      console.log(`✅ Refresh complete, loaded ${leads.length} leads`);
+    } catch (error) {
+      console.error('❌ Refresh failed:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -25,8 +46,38 @@ function ActivityPageContent() {
           >
             New Lead
           </button>
+          <button 
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={`px-4 py-2 text-sm text-white rounded-md ${isRefreshing ? 'bg-blue-400' : 'bg-blue-500 hover:bg-blue-600'}`}
+          >
+            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
+          <button 
+            onClick={forceFallback}
+            className="px-4 py-2 text-sm bg-amber-500 text-white rounded-md hover:bg-amber-600"
+          >
+            Use Dummy Data
+          </button>
         </div>
       </div>
+      
+      {isLoading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+          <div className="flex items-center gap-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <span className="text-blue-800">Loading lead data...</span>
+          </div>
+        </div>
+      )}
+      
+      {!isLoading && leads.length === 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+          <div className="flex items-center gap-2">
+            <span className="text-yellow-800">No leads found. Try using the "Use Dummy Data" button for testing.</span>
+          </div>
+        </div>
+      )}
 
       {isLoadingAmplitudeData && (
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
