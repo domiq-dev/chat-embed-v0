@@ -1,6 +1,14 @@
 import React, { useState } from 'react';
 import { X, Mail, Phone } from 'lucide-react';
 
+type FormData = {
+  name: string;
+  email: string;
+  phone: string;
+  method: 'email' | 'phone';
+  moveInDate?: string;
+};
+
 interface ContactFormModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -16,11 +24,12 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
   onSubmit, 
   analytics 
 }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     phone: '',
-    method: 'email' as 'email' | 'phone'
+    method: 'email',
+    moveInDate: ''
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -77,7 +86,8 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
       name: '',
       email: '',
       phone: '',
-      method: 'email'
+      method: 'email',
+      moveInDate: ''
     });
     setErrors({});
     onClose();
@@ -184,6 +194,18 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
               {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
             </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Desired Move-In Date
+            </label>
+            <input
+              type="date"
+              name="moveInDate"
+              placeholder="Desired move-in date"
+              onChange={(e) => setFormData({ ...formData, moveInDate: e.target.value })}
+            />
+          </div>
 
           <div className="flex gap-3 pt-4">
             <button

@@ -47,6 +47,9 @@ export type Avatar = {
 export class ApiService {
   private openapiHost: string;
   private openapiToken: string;
+  
+  // ✅ Hardcode Alice voice ID
+  private static readonly DEFAULT_VOICE_ID = "Xb7hH8MSUJpSbSDYk0k2"; // Alice voice
 
   constructor(openapiHost: string, openapiToken: string) {
     this.openapiHost = openapiHost;
@@ -81,9 +84,14 @@ export class ApiService {
   public async createSession(data: {
     avatar_id: string;
     duration: number;
-    voice_id?: string;
   }): Promise<Session> {
-    return this.fetchAPI("/api/open/v4/liveAvatar/session/create", "POST", data);
+    // ✅ Always use Alice voice
+    const sessionData = {
+      ...data,
+      voice_id: ApiService.DEFAULT_VOICE_ID
+    };
+    
+    return this.fetchAPI("/api/open/v4/liveAvatar/session/create", "POST", sessionData);
   }
 
   public async closeSession(id: string) {

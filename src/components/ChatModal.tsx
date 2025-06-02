@@ -14,6 +14,7 @@ import CTAButtons from "@/components/ui/CTAButtons";
 import { DEFAULT_APARTMENT_CONFIG } from "@/types/apartment";
 import { Session as AkoolSessionType } from '../services/apiService';
 import { useChatLifecycle } from '@/hooks/useChatLifecycle';
+import { useLeadDataCollection } from '@/hooks/useLeadDataCollection';
 
 // Dynamically import AgoraRTC types
 import type { IAgoraRTCClient, IRemoteVideoTrack, IRemoteAudioTrack, UID, SDK_MODE, SDK_CODEC } from 'agora-rtc-sdk-ng';
@@ -474,6 +475,15 @@ const ChatModal: FC<ChatModalProps> = ({
     // For now, we'll use the manual tracking functions
   });
 
+  // Initialize lead data collection with chatbot ID
+  const {
+    leadData,
+    updateUser,
+    updateConversation,
+    addMessage,
+    sendLeadData
+  } = useLeadDataCollection('your-chatbot-uuid-here'); // We'll use real ID later
+
   // NEW: Activity tracking and session management for 18/18 analytics completion
   const updateActivity = (activityType: string) => {
     setLastActivityTime(Date.now());
@@ -494,13 +504,23 @@ const ChatModal: FC<ChatModalProps> = ({
   };
 
   // Enhanced close handler with session end tracking
-  const handleClose = () => {
+  const handleClose = async () => {
     const sessionDuration = Date.now() - sessionStartTime;
     analytics.trackWidgetSessionEnded('user_closed', sessionDuration, messages.length);
     
     // Clear timeout
     if (inactivityTimeout) {
       clearTimeout(inactivityTimeout);
+    }
+    
+    // NEW: Send lead data before closing
+    try {
+      if (leadData.messages.length > 0 || leadData.user.email || leadData.user.phone) {
+        await sendLeadData();
+      }
+    } catch (error) {
+      console.error('Failed to save lead data:', error);
+      // Continue with close even if save fails
     }
     
     onClose();
@@ -644,6 +664,7 @@ const ChatModal: FC<ChatModalProps> = ({
             },
           ]);
           analytics.trackBotMessage();
+          addMessage('user', parsedMessage.pld.text);
         } else {
           // Ignore user messages or unknown types
           console.log('ChatModal: Ignored stream message:', parsedMessage);
@@ -1037,6 +1058,9 @@ const ChatModal: FC<ChatModalProps> = ({
     // Track user message sent
     analytics.trackUserMessage(text.trim());
 
+    // NEW: Track user message
+    addMessage('user', text);
+
     // If AKOOL session is active, send text to AKOOL for TTS
     if (akoolSession && agoraClientRef.current && isAgoraConnected && AgoraRTCModule) {
       // Check if dialogue mode is ready before sending messages
@@ -1099,7 +1123,20 @@ const ChatModal: FC<ChatModalProps> = ({
                   llmResponse = data.completed_reply;
                 }
                 
-                // ✨ NEW: Add this parsing logic only
+                // ✅ NEW: Capture initial summary data
+                if (data.data?.final_summary) {
+                  console.log('📊 Capturing initial LLM summary data:', {
+                    ai_intent_summary: data.data.final_summary.ai_intent_summary,
+                    qualified: data.data.final_summary.qualified
+                  });
+                  
+                  // Update lead data with summary (no book_tour)
+                  updateConversation({
+                    ai_intent_summary: data.data.final_summary.ai_intent_summary
+                  });
+                }
+                
+                // ✨ EXISTING: Variables update logic
                 if (data.final_variables_update) {
                   console.log("🎯 Variables update:", data.final_variables_update);
                   
@@ -1123,6 +1160,22 @@ const ChatModal: FC<ChatModalProps> = ({
                     setCurrentQuestion(null);
                     setCurrentHint(null);
                   }
+                }
+
+                // ✅ NEW: Capture final qualification data
+                if (data.completed_reply && data.is_qualified !== undefined) {
+                  console.log('📊 Capturing final LLM qualification data:', {
+                    is_qualified: data.is_qualified,
+                    kb_pending: data.kb_pending
+                  });
+                  
+                  // Update lead data with qualification results
+                  updateConversation({
+                    is_qualified: data.is_qualified,
+                    kb_pending: data.kb_pending
+                  });
+                  
+                  console.log('✅ Qualification data captured successfully');
                 }
               } catch (parseError) {
                 // ignore parsing errors
@@ -1293,8 +1346,14 @@ const ChatModal: FC<ChatModalProps> = ({
       sentAt: new Date() 
     }]);
     
-    // Could also trigger a backend API call here to save the contact
-    toast.success('Contact information saved!');
+    // NEW: Update user data only
+    const [firstName, ...lastNameParts] = contactData.name.split(' ');
+    updateUser({
+      first_name: firstName,
+      last_name: lastNameParts.join(' '),
+      email: contactData.email,
+      phone: contactData.phone
+    });
   };
 
   const handleTourBookingSubmit = (tourData: { 
@@ -1322,9 +1381,20 @@ const ChatModal: FC<ChatModalProps> = ({
       sentAt: new Date() 
     }]);
     
-    // Could also trigger a backend API call here to save the tour booking
-    toast.success('Tour scheduled successfully!');
-    setTourBooked(true);
+    // NEW: Update user and conversation data
+    const [firstName, ...lastNameParts] = tourData.name.split(' ');
+    updateUser({
+      first_name: firstName,
+      last_name: lastNameParts.join(' '),
+      email: tourData.email
+    });
+    updateConversation({
+      is_book_tour: true,
+      tour_type: tourData.tourType,
+      tour_datetime: tourData.preferredDate && tourData.preferredTime ? 
+        new Date(tourData.preferredDate + ' ' + tourData.preferredTime) : 
+        undefined
+    });
   };
 
   // NEW: Periodic dialogue mode reinforcement to prevent echoing
