@@ -188,13 +188,57 @@ interface ChatBodyProps {
   config: typeof DEFAULT_APARTMENT_CONFIG;
   isTyping: boolean;
   containerRef: React.RefObject<HTMLDivElement>;
+  currentHint: QuickReplyHint | null;
+  currentQuestion: string | null;
+  sendMessage: (text: string) => Promise<void>;
+  trackAnswerButtonClick?: (optionId: string, optionText: string) => void;
+  setCurrentHint: (hint: QuickReplyHint | null) => void;
+  setCurrentQuestion: (question: string | null) => void;
 }
 const ChatBody: FC<ChatBodyProps> = ({
   messages,
   config,
   isTyping,
   containerRef,
+  currentHint,
+  currentQuestion,
+  sendMessage,
+  trackAnswerButtonClick,
+  setCurrentHint,
+  setCurrentQuestion,
 }) => {
+  const lastAgentMessageIndex = messages.findLastIndex(msg => msg.from === 'agent');
+  const shouldShowQuickReply = !isTyping && (currentHint || currentQuestion) && lastAgentMessageIndex !== -1;
+
+  // Extract rendering of quick reply buttons to a separate element with more control
+  const renderQuickReplyButtons = () => {
+    if (!shouldShowQuickReply) return null;
+    
+    return (
+      <motion.div 
+        key="quick-reply-buttons"
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.5 }}
+        className="ml-10 mt-2"
+      >
+        <QuickReplyButtons 
+          currentQuestion={currentQuestion} 
+          hint={currentHint || undefined} 
+          onSelect={(value: string) => {
+            // Clear the quick reply state immediately when user clicks
+            setCurrentHint(null);
+            setCurrentQuestion(null);
+            
+            // Send the message
+            sendMessage(value);
+          }}
+          trackAnswerButtonClick={trackAnswerButtonClick} 
+        />
+      </motion.div>
+    );
+  };
+
   return (
     <div className="flex-1 flex flex-col relative z-[5] bg-transparent overflow-hidden">
       <div className="h-[180px] flex-shrink-0">
@@ -209,32 +253,36 @@ const ChatBody: FC<ChatBodyProps> = ({
         }}
       >
         <AnimatePresence>
-          {messages.map((message) => (
-            <motion.div
-              key={message.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className={`flex ${message.from === 'agent' ? 'justify-start' : 'justify-end'} items-end gap-2`}
-            >
-              {message.from === 'agent' && (
-                <img src={config.agent.avatar} alt="Agent" className="w-8 h-8 rounded-full" />
-              )}
-              <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-md ${
-                message.from === 'agent'
-                  ? 'bg-white/90 text-black rounded-bl-none'
-                  : 'bg-gradient-to-br from-blue-500/[.90] to-purple-500/[.90] text-white rounded-br-none'
-              }`}>
-                <div className={`prose prose-sm max-w-none break-words ${message.from === 'user' ? 'text-white' : ''}`}>
-                  <ReactMarkdown>{message.text}</ReactMarkdown>
-                </div>
-                {message.sentAt && (
-                  <div className={`text-[10px] mt-1 ${message.from === 'agent' ? 'text-gray-500' : 'text-white/90'}`}>
-                    {new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
+          {messages.map((message, index) => (
+            <React.Fragment key={message.id}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className={`flex ${message.from === 'agent' ? 'justify-start' : 'justify-end'} items-end gap-2`}
+              >
+                {message.from === 'agent' && (
+                  <img src={config.agent.avatar} alt="Agent" className="w-8 h-8 rounded-full" />
                 )}
-              </div>
-            </motion.div>
+                <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-md ${
+                  message.from === 'agent'
+                    ? 'bg-white/90 text-black rounded-bl-none'
+                    : 'bg-gradient-to-br from-blue-500/[.90] to-purple-500/[.90] text-white rounded-br-none'
+                }`}>
+                  <div className={`prose prose-sm max-w-none break-words ${message.from === 'user' ? 'text-white' : ''}`}>
+                    <ReactMarkdown>{message.text}</ReactMarkdown>
+                  </div>
+                  {message.sentAt && (
+                    <div className={`text-[10px] mt-1 ${message.from === 'agent' ? 'text-gray-500' : 'text-white/90'}`}>
+                      {new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+              
+              {/* Only show quick reply buttons once after the very last agent message */}
+              {shouldShowQuickReply && index === lastAgentMessageIndex && index === messages.length - 1 && !isTyping && renderQuickReplyButtons()}
+            </React.Fragment>
           ))}
           {/* Typing indicator as agent bubble */}
           {isTyping && (
@@ -259,60 +307,29 @@ const ChatBody: FC<ChatBodyProps> = ({
 
 // NEW: TimerSection Component
 interface TimerSectionProps {
-  isTyping: boolean;
-  currentHint: QuickReplyHint | null;
-  currentQuestion: string | null;
-  sendMessage: (text: string) => Promise<void>;
   showOffer: boolean;
   qualified: boolean;
   onOfferExpire: () => void;
   savings: number;
-  trackAnswerButtonClick?: (optionId: string, optionText: string) => void;
   analytics?: {
     trackIncentiveOffered: (incentiveType: string) => void;
     trackIncentiveExpired: (incentiveType: string) => void;
     trackIncentiveAccepted: (incentiveType: string) => void;
   };
-  setCurrentHint: (hint: QuickReplyHint | null) => void;
-  setCurrentQuestion: (question: string | null) => void;
   tourBooked: boolean;
   onPromptTour: () => void;
 }
 const TimerSection: FC<TimerSectionProps> = ({
-  isTyping,
-  currentHint,
-  currentQuestion,
-  sendMessage,
   showOffer,
   qualified,
   onOfferExpire,
   savings,
-  trackAnswerButtonClick,
   analytics,
-  setCurrentHint,
-  setCurrentQuestion,
   tourBooked,
   onPromptTour
 }) => {
   return (
     <div className="relative z-10 bg-white/80 backdrop-blur-sm">
-      {!isTyping && (currentHint || currentQuestion) && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}>
-          <QuickReplyButtons 
-            currentQuestion={currentQuestion} 
-            hint={currentHint || undefined} 
-            onSelect={(value: string) => {
-              // Clear the quick reply state immediately when user clicks
-              setCurrentHint(null);
-              setCurrentQuestion(null);
-              
-              // Send the message
-              sendMessage(value);
-            }}
-            trackAnswerButtonClick={trackAnswerButtonClick} 
-          />
-        </motion.div>
-      )}
       <AnimatePresence>
         {showOffer && !qualified && (
           <CountdownOffer 
@@ -324,6 +341,9 @@ const TimerSection: FC<TimerSectionProps> = ({
               trackIncentiveExpired: analytics?.trackIncentiveExpired,
               trackIncentiveAccepted: analytics?.trackIncentiveAccepted
             }}
+            tourBooked={tourBooked}
+            onPromptTour={onPromptTour}
+            onClose={onOfferExpire}
           />
         )}
       </AnimatePresence>
@@ -429,6 +449,7 @@ const ChatModal: FC<ChatModalProps> = ({
   const [showOffer, setShowOffer] = useState(false);
   const [offerExpired, setOfferExpired] = useState(false);
   const [showSessionEndedOverlay, setShowSessionEndedOverlay] = useState(false);
+  const [tourBooked, setTourBooked] = useState(false);
   
   // Modal states for new components
   const [showContactForm, setShowContactForm] = useState(false);
@@ -454,6 +475,9 @@ const ChatModal: FC<ChatModalProps> = ({
   // Add these state variables near the top with other useState calls
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [turnId, setTurnId] = useState(0);
+
+  // Add this state near the other state variables in ChatModal
+  const [afterTypingCallback, setAfterTypingCallback] = useState<(() => void) | null>(null);
 
   // Determine video player background - now always black when session is active
   const videoPlayerBgColor = akoolSession ? '#222' : 'white';
@@ -911,8 +935,8 @@ const ChatModal: FC<ChatModalProps> = ({
       case 'Bedroom_size':
         return {
           type: QuickReplyType.MULTIPLE_CHOICE,
-          options: ['1 BR', '2 BR', '3 BR'],
-          placeholder: 'What size apartment are you looking for?'
+          options: ['1BR', '2BR', '3BR'],
+          placeholder: 'How many bedrooms would you like?'
         };
         
       case 'Calendar':
@@ -1006,9 +1030,24 @@ const ChatModal: FC<ChatModalProps> = ({
     }
   };
 
+  // Helper function to scroll chat to bottom
+  const scrollToBottom = () => {
+    if (containerRef.current) {
+      // Use setTimeout to ensure the DOM has updated
+      setTimeout(() => {
+        containerRef.current!.scrollTop = containerRef.current!.scrollHeight;
+      }, 0);
+    }
+  };
+
   // sendMessage function: decides whether to send to backend agent or AKOOL
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
+    
+    // Clear any existing hints immediately to prevent flashing
+    setCurrentHint(null);
+    setCurrentQuestion(null);
+    setAfterTypingCallback(null);
     
     // NEW: Update activity tracking
     updateActivity('user_message');
@@ -1048,7 +1087,12 @@ const ChatModal: FC<ChatModalProps> = ({
       }
       isSendingRef.current = true;
       
-      setIsTyping(true); // Show typing indicator for LLM/AKOOL
+      // Add a slight delay before showing typing indicator to make it feel more natural
+      setTimeout(() => {
+        setIsTyping(true); // Show typing indicator for LLM/AKOOL
+        scrollToBottom(); // Scroll to see typing indicator
+      }, 1200); // 1.2 second delay for a more natural feel
+
       const localAgoraClient = agoraClientRef.current;
       if (typeof (localAgoraClient as any).sendStreamMessage !== 'function') {
         console.error('ChatModal: sendStreamMessage method does not exist on Agora client.');
@@ -1104,7 +1148,7 @@ const ChatModal: FC<ChatModalProps> = ({
                     key => data.final_variables_update[key] === true
                   );
                   
-                  if (activeVariable) {
+                  if (activeVariable && !isTyping) { // Only set when not typing
                     setCurrentQuestion(activeVariable);
                     console.log("📝 Active question:", activeVariable);
                     
@@ -1115,9 +1159,28 @@ const ChatModal: FC<ChatModalProps> = ({
                       console.log("💡 Quick reply hint:", hint);
                     }
                   } else {
-                    // No active variables - clear quick replies
-                    setCurrentQuestion(null);
-                    setCurrentHint(null);
+                    // Store the activeVariable for later use when typing finishes
+                    if (activeVariable) {
+                      const pendingVariable = activeVariable;
+                      const pendingHint = getQuickReplyHint(activeVariable);
+                      
+                      // Set a callback to be executed after typing finishes
+                      const setHintsAfterTyping = () => {
+                        if (pendingVariable) {
+                          setCurrentQuestion(pendingVariable);
+                          if (pendingHint) {
+                            setCurrentHint(pendingHint);
+                          }
+                        }
+                      };
+                      
+                      // Store this callback to be used when typing finishes
+                      setAfterTypingCallback(() => setHintsAfterTyping);
+                    } else {
+                      // No active variables - clear quick replies
+                      setCurrentQuestion(null);
+                      setCurrentHint(null);
+                    }
                   }
                 }
               } catch (parseError) {
@@ -1163,7 +1226,11 @@ const ChatModal: FC<ChatModalProps> = ({
   
   // Extracted backend posting logic
   const postTextToBackendAgent = async (text: string, originalUserMessageId: string) => {
-    setIsTyping(true); // Show backend agent typing indicator
+    // Add a slight delay before showing typing indicator to make it feel more natural
+    setTimeout(() => {
+      setIsTyping(true); // Show backend agent typing indicator
+      scrollToBottom(); // Scroll to see typing indicator
+    }, 1200); // 1.2 second delay for a more natural feel
     
     // NEW: Track activity for backend agent interaction
     updateActivity('backend_agent_query');
@@ -1226,9 +1293,36 @@ const ChatModal: FC<ChatModalProps> = ({
       if (stateRes.ok) {
         const data = await stateRes.json();
         setQualified(data.qualified ?? false);
-        setCurrentQuestion(data.current_question);
         setAgentState(data.agentState);
-        if (data.hint) { setCurrentHint(data.hint); } else { setCurrentHint(null); }
+        
+        // Only set up hints if we have a question or hint
+        if (data.current_question || data.hint) {
+          const pendingQuestion = data.current_question;
+          const pendingHint = data.hint || (data.current_question ? getQuickReplyHint(data.current_question) : null);
+          
+          console.log('Setting up pending hint for after typing:', pendingQuestion, pendingHint);
+          
+          // Set a callback to be executed after typing finishes
+          const setHintsAfterTyping = () => {
+            console.log('Applying pending hint after typing:', pendingQuestion, pendingHint);
+            if (pendingQuestion) {
+              setCurrentQuestion(pendingQuestion);
+            }
+            if (pendingHint) {
+              setCurrentHint(pendingHint);
+            }
+          };
+          
+          // Store this callback to be used when typing finishes
+          setAfterTypingCallback(() => setHintsAfterTyping);
+        } else {
+          // No hints needed - make sure they're cleared
+          setAfterTypingCallback(() => {
+            setCurrentQuestion(null);
+            setCurrentHint(null);
+          });
+        }
+        
         if (data.savings && data.savings > savings) {
             const startValue = savings; const endValue = data.savings; const duration = 1000; const startTime = Date.now();
             const animateSavings = () => { const now = Date.now(); const progress = Math.min((now - startTime) / duration, 1); const currentValue = Math.floor(startValue + (endValue - startValue) * progress); setSavings(currentValue); if (progress < 1) requestAnimationFrame(animateSavings); };
@@ -1387,7 +1481,26 @@ const ChatModal: FC<ChatModalProps> = ({
     };
   }, [analytics, sessionStartTime, messages.length, inactivityTimeout]);
 
-  const [tourBooked, setTourBooked] = useState(false);
+  // Add this effect to handle the callback when typing is finished with debounce
+  useEffect(() => {
+    if (!isTyping && afterTypingCallback) {
+      // Add a small delay before executing the callback to ensure typing has fully completed
+      // This helps prevent the quick reply hints from flashing or appearing prematurely
+      const timer = setTimeout(() => {
+        // Execute the callback
+        afterTypingCallback();
+        // Clear the callback
+        setAfterTypingCallback(null);
+      }, 200); // 200ms delay before showing the hints
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isTyping, afterTypingCallback]);
+
+  // Modify the existing scroll effect to be more comprehensive
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]); // Scroll when messages change or typing state changes
 
   return (
     <div className="fixed bottom-20 right-6 z-50">
@@ -1425,21 +1538,20 @@ const ChatModal: FC<ChatModalProps> = ({
           config={config}
           isTyping={isTyping}
           containerRef={containerRef}
-        />
-
-        <TimerSection
-          isTyping={isTyping}
           currentHint={currentHint}
           currentQuestion={currentQuestion}
           sendMessage={sendMessage}
+          trackAnswerButtonClick={analytics.trackAnswerButtonClick}
+          setCurrentHint={setCurrentHint}
+          setCurrentQuestion={setCurrentQuestion}
+        />
+
+        <TimerSection
           showOffer={showOffer}
           qualified={qualified}
           onOfferExpire={handleOfferExpire}
           savings={savings}
-          trackAnswerButtonClick={analytics.trackAnswerButtonClick}
           analytics={analytics}
-          setCurrentHint={setCurrentHint}
-          setCurrentQuestion={setCurrentQuestion}
           tourBooked={tourBooked}
           onPromptTour={() => setShowTourBooking(true)}
         />
