@@ -365,7 +365,7 @@ interface MessagingInputProps {
   inputText: string;
   setInputText: (text: string) => void;
   sendMessage: (text: string) => Promise<void>;
-  akoolSession: AkoolSessionType | null;
+  akoolSession?: AkoolSessionType | null;
   isAgoraConnected: boolean;
   isDialogueModeReady: boolean;
   agentState: string | null;
