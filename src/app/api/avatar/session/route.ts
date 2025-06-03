@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 
 // Environment variables for API credentials
 // Store these securely in your .env.local file
-const AKOOL_CLIENT_ID = process.env.AKOOL_CLIENT_ID || '57Vdo8P9OCtDwCY3Ey+rbg==';
-const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY || 'ryppKng8Y/mXDU+6ofoPu2IpABVR0mhG';
+const AKOOL_CLIENT_ID = process.env.AKOOL_CLIENT_ID
+const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
 
 // Types for API responses
 interface AvatarSessionResponse {
