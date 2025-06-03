@@ -4,6 +4,7 @@ import { X, MessageSquare, Phone, Mail, Star, Volume2, Mic, MicOff } from 'lucid
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from 'canvas-confetti';
 import QuickReplyButtons, { QuickReplyHint, QuickReplyType } from "@/components/ui/QuicklyReplyButtons";
 import FloatingBanner from "@/components/ui/FloatingBanner";
 import CountdownOffer from "@/components/ui/CountdownOffer";
@@ -207,7 +208,7 @@ const ChatBody: FC<ChatBodyProps> = ({
   sendMessage,
   trackAnswerButtonClick,
   setCurrentHint,
-  setCurrentQuestion,
+  setCurrentQuestion
 }) => {
   const lastAgentMessageIndex = messages.findLastIndex(msg => msg.from === 'agent');
   const shouldShowQuickReply = !isTyping && (currentHint || currentQuestion) && lastAgentMessageIndex !== -1;
@@ -441,7 +442,6 @@ const ChatModal: FC<ChatModalProps> = ({
   const [agentState, setAgentState] = useState<string | null>(null);
   const [savings, setSavings] = useState(0);
   const [qualified, setQualified] = useState(false);
-  const [showFloatingBanner, setShowFloatingBanner] = useState(false);
   const [showSparkles, setShowSparkles] = useState(false);
   const [localUnreadCount, setLocalUnreadCount] = useState(unreadCount);
   const [showOffer, setShowOffer] = useState(false);
@@ -1239,11 +1239,52 @@ const ChatModal: FC<ChatModalProps> = ({
 
                 // ✅ NEW: Capture final qualification data
                 if (data.completed_reply && data.is_qualified !== undefined) {
+                  console.log('ChatModal: LLM qualification detected:', data.is_qualified);
                   // Update lead data with qualification results
                   updateConversation({
                     is_qualified: data.is_qualified,
                     kb_pending: data.kb_pending
                   });
+                  
+                  // NEW: Trigger qualification banner if qualified
+                  if (data.is_qualified === true) {
+                    setQualified(true);
+                    setShowSparkles(true);
+                    
+                    // Extract and store user information from conversation
+                    const nameMatch = llmResponse.match(/\b([A-Z][a-z]+ [A-Z][a-z]+)\b/);
+                    if (nameMatch) {
+                      const fullName = nameMatch[1];
+                      const [firstName, lastName] = fullName.split(' ');
+                      setUserName(firstName);
+                      
+                      // Update lead data with extracted name
+                      updateUser({
+                        first_name: firstName,
+                        last_name: lastName || ''
+                      });
+                    }
+                    
+                    // Extract other qualification info from data if available
+                    if (data.data?.final_summary) {
+                      const summary = data.data.final_summary;
+                      
+                      // Update conversation data with any extracted information
+                      updateConversation({
+                        is_qualified: true,
+                        ai_intent_summary: summary.ai_intent_summary
+                      });
+                    }
+                    
+                    // Trigger confetti effect
+                    setTimeout(() => {
+                      confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.3 }
+                      });
+                    }, 500);
+                  }
                 }
               } catch (parseError) {
                 // ignore parsing errors
@@ -1385,10 +1426,14 @@ const ChatModal: FC<ChatModalProps> = ({
             const animateSavings = () => { const now = Date.now(); const progress = Math.min((now - startTime) / duration, 1); const currentValue = Math.floor(startValue + (endValue - startValue) * progress); setSavings(currentValue); if (progress < 1) requestAnimationFrame(animateSavings); };
           requestAnimationFrame(animateSavings);
         }
-        if (data.qualified && !showFloatingBanner) { 
-          setShowFloatingBanner(true); 
+        if (data.qualified && !showSparkles) { 
           setShowSparkles(true); 
           setTimeout(() => setShowSparkles(false), 2000);
+          
+          // Set the user's name for the banner
+          const firstName = data.user_info?.full_name ? data.user_info.full_name.split(' ')[0] : 
+                           leadData.user.first_name || "there";
+          setUserName(firstName);
           
           // Track incentive acceptance when someone qualifies
           analytics.trackIncentiveAccepted('qualification_bonus');
@@ -1570,6 +1615,73 @@ const ChatModal: FC<ChatModalProps> = ({
     scrollToBottom();
   }, [messages, isTyping]); // Scroll when messages change or typing state changes
 
+  // Add these new state variables
+  const [isPreLeaseSigned, setIsPreLeaseSigned] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  // Add this new function to handle PDF download
+  const handleSignPrequalificationPDF = async () => {
+    try {
+      // Create data object for PDF generation
+      const userData = {
+        fullName: leadData.user.first_name ? `${leadData.user.first_name} ${leadData.user.last_name || ''}`.trim() : 'Prospective Resident',
+        moveInDate: leadData.conversation.move_in_date || 'Flexible',
+        apartmentSize: leadData.conversation.apartment_size_preference || 'Studio',
+        incomeQualified: true, // They are qualified based on income
+        evictionStatus: false // No eviction history
+      };
+      
+      setUserName(userData.fullName.split(' ')[0]); // Set first name for congrats message
+
+      // Call the API to generate and download PDF
+      const response = await fetch('/api/generate-prelease', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+      
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pre-qualification-${userData.fullName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      // Update state
+      setIsPreLeaseSigned(true);
+      
+      // Track event
+      analytics.trackIncentiveAccepted('pre_qualification_form');
+      
+      // Update the conversation data with pre_lease_signed flag
+      updateConversation({
+        is_qualified: true // Using existing property since pre_lease_signed isn't available
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error("Failed to download the prequalification form. Please try again.");
+      return false;
+    }
+  };
+
   return (
     <div className="fixed bottom-20 right-6 z-50">
       {akoolSessionError && (
@@ -1613,6 +1725,17 @@ const ChatModal: FC<ChatModalProps> = ({
           setCurrentHint={setCurrentHint}
           setCurrentQuestion={setCurrentQuestion}
         />
+
+        {/* CONDITIONAL BANNER - SIMPLE */}
+        {qualified && !isPreLeaseSigned && (
+          <div className="absolute top-20 left-4 right-4 z-50">
+            <FloatingBanner
+              onClickCTA={handleSignPrequalificationPDF}
+              isPrequalified={qualified}
+              userName={userName || "Test User"}
+            />
+          </div>
+        )}
 
         <TimerSection
           showOffer={showOffer}
@@ -1674,21 +1797,6 @@ const ChatModal: FC<ChatModalProps> = ({
           }}
         />
       </div>
-
-      <AnimatePresence>
-        {showFloatingBanner && qualified && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="mt-2"
-          >
-            <FloatingBanner
-              onClickCTA={() => setShowFloatingBanner(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Contact Form Modal */}
       <ContactFormModal

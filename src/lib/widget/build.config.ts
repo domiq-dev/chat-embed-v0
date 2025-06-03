@@ -8,7 +8,7 @@ export default defineConfig({
   outDir: 'public',
   format: ['iife'],
   minify: true,
-  clean: true,
+  clean: false,
   dts: false,
   outExtension({ format }) {
     return {
