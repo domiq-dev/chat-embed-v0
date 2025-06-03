@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Ensure dates are properly serialized for JSON
     const serializedData = serializeDates(leadData);
     
-    console.log('📤 Forwarding lead to FastAPI...');
+    ;
     
     // Forward to Python API
     const response = await fetch(`${PYTHON_API_URL}/api/leads/`, {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
     
     const result = await response.json();
-    console.log('✅ Lead created successfully:', result.lead_id);
+    ;
     
     return NextResponse.json(result);
     
@@ -103,8 +103,8 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    console.log('🔍 Fetching leads from database API...');
-    console.log(`📡 Request URL: ${DATABASE_API_URL}/api/v1/conversations?expand=user,property_manager`);
+    ;
+    ;
     
     // Fetch conversations with expanded user data
     const response = await axios.get(`${DATABASE_API_URL}/api/v1/conversations?expand=user,property_manager`, {
@@ -115,26 +115,26 @@ export async function GET() {
       }
     });
     
-    console.log(`✅ Got ${response.data.items?.length || 0} conversations from database`);
+    ;
     
     if (!response.data.items || response.data.items.length === 0) {
       console.warn('⚠️ No conversations found in the database API response');
       return NextResponse.json([]);
     }
     
-    console.log('📦 First conversation sample:', JSON.stringify(response.data.items[0]).substring(0, 150) + '...');
+    ;
     
     // Transform the data to match our frontend model
     const leads = await Promise.all(
       (response.data.items || []).map(async (conversation: any) => {
         try {
           // Fetch activities for this conversation
-          console.log(`🔍 Fetching activities for conversation ${conversation.id}...`);
+          ;
           const activitiesResponse = await axios.get(
             `${DATABASE_API_URL}/api/v1/conversations/${conversation.id}/activities`
           );
           
-          console.log(`✅ Got ${activitiesResponse.data.items?.length || 0} activities for conversation ${conversation.id}`);
+          ;
           
           return mapToLead(
             conversation,
@@ -149,7 +149,7 @@ export async function GET() {
       })
     );
     
-    console.log(`🎉 Transformed ${leads.length} leads for frontend`);
+    ;
     return NextResponse.json(leads);
   } catch (error) {
     console.error('❌ Error fetching leads:', error);

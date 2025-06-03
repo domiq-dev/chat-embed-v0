@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     // Handle force-close-all requests (simplified)
     if (id === 'force-close-all') {
-      console.log(`[FORCE-CLOSE] Force closing sessions for avatar: ${avatar_id || 'all'}`);
+      ;
       
       // Just clear local data - don't overcomplicate with server calls
       const response = NextResponse.json({ 
@@ -56,11 +56,11 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`[CLOSE] Attempting to close AKOOL session: ${id}`);
+    ;
 
     // Get proper AKOOL token
     const token = await getAkoolToken();
-    console.log(`[CLOSE] Token acquired successfully for session: ${id}`);
+    ;
     
     const response = await fetch('https://openapi.akool.com/api/open/v4/liveAvatar/session/close', {
       method: 'POST',
@@ -72,17 +72,17 @@ export async function POST(request: Request) {
     });
 
     const responseData = await response.json();
-    console.log(`[CLOSE] AKOOL response for session ${id}:`, responseData);
+    ;
     
     if (responseData.code === 1000) {
-      console.log(`[CLOSE] ✅ Successfully closed AKOOL session: ${id}`);
+      ;
       return NextResponse.json({ success: true });
     } else {
       console.error(`[CLOSE] ❌ Failed to close AKOOL session ${id}:`, responseData);
       
       // Handle specific error cases gracefully
       if (responseData.message?.includes('unavailable') || responseData.msg?.includes('unavailable')) {
-        console.log(`[CLOSE] 🚨 AKOOL server unavailable for session ${id} - treating as success`);
+        ;
         return NextResponse.json({ 
           success: true, 
           warning: 'Server unavailable, session may auto-expire' 

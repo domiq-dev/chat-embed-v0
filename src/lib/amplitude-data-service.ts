@@ -264,16 +264,15 @@ class AmplitudeDataService {
 
   // Force close all active sessions
   forceCloseAllSessions() {
-    console.log(`🔄 Force closing ${this.activeRequests.size} active Amplitude API sessions`);
-    
+    // Force close all active requests
     this.activeRequests.forEach(controller => {
       if (!controller.signal.aborted) {
         controller.abort();
       }
     });
     
+    // Clear set
     this.activeRequests.clear();
-    console.log('✅ All Amplitude API sessions forcefully closed');
   }
 
   // Get status of active sessions

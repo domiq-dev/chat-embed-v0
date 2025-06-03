@@ -14,17 +14,17 @@ function ActivityPageContent() {
 
   // Function to force fallback to dummy data for testing
   const forceFallback = () => {
-    console.log('🔄 Forcing fallback to dummy data for testing');
+    ;
     setLeads(dummyLeads);
   };
 
   // Enhanced refresh function with loading state
   const handleRefresh = async () => {
-    console.log('🔄 Manually triggering refresh...');
+    ;
     setIsRefreshing(true);
     try {
       await refresh();
-      console.log(`✅ Refresh complete, loaded ${leads.length} leads`);
+      ;
     } catch (error) {
       console.error('❌ Refresh failed:', error);
     } finally {

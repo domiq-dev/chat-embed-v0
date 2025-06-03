@@ -45,13 +45,10 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     
     setIsLoading(true);
     try {
-      console.log('🔄 Refreshing leads data from API...');
       const leadsData = await fetchLeads();
-      console.log(`✅ Successfully fetched ${leadsData.length} leads from API`);
       
       if (!isUnmountedRef.current) {
         setLeads(leadsData);
-        console.log('💾 Updated leads state with fresh data');
       }
     } catch (error) {
       console.error('❌ Error fetching leads:', error);
@@ -63,7 +60,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
     } finally {
       if (!isUnmountedRef.current) {
         setIsLoading(false);
-        console.log('🏁 Finished refreshing leads data');
       }
     }
   };
@@ -166,11 +162,9 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
   };
 
   const forceCloseSession = () => {
-    console.log('🔄 Force closing lead context session...');
     
     // Abort any active fetch request
     if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
-      console.log('❌ Aborting active Amplitude API request');
       abortControllerRef.current.abort();
     }
     
@@ -189,7 +183,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
       console.warn('Could not force close Amplitude sessions:', error);
     }
     
-    console.log('✅ Lead context session forcefully closed');
   };
 
   const refreshAmplitudeData = async () => {
@@ -220,7 +213,6 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
 
       // Check if request was aborted
       if (signal.aborted) {
-        console.log('Amplitude data fetch was aborted');
         return;
       }
 
@@ -233,17 +225,15 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
             ...lead,
             amplitudeData: data[lead.id] || lead.amplitudeData
           })));
-
-          console.log('✅ Successfully updated Amplitude data for', Object.keys(data).length, 'leads');
         }
       } else {
         console.warn('Failed to fetch Amplitude data, using dummy data');
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        console.log('Amplitude data fetch was cancelled');
+        return;
       } else {
-        console.error('Error fetching Amplitude data:', error);
+        console.error('Failed to refresh Amplitude data:', error);
       }
     } finally {
       // Only update loading state if component is still mounted
@@ -261,15 +251,12 @@ export function LeadProvider({ children }: { children: React.ReactNode }) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      console.log('🧹 LeadProvider unmounting, cleaning up...');
       isUnmountedRef.current = true;
       
       // Abort any active request
       if (abortControllerRef.current && !abortControllerRef.current.signal.aborted) {
         abortControllerRef.current.abort();
       }
-      
-      console.log('✅ LeadProvider cleanup completed');
     };
   }, []);
 

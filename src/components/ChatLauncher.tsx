@@ -12,7 +12,7 @@ interface TokenResponse {
 }
 
 const AKOOL_OPENAPI_HOST = 'https://openapi.akool.com';
-const DEFAULT_SESSION_DURATION = 600; // 10 minutes
+const DEFAULT_SESSION_DURATION = 720; // 12 minutes
 const DEFAULT_AVATAR_ID = 'Alinna_background_st01_Domiq';
 
 const ChatLauncher = () => {
@@ -42,17 +42,14 @@ const ChatLauncher = () => {
 
   const closeCurrentSession = useCallback(async () => {
     if (currentSession && apiService) {
-      console.log("ChatLauncher: Closing AKOOL session:", currentSession._id);
       
       try {
         await apiService.closeSession(currentSession._id);
-        console.log("ChatLauncher: AKOOL session closed successfully.");
       } catch (err) {
         console.error("ChatLauncher: Error closing AKOOL session:", err);
       } finally {
         // Always clean up locally
         setCurrentSession(null);
-        console.log("ChatLauncher: Local session cleanup completed");
       }
     }
   }, [currentSession, apiService]);
@@ -63,7 +60,6 @@ const ChatLauncher = () => {
       // Check if this is a mailto or phone link navigation - don't close session for these
       const timeSinceClickAction = Date.now() - lastMailtoClickTime.current;
       if (timeSinceClickAction < 2000) { // Within 2 seconds of mailto/phone click
-        console.log('ChatLauncher: Ignoring beforeunload for recent mailto/phone click');
         return;
       }
       
@@ -95,7 +91,6 @@ const ChatLauncher = () => {
   useEffect(() => {
     return () => {
       if (currentSession && apiService) {
-        console.log("ChatLauncher: Component unmounting, closing session");
         apiService.closeSession(currentSession._id)
           .catch(err => console.error("Error closing session on unmount:", err));
       }
@@ -116,7 +111,6 @@ const ChatLauncher = () => {
         if (tokenData.error || !tokenData.token) {
           throw new Error(tokenData.error || 'AKOOL token not found in response');
         }
-        console.log("AKOOL Token fetched successfully for ChatLauncher");
         const service = new ApiService(AKOOL_OPENAPI_HOST, tokenData.token);
         setApiService(service);
       } catch (err) {
@@ -136,7 +130,6 @@ const ChatLauncher = () => {
 
     setIsCreatingSession(true);
     setSessionError(null);
-    console.log(`Creating AKOOL session for avatar: ${DEFAULT_AVATAR_ID}`);
     
     try {
       const sessionData = await apiService.createSession({ 
@@ -146,7 +139,6 @@ const ChatLauncher = () => {
       });
       
       setCurrentSession(sessionData);
-      console.log("AKOOL Session created successfully:", sessionData);
       
     } catch (err) {
       console.error('Error creating AKOOL session:', err);
@@ -154,7 +146,6 @@ const ChatLauncher = () => {
       
       // If avatar is busy, try force-close once and retry
       if (errorMessage.includes('currently busy') || errorMessage.includes('busy')) {
-        console.log('🚨 Avatar busy - attempting force close and retry...');
         setSessionError('Avatar busy. Clearing all sessions and retrying...');
         
         try {
@@ -171,12 +162,10 @@ const ChatLauncher = () => {
           
           if (response.ok) {
             const result = await response.json();
-            console.log('✅ Force close result:', result);
             
             // Wait 5 seconds for AKOOL to process the closures
             setTimeout(async () => {
               try {
-                console.log('🔄 Attempting retry after force close...');
                 const retrySessionData = await apiService.createSession({ 
                   avatar_id: DEFAULT_AVATAR_ID, 
                   duration: DEFAULT_SESSION_DURATION,
@@ -184,7 +173,6 @@ const ChatLauncher = () => {
                 });
                 setCurrentSession(retrySessionData);
                 setSessionError(null);
-                console.log("AKOOL Session created successfully on retry:", retrySessionData);
               } catch (retryErr) {
                 console.error('Retry failed:', retryErr);
                 setSessionError('Avatar still busy after cleanup. Please refresh the page.');
@@ -238,7 +226,6 @@ const ChatLauncher = () => {
     if (!currentSession) return;
 
     const sessionTimeout = setTimeout(() => {
-      console.log("ChatLauncher: Session approaching timeout, closing proactively");
       closeCurrentSession();
     }, (DEFAULT_SESSION_DURATION - 30) * 1000); // Close 30 seconds before expiry
 
@@ -254,7 +241,6 @@ const ChatLauncher = () => {
             <div style={{ marginTop: '10px' }}>
               <button 
                 onClick={() => {
-                  console.log('🔄 Manual page refresh triggered');
                   window.location.reload();
                 }}
                 style={{ 
@@ -274,8 +260,66 @@ const ChatLauncher = () => {
         </div>
       )}
 
-      {/* ChatModal card - Render if open, session exists, AND not in initial API creation phase. */}
-      {open && (
+      {/* Professional Loading Screen for ChatLauncher */}
+      {open && (isCreatingSession || !currentSession) && (
+        <div className="mb-3 shadow-xl rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 w-[360px] h-[625px] flex flex-col relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5"></div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-200/20 to-transparent rounded-full -mr-16 -mt-16"></div>
+          <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-purple-200/20 to-transparent rounded-full -ml-20 -mb-20"></div>
+          
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center justify-center h-full px-8 text-center">
+            {/* Logo/Brand Area */}
+            <div className="mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg">
+                <span className="text-white text-2xl font-bold">GO</span>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                Welcome to Grand Oaks
+              </h2>
+              <h3 className="text-lg text-gray-600 font-medium">
+                Luxury Apartments
+              </h3>
+            </div>
+
+            {/* Loading Animation */}
+            <div className="mb-6">
+              <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+            </div>
+
+            {/* Loading Messages */}
+            <div className="space-y-3">
+              <p className="text-lg font-semibold text-gray-800">
+                Connecting you with Ava
+              </p>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Your personal leasing assistant is being prepared.<br />
+                This will just take a moment...
+              </p>
+            </div>
+
+            {/* Features Preview */}
+            <div className="mt-8 space-y-2">
+              <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>Live Video Chat</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
+                <span>Instant Answers</span>
+              </div>
+              <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                <span>Tour Scheduling</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ChatModal card - Only render if open, session exists, AND not in initial API creation phase */}
+      {open && currentSession && !isCreatingSession && (
         <div className="mb-3" style={{ overflow: 'visible' }}>
           <ChatModal
             onClose={toggle}

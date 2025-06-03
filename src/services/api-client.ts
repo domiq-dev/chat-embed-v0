@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { Lead } from '@/lib/dummy-data';
 
 // Base API client
 const apiClient = axios.create({
@@ -11,37 +12,21 @@ const apiClient = axios.create({
 // Add response interceptor for debugging
 apiClient.interceptors.response.use(
   (response) => {
-    console.log(`✅ API Response [${response.config.url}]:`, {
-      status: response.status,
-      dataPreview: typeof response.data === 'object' 
-        ? Array.isArray(response.data) 
-          ? `Array(${response.data.length})`
-          : Object.keys(response.data).slice(0, 3).join(', ') + '...'
-        : response.data
-    });
     return response;
   },
   (error) => {
-    console.error(`❌ API Error [${error.config?.url || 'unknown'}]:`, {
-      message: error.message,
-      status: error.response?.status,
-      data: error.response?.data
-    });
     return Promise.reject(error);
   }
 );
 
 // Leads API
-export const fetchLeads = async () => {
-  console.log('📡 Fetching leads from API...');
+export const fetchLeads = async (): Promise<Lead[]> => {
   try {
-    const response = await apiClient.get('/leads');
-    console.log(`📊 Fetched ${response.data.length || 0} leads`);
+    const response = await apiClient.get<Lead[]>('/leads');
     return response.data;
   } catch (error) {
-    console.error('❌ Failed to fetch leads:', error);
-    // Re-throw to let the caller handle it
-    throw error;
+    console.error('Error fetching leads:', error);
+    return [];
   }
 };
 

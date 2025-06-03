@@ -7,7 +7,6 @@ import {
 
 // Simple tool to show the FAQ checklist
 export const showFAQTool = tool(({ state }: { state?: string }) => {
-  console.log("showFAQTool called - displaying leasing checklist");
   // Parse state
   let currentState: ConversationState;
   try {
@@ -32,7 +31,6 @@ export const showFAQTool = tool(({ state }: { state?: string }) => {
 
 // Simple tool to direct to booking page
 export const bookTourTool = tool(({ state }: { state?: string }) => {
-  console.log("bookTourTool called - directing to booking page");
 
   // Parse state
   let currentState: ConversationState;

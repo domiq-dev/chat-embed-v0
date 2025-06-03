@@ -80,7 +80,7 @@ export async function GET() {
         metadata = recovered;
         // Save the recovered metadata
         await writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2));
-        console.log('Recovered metadata for', recovered.length, 'orphaned files');
+        ;
       }
     }
     

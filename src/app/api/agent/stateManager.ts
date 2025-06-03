@@ -44,7 +44,7 @@ export const REQUIRED_INFO = ["full_name", "preferred_name", "apt_size", "move_i
 // Check if user is qualified
 export function checkIfQualified(state: ConversationState): boolean {
   const { age, income, eviction } = state.qualificationStatus;
-  console.log("THIS IS AGE", age)
+  
   return age === true && income === true && eviction === false;
 }
 
@@ -60,7 +60,7 @@ export function deriveUIHint(state: ConversationState): any {
   if (!state.shownFAQ && hasRequiredInfo) {
     return { type: "show_checklist", autoOpen: true };
   }
-    console.log("THIS IS UINOFFFFFFFFFFFFFFFFFFFFF", state.basicInfo)
+    
 
 
   // Show booking link if qualified and we haven't shown it yet

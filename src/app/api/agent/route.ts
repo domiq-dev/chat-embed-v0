@@ -109,7 +109,6 @@ Otherwise, return null for question_type.
     `;
 
     const response = await evaluator.invoke(prompt);
-    console.log("[ANALYZER] Raw response:", response.content);
 
     try {
       const result = JSON.parse(response.content.toString());
@@ -173,13 +172,6 @@ export async function POST(req: NextRequest) {
       console.error("[API] Failed to parse request body:", error);
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
-
-    console.log("[API] New request received:", {
-      messageCount: body.messages?.length || 0,
-      lastMessage: body.messages?.[body.messages.length-1]?.content || "No message",
-      userId: body.userId,
-      stateFetch: body.stateFetch
-    });
 
     const returnIntermediateSteps = body.stateFetch;
 
@@ -275,7 +267,6 @@ export async function POST(req: NextRequest) {
       }
     } else {
       // Non-streaming case for state updates
-      console.log("[API] Invoking agent for state updates");
 
       // Invoke the agent
       const result = await (agent as any).invoke(
@@ -298,9 +289,7 @@ export async function POST(req: NextRequest) {
           const markerMatch = lastAssistantMessage.content.match(/<!--QUESTION_TYPE:([a-z_]+)-->/);
           if (markerMatch) {
             currentQuestionFromMarker = markerMatch[1];
-            console.log("[API] Detected question type from marker:", currentQuestionFromMarker);
           } else {
-            console.log("[API] No question type marker found in response");
           }
         }
       }
@@ -309,7 +298,6 @@ export async function POST(req: NextRequest) {
       if (body.messages && body.messages.length > 0) {
         // Get latest user message
         const latestUserMessage = [...body.messages].reverse().find(m => m.role === "user");
-        console.log("[DEBUG] Latest user input:", latestUserMessage?.content);
 
         if (latestUserMessage && latestUserMessage.role === "user") {
           // Save user message to history
@@ -359,15 +347,11 @@ export async function POST(req: NextRequest) {
         .eq("id", conversation?.id);
 
       // Use the complete chat history from body.messages for analysis
-      console.log("[ANALYZER] Analyzing complete chat history with", body.messages.length, "messages");
 
       // Analyze conversation to extract information and qualification status
       const { basicInfo, qualificationInfo, isQualified, question_type } = await analyzeConversation(body.messages);
 
-      console.log("[ANALYZER] Extracted basic info:", basicInfo);
-      console.log("[ANALYZER] Qualification info:", qualificationInfo);
-      console.log("[ANALYZER] Is qualified:", isQualified);
-      console.log("[ANALYZER] Is qualified:", question_type);
+    
 
 
       // Update user information based on conversation analysis
@@ -383,7 +367,6 @@ export async function POST(req: NextRequest) {
       };
 
       // Save updated user info to DB
-      console.log("🔁 Updating user with:", updates);
       await updateUser(userId, updates);
 
       // Get fresh user data after updates
@@ -393,7 +376,6 @@ export async function POST(req: NextRequest) {
         .eq('id', userId)
         .single();
 
-      console.log("QUALIFIED???",freshUserData.is_qualified)
 
       // Determine UI hint based on conversation state
       let uiHint = null;
@@ -426,7 +408,6 @@ export async function POST(req: NextRequest) {
         }
         return message;
       });
-      console.log("CUREENT QUESTION IS", question_type)
       return NextResponse.json({
         messages: filteredMessages,
         userId: userId,
