@@ -585,11 +585,15 @@ const ChatModal: FC<ChatModalProps> = ({
     
     // NEW: Send lead data before closing
     try {
+      // Always try to send lead data on close (in case real-time submission failed)
       if (leadData.messages.length > 0 || leadData.user.email || leadData.user.phone) {
         await sendLeadData();
+        console.log("✅ Lead data saved on close");
+      } else {
+        console.log("ℹ️ No lead data to save");
       }
     } catch (error) {
-      console.error('Failed to save lead data:', error);
+      console.error('❌ Failed to save lead data on close:', error);
       // Continue with close even if save fails
     }
     
@@ -1640,6 +1644,25 @@ const ChatModal: FC<ChatModalProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]); // Scroll when messages change or typing state changes
+
+  // Add this after your existing useEffects, before the return statement:
+  const handleSendLeadData = async () => {
+    console.log("🚀 About to send lead data:", leadData);
+    try {
+      await sendLeadData();
+      console.log("✅ Lead data sent successfully");
+    } catch (error) {
+      console.error("❌ Failed to send lead data:", error);
+    }
+  };
+
+  // Call this when user provides email/phone (real-time submission)
+  useEffect(() => {
+    if (leadData.user.email || leadData.user.phone) {
+      console.log("🎯 Contact info detected, sending lead data...");
+      handleSendLeadData();
+    }
+  }, [leadData.user.email, leadData.user.phone]);
 
   return (
     <div className="fixed bottom-20 right-6 z-50">

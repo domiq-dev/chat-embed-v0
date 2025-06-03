@@ -4,9 +4,9 @@ import { mapToLead } from '@/lib/data-mappers';
 
 // Get the FastAPI URL from environment variables
 const PYTHON_API_URL = process.env.PYTHON_API_URL || 'http://localhost:8000';
-
+console.log('PYTHON_API_URL:', PYTHON_API_URL);
 // Get the database API URL from environment variables
-const DATABASE_API_URL = process.env.DATABASE_API_URL || 'http://127.0.0.1:8000';
+const DATABASE_API_URL = process.env.PYTHON_API_URL || 'http://127.0.0.1:8000';
 
 // Lead submission interface matching your FastAPI backend
 interface LeadSubmission {
@@ -57,45 +57,39 @@ function serializeDates(obj: any): any {
 }
 
 export async function POST(request: NextRequest) {
+  console.log('🚀 POST /api/leads called');
+  
   try {
-    const leadData: LeadSubmission = await request.json();
+    const body = await request.json();
+    console.log('📥 Request body:', JSON.stringify(body, null, 2));
     
-    // Ensure dates are properly serialized for JSON
-    const serializedData = serializeDates(leadData);
+    const serializedData = serializeDates(body);
+    console.log('📤 Sending to FastAPI:', `${PYTHON_API_URL}/api/leads/`);
     
-    console.log('📤 Forwarding lead to FastAPI...');
-    
-    // Forward to Python API
     const response = await fetch(`${PYTHON_API_URL}/api/leads/`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
       },
       body: JSON.stringify(serializedData),
-      signal: AbortSignal.timeout(30000) // 30 second timeout
     });
+
+    console.log('📡 FastAPI response status:', response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ FastAPI error:', errorText);
-      throw new Error(`FastAPI error: ${response.status} - ${errorText}`);
+      console.error('❌ FastAPI error response:', errorText);
+      throw new Error(`FastAPI returned ${response.status}: ${errorText}`);
     }
-    
+
     const result = await response.json();
-    console.log('✅ Lead created successfully:', result.lead_id);
-    
+    console.log('✅ FastAPI success:', result);
     return NextResponse.json(result);
     
   } catch (error) {
-    console.error('❌ Error creating lead:', error);
-    
+    console.error('❌ POST /api/leads error:', error);
     return NextResponse.json(
-      { 
-        success: false,
-        error: 'Failed to create lead',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
+      { error: 'Failed to create lead', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
