@@ -1,4 +1,3 @@
-
 # 🔧 Team Coding Protocol
 
 This document outlines the required practices for contributing to the codebase. Follow these rules strictly to maintain code quality, avoid duplication, and streamline collaboration.
@@ -38,3 +37,24 @@ At the end of each push or pull request, include a **cursor log**:
 - 🔐 **Fengli and Patrick can merge into the `main` branch before RAG deployment.**
 - After RAG is live, **Fengli, Nimil, and Patrick will review all code before merges.**
 - Use **pull requests only** — absolutely **no direct pushes to `main`**.
+
+---
+
+## 🚀 Widget for Apartment Websites
+
+To add the chat widget to your apartment website, add these two script tags:
+
+```html
+<script>
+  window.domIQChat = {
+    config: {
+      propertyId: 'YOUR_PROPERTY_ID'
+    }
+  };
+</script>
+<script async src="https://chat.domiq.ai/widget.min.js"></script>
+```
+
+Replace `YOUR_PROPERTY_ID` with your actual property ID.
+
+The widget will appear in the bottom-right corner of your website.

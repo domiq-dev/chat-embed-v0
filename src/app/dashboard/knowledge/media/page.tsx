@@ -56,7 +56,7 @@ export default function MediaPage() {
               ...item,
               uploadedAt: new Date(item.uploadedAt),
             }));
-            console.log('Loaded from API:', items.length, 'items');
+            ;
             setMediaItems(items);
             
             // Also save to localStorage as backup
@@ -67,11 +67,11 @@ export default function MediaPage() {
         }
         
         // Fallback to localStorage
-        console.log('API failed, trying localStorage');
+        ;
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (stored) {
           const items = deserializeMediaItems(stored);
-          console.log('Loaded from localStorage:', items.length, 'items');
+          ;
           setMediaItems(items);
           
           // Sync to API
@@ -101,7 +101,7 @@ export default function MediaPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ metadata }),
       });
-      console.log('Synced to API:', items.length, 'items');
+      ;
     } catch (error) {
       console.error('Failed to sync to API:', error);
     }
@@ -114,7 +114,7 @@ export default function MediaPage() {
         // Save to localStorage
         const serialized = serializeMediaItems(mediaItems);
         localStorage.setItem(LOCAL_STORAGE_KEY, serialized);
-        console.log('Saved to localStorage:', mediaItems.length, 'items');
+        ;
         
         // Save to API
         syncToAPI(mediaItems);

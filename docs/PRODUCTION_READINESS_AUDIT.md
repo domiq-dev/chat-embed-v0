@@ -6,8 +6,8 @@
 - **File**: `src/app/api/avatar/session/route.ts`
 - **Issue**: Contains fallback API keys in source code
 ```typescript
-const AKOOL_CLIENT_ID = process.env.AKOOL_CLIENT_ID || '57Vdo8P9OCtDwCY3Ey+rbg==';
-const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY || 'ryppKng8Y/mXDU+6ofoPu2IpABVR0mhG';
+const AKOOL_CLIENT_ID = process.env.AKOOL_CLIENT_ID
+const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
 ```
 - **Risk**: API credentials exposed in source code, security vulnerability
 - **Fix**: Remove fallbacks, ensure environment variables are required

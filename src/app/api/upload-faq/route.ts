@@ -27,7 +27,7 @@
 //       return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 });
 //     }
 //
-//     console.log('Knowledgebase updated successfully.');
+//     ;
 //     return NextResponse.json({ status: 'uploaded' });
 //   } catch (error) {
 //     console.error('Upload error:', error);

@@ -4,6 +4,7 @@ import { X, MessageSquare, Phone, Mail, Star, Volume2, Mic, MicOff } from 'lucid
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from 'canvas-confetti';
 import QuickReplyButtons, { QuickReplyHint, QuickReplyType } from "@/components/ui/QuicklyReplyButtons";
 import FloatingBanner from "@/components/ui/FloatingBanner";
 import CountdownOffer from "@/components/ui/CountdownOffer";
@@ -167,7 +168,6 @@ const ChatHeader: FC<ChatHeaderProps> = ({ config, onClose, headerRef, lastMailt
           whileHover={{ scale: 1.05 }} 
           whileTap={{ scale: 0.95 }} 
           onClick={() => {
-            console.log('ChatModal: Email button clicked - opening mailto');
             analytics.trackEmailOfficeClick('header');
             if (lastMailtoClickTime) {
               lastMailtoClickTime.current = Date.now();
@@ -208,7 +208,7 @@ const ChatBody: FC<ChatBodyProps> = ({
   sendMessage,
   trackAnswerButtonClick,
   setCurrentHint,
-  setCurrentQuestion,
+  setCurrentQuestion
 }) => {
   const lastAgentMessageIndex = messages.findLastIndex(msg => msg.from === 'agent');
   const shouldShowQuickReply = !isTyping && (currentHint || currentQuestion) && lastAgentMessageIndex !== -1;
@@ -442,7 +442,6 @@ const ChatModal: FC<ChatModalProps> = ({
   const [agentState, setAgentState] = useState<string | null>(null);
   const [savings, setSavings] = useState(0);
   const [qualified, setQualified] = useState(false);
-  const [showFloatingBanner, setShowFloatingBanner] = useState(false);
   const [showSparkles, setShowSparkles] = useState(false);
   const [localUnreadCount, setLocalUnreadCount] = useState(unreadCount);
   const [showOffer, setShowOffer] = useState(false);
@@ -529,9 +528,7 @@ const ChatModal: FC<ChatModalProps> = ({
       }
     };
     
-    console.log("ChatModal: Setting avatar parameters:", message);
     await client.sendStreamMessage(JSON.stringify(message), false);
-    console.log("ChatModal: Avatar parameters set successfully");
   };
 
   // Helper function to send message to avatar
@@ -549,9 +546,7 @@ const ChatModal: FC<ChatModalProps> = ({
       pld: { text: text }
     };
     
-    console.log("ChatModal: Sending message to avatar:", message);
     await client.sendStreamMessage(JSON.stringify(message), false);
-    console.log("ChatModal: Message sent to avatar successfully");
   };
 
   // NEW: Activity tracking and session management for 18/18 analytics completion
@@ -604,7 +599,6 @@ const ChatModal: FC<ChatModalProps> = ({
   useEffect(() => {
     import('agora-rtc-sdk-ng').then(module => {
       setAgoraRTCModule(module.default);
-      console.log("Agora RTC SDK loaded for ChatModal");
     }).catch(err => {
       console.error("Failed to load Agora RTC SDK in ChatModal:", err);
       setAkoolSessionError("Agora SDK failed to load. Video features disabled.");
@@ -622,7 +616,6 @@ const ChatModal: FC<ChatModalProps> = ({
   useEffect(() => {
     if (!AgoraRTCModule || !akoolSession?.credentials) {
       if (agoraClientRef.current && isAgoraConnected) {
-        console.log("ChatModal: Leaving Agora channel due to missing module or session.");
         agoraClientRef.current.leave()
           .then(() => { 
             setIsAgoraConnected(false); 
@@ -641,7 +634,6 @@ const ChatModal: FC<ChatModalProps> = ({
       return;
     }
 
-    console.log("ChatModal: AgoraRTCModule and akoolSession credentials present. Setting up Agora client.");
     setIsAvatarBuffering(true);
     setShowSessionEndedOverlay(false);
     setHasDeliveredOpening(false); // Reset opening statement flag for new session
@@ -665,7 +657,6 @@ const ChatModal: FC<ChatModalProps> = ({
 
     const handleUserPublished = async (user: any, mediaType: 'video' | 'audio') => {
       if (!currentActiveClient) return;
-      console.log(`ChatModal: Agora user ${user.uid} published ${mediaType}`);
       try {
         await currentActiveClient.subscribe(user, mediaType); // Subscribe first
 
@@ -675,13 +666,11 @@ const ChatModal: FC<ChatModalProps> = ({
 
           if (videoTrack && videoPlayerDiv) {
             const firstFrameDecodedHandler = () => {
-              console.log(`ChatModal: Video track first-frame-decoded for user ${user.uid}.`);
               setHasVideoStarted(true);
               setIsAvatarBuffering(false);
               setShowSessionEndedOverlay(false);
             };
             videoTrack.once('first-frame-decoded', firstFrameDecodedHandler);
-            console.log(`ChatModal: Playing remote video track in ${AKOOL_PLAYER_ID} for user ${user.uid}`);
             videoTrack.play(videoPlayerDiv);
           } else {
             const warningMsg = `ChatModal: Video track or player div ('${AKOOL_PLAYER_ID}') not found for user ${user.uid}.`;
@@ -691,7 +680,6 @@ const ChatModal: FC<ChatModalProps> = ({
           }
         }
         if (mediaType === 'audio') {
-          console.log(`ChatModal: Remote user ${user.uid} published audio. Attempting to play.`);
           if (user.audioTrack) {
             (user.audioTrack as IRemoteAudioTrack).play();
           } else {
@@ -707,11 +695,7 @@ const ChatModal: FC<ChatModalProps> = ({
     };
 
     const handleUserUnpublished = (user: any, mediaType: 'video' | 'audio') => {
-      console.log(`ChatModal: Agora user ${user.uid} unpublished ${mediaType}`);
-      console.log('ChatModal: Current connection state:', agoraClientRef.current?.connectionState);
-      console.log('ChatModal: Current video started state:', hasVideoStarted);
       if (mediaType === 'video') {
-        console.log('ChatModal: Video unpublished - ending session');
         setHasVideoStarted(false);
         setShowSessionEndedOverlay(true);
         setIsAvatarBuffering(false);
@@ -721,10 +705,8 @@ const ChatModal: FC<ChatModalProps> = ({
     const handleStreamMessage = (uid: UID, data: Uint8Array | string) => {
       try {
         const messageStr = typeof data === 'string' ? data : new TextDecoder().decode(data as Uint8Array);
-        console.log('ChatModal: Received stream message from UID:', uid, 'Data:', messageStr);
         const parsedMessage = JSON.parse(messageStr);
 
-        // Only process agent/bot messages, ignore user echoes
         if (
           parsedMessage.type === 'chat' &&
           (parsedMessage.pld?.from === 'bot' || parsedMessage.pld?.from === undefined || parsedMessage.pld?.from === null) &&
@@ -744,7 +726,6 @@ const ChatModal: FC<ChatModalProps> = ({
           addMessage('user', parsedMessage.pld.text);
         } else {
           // Ignore user messages or unknown types
-          console.log('ChatModal: Ignored stream message:', parsedMessage);
         }
       } catch (e) {
         console.error('ChatModal: Error processing stream message:', e, 'Raw data:', data);
@@ -753,7 +734,6 @@ const ChatModal: FC<ChatModalProps> = ({
 
     // NEW: Token expiration handlers for better session management
     const handleTokenWillExpire = () => {
-      console.log('ChatModal: Agora token will expire soon - preparing for renewal');
       // When token expires and renews, dialogue mode often gets reset
       // We'll re-establish it after the renewal
     };
@@ -769,8 +749,6 @@ const ChatModal: FC<ChatModalProps> = ({
 
     // NEW: Connection state change handler
     const handleConnectionStateChange = (curState: string, revState: string) => {
-      console.log(`ChatModal: Agora connection state changed from ${revState} to ${curState}`);
-      
       if (curState === 'DISCONNECTED' || curState === 'DISCONNECTING') {
         setIsAgoraConnected(false);
         setHasVideoStarted(false);
@@ -789,7 +767,6 @@ const ChatModal: FC<ChatModalProps> = ({
         
         // Only re-establish dialogue mode for RECONNECTIONS, not initial connections
         if (revState === 'RECONNECTING') {
-          console.log('ChatModal: Reconnected - re-establishing dialogue mode');
           setTimeout(() => {
             setupAvatarDialogueMode();
           }, 1000); // Give connection a moment to stabilize
@@ -810,8 +787,6 @@ const ChatModal: FC<ChatModalProps> = ({
           const voiceId = "Xb7hH8MSUJpSbSDYk0k2"; // Alice voice
           const language = "en"; // English
           
-          console.log("ChatModal: Setting up avatar with voice ID and opening statement");
-          
           // Initial setup with dialogue mode
           await setAvatarParams(currentActiveClient, {
             vid: voiceId,
@@ -820,7 +795,6 @@ const ChatModal: FC<ChatModalProps> = ({
           });
           
           setIsDialogueModeReady(true);
-          console.log("ChatModal: Avatar dialogue mode configured successfully");
           
           // Only deliver opening statement once
           if (!hasDeliveredOpening) {
@@ -850,8 +824,6 @@ const ChatModal: FC<ChatModalProps> = ({
                   mode: 1,
                 });
                 
-                console.log("ChatModal: Opening statement delivered and switched back to dialogue mode");
-                
               } catch (error) {
                 console.warn("ChatModal: Failed to deliver opening statement:", error);
               }
@@ -863,7 +835,6 @@ const ChatModal: FC<ChatModalProps> = ({
           // More aggressive retry for dialogue mode
           if (!isRetry) {
             setTimeout(() => {
-              console.log("ChatModal: Retrying dialogue mode setup...");
               setupAvatarDialogueMode(true);
             }, 3000); // Longer delay before retry
           } else {
@@ -889,13 +860,10 @@ const ChatModal: FC<ChatModalProps> = ({
     // NEW: Add connection state handler
     currentActiveClient.on('connection-state-change', handleConnectionStateChange);
     
-    console.log("ChatModal: Joining Agora channel...", {agora_app_id, agora_channel, agora_uid});
     currentActiveClient.join(agora_app_id, agora_channel, agora_token, agora_uid)
       .then(() => {
         setIsAgoraConnected(true);
         hasJoined = true;
-        console.log("ChatModal: Successfully joined Agora channel.");
-        // Set up dialogue mode immediately after joining
         setupAvatarDialogueMode();
       })
       .catch(err => {
@@ -907,10 +875,8 @@ const ChatModal: FC<ChatModalProps> = ({
       });
 
     return () => {
-      console.log("ChatModal: Cleaning up Agora client for session:", akoolSession?._id);
       setIsAvatarBuffering(false);
       if (currentActiveClient) {
-        // Remove all event handlers
         currentActiveClient.off('user-published', handleUserPublished);
         currentActiveClient.off('user-unpublished', handleUserUnpublished);
         currentActiveClient.off('stream-message', handleStreamMessage);
@@ -927,7 +893,6 @@ const ChatModal: FC<ChatModalProps> = ({
                 setHasVideoStarted(false);
                 setIsDialogueModeReady(false); // Reset dialogue mode status
                 agoraClientRef.current = null;
-                 console.log("ChatModal: Agora client left and cleaned up.");
               }
             });
         } else {
@@ -936,7 +901,6 @@ const ChatModal: FC<ChatModalProps> = ({
              setHasVideoStarted(false);
              setIsDialogueModeReady(false);
              agoraClientRef.current = null; 
-             console.log("ChatModal: Agora client (not fully joined) cleaned up.");
            }
         }
       }
@@ -950,20 +914,16 @@ const ChatModal: FC<ChatModalProps> = ({
         // Add a small delay before checking connection to avoid false positives
         // from UI interactions that briefly change focus
         setTimeout(() => {
-          console.log('ChatModal: Tab became visible - checking connection state');
           if (agoraClientRef.current && akoolSession) {
             const connectionState = agoraClientRef.current.connectionState;
-            console.log('ChatModal: Current Agora connection state:', connectionState);
             
             if (connectionState === 'DISCONNECTED' && !showSessionEndedOverlay) {
-              console.log('ChatModal: Connection lost while tab was hidden - showing reconnection UI');
               setShowSessionEndedOverlay(true);
               setAkoolSessionError('Connection lost while tab was inactive. Please close and reopen chat.');
             }
           }
         }, 500); // Wait 500ms before checking
       } else {
-        console.log('ChatModal: Tab became hidden - session will continue in background');
       }
     };
 
@@ -977,8 +937,6 @@ const ChatModal: FC<ChatModalProps> = ({
 
     const keepAliveInterval = setInterval(() => {
       if (agoraClientRef.current && agoraClientRef.current.connectionState === 'CONNECTED') {
-        console.log('ChatModal: Sending keep-alive ping');
-        // Send a small keep-alive message to maintain connection
         try {
           const keepAliveMessage = {
             v: 2,
@@ -1173,13 +1131,11 @@ const ChatModal: FC<ChatModalProps> = ({
     if (akoolSession && agoraClientRef.current && isAgoraConnected && AgoraRTCModule) {
       // Check if dialogue mode is ready before sending messages
       if (!isDialogueModeReady) {
-        console.log('ChatModal: Dialogue mode not ready yet, falling back to backend agent.');
         postTextToBackendAgent(text.trim(), userMessageId);
         return;
       }
       
       if (isSendingRef.current) {
-        console.log('ChatModal: Send to AKOOL already in progress, skipping.');
         return;
       }
       isSendingRef.current = true;
@@ -1238,11 +1194,6 @@ const ChatModal: FC<ChatModalProps> = ({
                 
                 // ✅ NEW: Capture initial summary data
                 if (data.data?.final_summary) {
-                  console.log('📊 Capturing initial LLM summary data:', {
-                    ai_intent_summary: data.data.final_summary.ai_intent_summary,
-                    qualified: data.data.final_summary.qualified
-                  });
-                  
                   // Update lead data with summary (no book_tour)
                   updateConversation({
                     ai_intent_summary: data.data.final_summary.ai_intent_summary
@@ -1251,8 +1202,6 @@ const ChatModal: FC<ChatModalProps> = ({
                 
                 // ✨ EXISTING: Variables update logic
                 if (data.final_variables_update) {
-                  console.log("🎯 Variables update:", data.final_variables_update);
-                  
                   // Find which variable is currently true (being asked for)
                   const activeVariable = Object.keys(data.final_variables_update).find(
                     key => data.final_variables_update[key] === true
@@ -1260,13 +1209,11 @@ const ChatModal: FC<ChatModalProps> = ({
                   
                   if (activeVariable && !isTyping) { // Only set when not typing
                     setCurrentQuestion(activeVariable);
-                    console.log("📝 Active question:", activeVariable);
                     
                     // Set appropriate quick reply hint based on the variable
                     const hint = getQuickReplyHint(activeVariable);
                     if (hint) {
                       setCurrentHint(hint);
-                      console.log("💡 Quick reply hint:", hint);
                     }
                   } else {
                     // Store the activeVariable for later use when typing finishes
@@ -1296,18 +1243,52 @@ const ChatModal: FC<ChatModalProps> = ({
 
                 // ✅ NEW: Capture final qualification data
                 if (data.completed_reply && data.is_qualified !== undefined) {
-                  console.log('📊 Capturing final LLM qualification data:', {
-                    is_qualified: data.is_qualified,
-                    kb_pending: data.kb_pending
-                  });
-                  
+                  console.log('ChatModal: LLM qualification detected:', data.is_qualified);
                   // Update lead data with qualification results
                   updateConversation({
                     is_qualified: data.is_qualified,
                     kb_pending: data.kb_pending
                   });
                   
-                  console.log('✅ Qualification data captured successfully');
+                  // NEW: Trigger qualification banner if qualified
+                  if (data.is_qualified === true) {
+                    setQualified(true);
+                    setShowSparkles(true);
+                    
+                    // Extract and store user information from conversation
+                    const nameMatch = llmResponse.match(/\b([A-Z][a-z]+ [A-Z][a-z]+)\b/);
+                    if (nameMatch) {
+                      const fullName = nameMatch[1];
+                      const [firstName, lastName] = fullName.split(' ');
+                      setUserName(firstName);
+                      
+                      // Update lead data with extracted name
+                      updateUser({
+                        first_name: firstName,
+                        last_name: lastName || ''
+                      });
+                    }
+                    
+                    // Extract other qualification info from data if available
+                    if (data.data?.final_summary) {
+                      const summary = data.data.final_summary;
+                      
+                      // Update conversation data with any extracted information
+                      updateConversation({
+                        is_qualified: true,
+                        ai_intent_summary: summary.ai_intent_summary
+                      });
+                    }
+                    
+                    // Trigger confetti effect
+                    setTimeout(() => {
+                      confetti({
+                        particleCount: 100,
+                        spread: 70,
+                        origin: { y: 0.3 }
+                      });
+                    }, 500);
+                  }
                 }
               } catch (parseError) {
                 // ignore parsing errors
@@ -1330,7 +1311,6 @@ const ChatModal: FC<ChatModalProps> = ({
       };
 
       try {
-        console.log("ChatModal: Sending message to AKOOL avatar:", agoraMessage);
         // @ts-ignore - Assuming sendStreamMessage exists despite type issues seen previously
         await (localAgoraClient as IAgoraRTCClient).sendStreamMessage(JSON.stringify(agoraMessage), false);
         // Bot response will be handled by 'stream-message' listener
@@ -1345,7 +1325,6 @@ const ChatModal: FC<ChatModalProps> = ({
       }
     } else {
       // Fallback to existing backend agent if AKOOL is not active
-      console.log("ChatModal: AKOOL not active, sending to backend text agent.");
       postTextToBackendAgent(text.trim(), userMessageId); // Use separate function for clarity
     }
   };
@@ -1426,11 +1405,8 @@ const ChatModal: FC<ChatModalProps> = ({
           const pendingQuestion = data.current_question;
           const pendingHint = data.hint || (data.current_question ? getQuickReplyHint(data.current_question) : null);
           
-          console.log('Setting up pending hint for after typing:', pendingQuestion, pendingHint);
-          
           // Set a callback to be executed after typing finishes
           const setHintsAfterTyping = () => {
-            console.log('Applying pending hint after typing:', pendingQuestion, pendingHint);
             if (pendingQuestion) {
               setCurrentQuestion(pendingQuestion);
             }
@@ -1454,10 +1430,14 @@ const ChatModal: FC<ChatModalProps> = ({
             const animateSavings = () => { const now = Date.now(); const progress = Math.min((now - startTime) / duration, 1); const currentValue = Math.floor(startValue + (endValue - startValue) * progress); setSavings(currentValue); if (progress < 1) requestAnimationFrame(animateSavings); };
           requestAnimationFrame(animateSavings);
         }
-        if (data.qualified && !showFloatingBanner) { 
-          setShowFloatingBanner(true); 
+        if (data.qualified && !showSparkles) { 
           setShowSparkles(true); 
           setTimeout(() => setShowSparkles(false), 2000);
+          
+          // Set the user's name for the banner
+          const firstName = data.user_info?.full_name ? data.user_info.full_name.split(' ')[0] : 
+                           leadData.user.first_name || "there";
+          setUserName(firstName);
           
           // Track incentive acceptance when someone qualifies
           analytics.trackIncentiveAccepted('qualification_bonus');
@@ -1492,8 +1472,6 @@ const ChatModal: FC<ChatModalProps> = ({
     phone?: string; 
     method: 'email' | 'phone' 
   }) => {
-    console.log('Contact form submitted:', contactData);
-    
     // NEW: Update conversation stage and activity
     if (conversationStage !== 'converted') {
       setConversationStage('qualified');
@@ -1526,8 +1504,6 @@ const ChatModal: FC<ChatModalProps> = ({
     preferredDate?: string;
     preferredTime?: string;
   }) => {
-    console.log('Tour booking submitted:', tourData);
-    
     // NEW: Update conversation stage to converted
     setConversationStage('converted');
     updateActivity('tour_booking');
@@ -1566,7 +1542,6 @@ const ChatModal: FC<ChatModalProps> = ({
 
     const reinforcementInterval = setInterval(() => {
       if (agoraClientRef.current && agoraClientRef.current.connectionState === 'CONNECTED') {
-        console.log('ChatModal: Reinforcing dialogue mode to prevent echoing');
         // Re-send dialogue mode setup to ensure it hasn't been reset
         const reinforceMessage = {
           v: 2,
@@ -1580,7 +1555,6 @@ const ChatModal: FC<ChatModalProps> = ({
         try {
           // @ts-ignore
           agoraClientRef.current.sendStreamMessage(JSON.stringify(reinforceMessage), false);
-          console.log('ChatModal: Dialogue mode reinforced successfully');
         } catch (error) {
           console.warn('ChatModal: Failed to reinforce dialogue mode:', error);
         }
@@ -1645,6 +1619,73 @@ const ChatModal: FC<ChatModalProps> = ({
     scrollToBottom();
   }, [messages, isTyping]); // Scroll when messages change or typing state changes
 
+  // Add these new state variables
+  const [isPreLeaseSigned, setIsPreLeaseSigned] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  // Add this new function to handle PDF download
+  const handleSignPrequalificationPDF = async () => {
+    try {
+      // Create data object for PDF generation
+      const userData = {
+        fullName: leadData.user.first_name ? `${leadData.user.first_name} ${leadData.user.last_name || ''}`.trim() : 'Prospective Resident',
+        moveInDate: leadData.conversation.move_in_date || 'Flexible',
+        apartmentSize: leadData.conversation.apartment_size_preference || 'Studio',
+        incomeQualified: true, // They are qualified based on income
+        evictionStatus: false // No eviction history
+      };
+      
+      setUserName(userData.fullName.split(' ')[0]); // Set first name for congrats message
+
+      // Call the API to generate and download PDF
+      const response = await fetch('/api/generate-prelease', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to generate PDF');
+      }
+      
+      // Get the blob from the response
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary link and trigger download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `pre-qualification-${userData.fullName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      // Update state
+      setIsPreLeaseSigned(true);
+      
+      // Track event
+      analytics.trackIncentiveAccepted('pre_qualification_form');
+      
+      // Update the conversation data with pre_lease_signed flag
+      updateConversation({
+        is_qualified: true // Using existing property since pre_lease_signed isn't available
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast.error("Failed to download the prequalification form. Please try again.");
+      return false;
+    }
+  };
+
   // Add this after your existing useEffects, before the return statement:
   const handleSendLeadData = async () => {
     console.log("🚀 About to send lead data:", leadData);
@@ -1708,6 +1749,17 @@ const ChatModal: FC<ChatModalProps> = ({
           setCurrentQuestion={setCurrentQuestion}
         />
 
+        {/* CONDITIONAL BANNER - SIMPLE */}
+        {qualified && !isPreLeaseSigned && (
+          <div className="absolute top-20 left-4 right-4 z-50">
+            <FloatingBanner
+              onClickCTA={handleSignPrequalificationPDF}
+              isPrequalified={qualified}
+              userName={userName || "Test User"}
+            />
+          </div>
+        )}
+
         <TimerSection
           showOffer={showOffer}
           qualified={qualified}
@@ -1729,7 +1781,7 @@ const ChatModal: FC<ChatModalProps> = ({
         />
 
         {isAvatarBuffering && !showSessionEndedOverlay && (
-          <div className="absolute inset-0 bg-white z-20 flex flex-col items-center justify-center">
+          <div className="absolute inset-0 z-20">
             <AvatarLoadingScreen message="Connecting to Ava..." />
           </div>
         )}
@@ -1768,21 +1820,6 @@ const ChatModal: FC<ChatModalProps> = ({
           }}
         />
       </div>
-
-      <AnimatePresence>
-        {showFloatingBanner && qualified && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            className="mt-2"
-          >
-            <FloatingBanner
-              onClickCTA={() => setShowFloatingBanner(false)}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Contact Form Modal */}
       <ContactFormModal

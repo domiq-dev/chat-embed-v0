@@ -101,7 +101,6 @@ export const useLeadDataCollection = (chatbotId: string) => {
         throw new Error('Failed to save lead data');
       }
 
-      console.log('Lead data saved successfully');
       return await response.json();
     } catch (error) {
       console.error('Error saving lead data:', error);

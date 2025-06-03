@@ -223,10 +223,10 @@ Build Process:
     - Verifies the presence of critical Tailwind CSS sizing classes (`w-[360px]`, `h-[600px]`).
     - Checks that `localStorage.getItem('chatbotState')` is accessed within a `typeof window !== 'undefined'` guard.
   - Added an npm script `test:scripts` to `package.json` to run both `tests/check-tailwind-build.js` and `tests/check-chat-modal.js` with a single command.
-- **Testing Plan Discussion:** Outlined a high-level testing strategy, recommending:
-  - Unit/integration tests for components using Jest and React Testing Library (RTL), focusing on render checks and basic interactions.
-  - End-to-end (E2E) smoke tests with Playwright or Cypress for critical user flows.
-  - Continued use of TypeScript and ESLint for static analysis.
+  - **Testing Plan Discussion:** Outlined a high-level testing strategy, recommending:
+    - Unit/integration tests for components using Jest and React Testing Library (RTL), focusing on render checks and basic interactions.
+    - End-to-end (E2E) smoke tests with Playwright or Cypress for critical user flows.
+    - Continued use of TypeScript and ESLint for static analysis.
 
 ## ChatModal.tsx Video Overlay & Styling Refinements
 
@@ -673,3 +673,64 @@ src/
 - Enhanced console logging for easier debugging of API integration issues
 - Created Use Dummy Data button for testing when backend is unavailable
 - Added proper error state handling to maintain UI functionality during API failures
+
+## Widget Build Configuration Fix - SVG Asset Preservation
+
+### Critical Build Issue Resolution
+**Problem:** `npm run build:widget` command was deleting SVG files and other assets from the `public` directory during the build process, causing broken social icons and other visual elements.
+
+**Root Cause Analysis:**
+- **File:** `src/lib/widget/build.config.ts`
+- **Line 9:** Build configuration had `clean: true` setting
+- **Issue:** The `clean: true` option in tsup configuration was cleaning the entire `public` directory before building
+- **Impact:** All existing assets (SVG files, fonts, uploads) were being deleted during widget compilation
+
+**Assets Affected:**
+- `/public/social/facebook.svg` - Referenced in ChatModal.tsx for social media buttons
+- `/public/fonts/` directory - Custom font assets
+- `/public/uploads/` directory - User uploaded media files
+- Any other static assets in the public directory
+
+**Solution Implemented:**
+- **File:** `src/lib/widget/build.config.ts`
+- **Line 9:** Changed `clean: true` to `clean: false`
+- **Reason:** Prevent automatic deletion of existing assets while still allowing widget file updates
+
+**Technical Details:**
+```typescript
+// Before (problematic):
+export default defineConfig({
+  entry: { 'widget': 'src/lib/widget/build.ts' },
+  outDir: 'public',
+  format: ['iife'],
+  minify: true,
+  clean: true,  // ❌ This was deleting all public assets
+  // ... rest of config
+});
+
+// After (fixed):
+export default defineConfig({
+  entry: { 'widget': 'src/lib/widget/build.ts' },
+  outDir: 'public',
+  format: ['iife'],
+  minify: true,
+  clean: false, // ✅ Preserves existing assets
+  // ... rest of config
+});
+```
+
+**Build Process Impact:**
+- **Before:** `npm run build:widget` → Clean entire public directory → Build widget.min.js → Assets lost
+- **After:** `npm run build:widget` → Preserve existing assets → Update only widget.min.js → Assets safe
+
+**Files Modified:**
+- `src/lib/widget/build.config.ts` - Changed clean option from true to false
+
+**Production Impact:**
+✅ **Asset Preservation:** SVG files, fonts, and uploads now persist during widget builds  
+✅ **Social Icons:** Facebook and other social media buttons maintain functionality  
+✅ **Media Library:** Uploaded content remains accessible across build cycles  
+✅ **Build Safety:** Widget compilation no longer destroys existing static assets  
+✅ **Development Workflow:** Developers can rebuild widget without losing project assets
+
+**Business Value:** Property managers can now safely update the chat widget without losing branding assets, uploaded media, or social media integration, ensuring consistent user experience across all deployment cycles.
