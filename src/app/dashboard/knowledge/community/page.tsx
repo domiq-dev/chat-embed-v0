@@ -3,14 +3,27 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 const floorPlans = [
-  { name: '1 Bedroom / 1 Bath', size: '750 sq ft', description: 'Spacious one-bedroom with open living area and private balcony.' },
-  { name: '2 Bedroom / 2 Bath', size: '1050 sq ft', description: 'Ideal for roommates or families, includes walk-in closets.' },
-  { name: '3 Bedroom / 2 Bath', size: '1300 sq ft', description: 'Large layout with extra storage and two full bathrooms.' },
+  {
+    name: '1 Bedroom / 1 Bath',
+    size: '750 sq ft',
+    description: 'Spacious one-bedroom with open living area and private balcony.',
+  },
+  {
+    name: '2 Bedroom / 2 Bath',
+    size: '1050 sq ft',
+    description: 'Ideal for roommates or families, includes walk-in closets.',
+  },
+  {
+    name: '3 Bedroom / 2 Bath',
+    size: '1300 sq ft',
+    description: 'Large layout with extra storage and two full bathrooms.',
+  },
 ];
 
 const petPolicy = {
   allowed: true,
-  details: 'Cats and dogs allowed. Max 2 pets per apartment. Breed restrictions apply. $300 non-refundable pet fee per pet. $25/month pet rent per pet.'
+  details:
+    'Cats and dogs allowed. Max 2 pets per apartment. Breed restrictions apply. $300 non-refundable pet fee per pet. $25/month pet rent per pet.',
 };
 
 const qualifications = [
@@ -41,7 +54,7 @@ export default function CommunityInfoPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {floorPlans.map(plan => (
+            {floorPlans.map((plan) => (
               <div key={plan.name} className="border rounded-lg p-4 bg-gray-50">
                 <h3 className="font-semibold text-lg mb-1">{plan.name}</h3>
                 <p className="text-sm text-gray-500 mb-2">{plan.size}</p>
@@ -72,7 +85,7 @@ export default function CommunityInfoPage() {
         </CardHeader>
         <CardContent>
           <ul className="list-disc pl-6 space-y-1 text-gray-700">
-            {qualifications.map(q => (
+            {qualifications.map((q) => (
               <li key={q}>{q}</li>
             ))}
           </ul>
@@ -86,9 +99,11 @@ export default function CommunityInfoPage() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {nearby.map(place => (
+            {nearby.map((place) => (
               <div key={place.name} className="border rounded-lg p-3 bg-white flex flex-col">
-                <span className="text-xs text-gray-500 uppercase tracking-wide mb-1">{place.type}</span>
+                <span className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                  {place.type}
+                </span>
                 <span className="font-medium text-gray-800">{place.name}</span>
                 <span className="text-xs text-gray-500">{place.distance} away</span>
               </div>
@@ -98,4 +113,4 @@ export default function CommunityInfoPage() {
       </Card>
     </div>
   );
-} 
+}

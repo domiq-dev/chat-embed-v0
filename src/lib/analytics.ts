@@ -5,10 +5,10 @@ const amplitudeKey = process.env.NEXT_PUBLIC_AMPLITUDE_KEY;
 const isClient = typeof window !== 'undefined';
 
 if (amplitudeKey && isClient) {
-  amplitude.init(amplitudeKey, { 
+  amplitude.init(amplitudeKey, {
     defaultTracking: true,
     serverZone: 'US',
-    serverUrl: 'https://api2.amplitude.com/2/httpapi'
+    serverUrl: 'https://api2.amplitude.com/2/httpapi',
   });
 } else if (!amplitudeKey && isClient) {
   console.warn('NEXT_PUBLIC_AMPLITUDE_KEY not found - analytics disabled');
@@ -17,7 +17,7 @@ if (amplitudeKey && isClient) {
 // Helper function to track events with automatic session/device IDs
 export const track = (event: string, props: Record<string, any> = {}) => {
   if (!amplitudeKey || !isClient) return; // Skip if no key or server-side
-  
+
   try {
     const { deviceId, sessionId } = getIds();
     const eventProps = {
@@ -25,7 +25,7 @@ export const track = (event: string, props: Record<string, any> = {}) => {
       device_id: deviceId,
       session_id: sessionId,
     };
-    
+
     amplitude.track(event, eventProps);
   } catch (error) {
     console.warn('Analytics tracking error:', error);
@@ -45,11 +45,11 @@ export const setUserId = (id: string) => {
 // Helper function to get device and session IDs for backend stitching
 export const getIds = () => {
   if (!isClient) return { deviceId: null, sessionId: null };
-  
+
   try {
     return {
       deviceId: amplitude.getDeviceId(),
-      sessionId: amplitude.getSessionId()
+      sessionId: amplitude.getSessionId(),
     };
   } catch (error) {
     console.warn('Analytics getIds error:', error);
@@ -58,4 +58,4 @@ export const getIds = () => {
 };
 
 // Export for debugging
-export const getAmplitudeInstance = () => amplitude; 
+export const getAmplitudeInstance = () => amplitude;

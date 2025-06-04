@@ -1,8 +1,6 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from '@/components/ui/card';
 
-const agents = [
-  { name: "Demo", calls: 120, minutes: 61},
-];
+const agents = [{ name: 'Demo', calls: 120, minutes: 61 }];
 
 export function AgentsTable() {
   return (

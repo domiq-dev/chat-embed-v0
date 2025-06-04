@@ -28,14 +28,16 @@ function formatDateForInput(date: Date): string {
 
 function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleModalProps) {
   const { leads } = useLeadContext();
-  const [formData, setFormData] = useState<Omit<Tour, 'id' | 'source' | 'prospectId' | 'agentId' | 'leadId'>>({
+  const [formData, setFormData] = useState<
+    Omit<Tour, 'id' | 'source' | 'prospectId' | 'agentId' | 'leadId'>
+  >({
     title: '',
     prospectName: '',
     unit: '',
     start: new Date(),
     end: new Date(),
     status: 'scheduled',
-    agent: ''
+    agent: '',
   });
   const [selectedLeadId, setSelectedLeadId] = useState<string>('');
   const [selectedAgentId, setSelectedAgentId] = useState<string>('');
@@ -43,10 +45,10 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
   // Update form data when selectedSlot changes
   useEffect(() => {
     if (selectedSlot) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         start: selectedSlot.start,
-        end: selectedSlot.end
+        end: selectedSlot.end,
       }));
     }
   }, [selectedSlot]);
@@ -54,12 +56,12 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
   // Update prospect name when lead is selected
   useEffect(() => {
     if (selectedLeadId) {
-      const lead = leads.find(l => l.id === selectedLeadId);
+      const lead = leads.find((l) => l.id === selectedLeadId);
       if (lead) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           prospectName: lead.name,
-          unit: lead.unitInterest || prev.unit
+          unit: lead.unitInterest || prev.unit,
         }));
         if (lead.assignedAgentId) {
           setSelectedAgentId(lead.assignedAgentId);
@@ -71,11 +73,11 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
   // Update agent name when agent is selected
   useEffect(() => {
     if (selectedAgentId) {
-      const agent = dummyAgents.find(a => a.id === selectedAgentId);
+      const agent = dummyAgents.find((a) => a.id === selectedAgentId);
       if (agent) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          agent: agent.name
+          agent: agent.name,
         }));
       }
     }
@@ -93,7 +95,7 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
       agentId: selectedAgentId || undefined,
       prospectId: undefined, // Legacy field
     });
-    
+
     // Reset form
     setFormData({
       title: '',
@@ -102,7 +104,7 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
       start: new Date(),
       end: new Date(),
       status: 'scheduled',
-      agent: ''
+      agent: '',
     });
     setSelectedLeadId('');
     setSelectedAgentId('');
@@ -131,8 +133,8 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
             >
               <option value="">Manual entry (no lead)</option>
               {leads
-                .filter(lead => lead.currentStage !== 'handed_off')
-                .map(lead => (
+                .filter((lead) => lead.currentStage !== 'handed_off')
+                .map((lead) => (
                   <option key={lead.id} value={lead.id}>
                     {lead.name} - {lead.currentStage.replace('_', ' ')}
                   </option>
@@ -141,9 +143,7 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Title
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
             <input
               type="text"
               value={formData.title}
@@ -155,9 +155,7 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Prospect Name
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Prospect Name</label>
             <input
               type="text"
               value={formData.prospectName}
@@ -170,9 +168,7 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Unit
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
             <input
               type="text"
               value={formData.unit}
@@ -182,18 +178,16 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
               required
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Agent
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Agent</label>
             <select
               value={selectedAgentId}
               onChange={(e) => setSelectedAgentId(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="">No agent assigned</option>
-              {dummyAgents.map(agent => (
+              {dummyAgents.map((agent) => (
                 <option key={agent.id} value={agent.id}>
                   {agent.name}
                 </option>
@@ -203,18 +197,17 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Time
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
               <input
                 type="datetime-local"
                 value={formatDateForInput(formData.start)}
                 onChange={(e) => {
                   const newDate = new Date(e.target.value);
-                  setFormData(prev => ({
+                  setFormData((prev) => ({
                     ...prev,
                     start: newDate,
-                    end: prev.end < newDate ? new Date(newDate.getTime() + 60 * 60 * 1000) : prev.end
+                    end:
+                      prev.end < newDate ? new Date(newDate.getTime() + 60 * 60 * 1000) : prev.end,
                   }));
                 }}
                 className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
@@ -222,18 +215,19 @@ function ScheduleModal({ isOpen, onClose, selectedSlot, onSchedule }: ScheduleMo
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Time
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Time</label>
               <input
                 type="datetime-local"
                 value={formatDateForInput(formData.end)}
                 onChange={(e) => {
                   const newDate = new Date(e.target.value);
-                  setFormData(prev => ({
+                  setFormData((prev) => ({
                     ...prev,
-                    start: newDate < prev.start ? new Date(newDate.getTime() - 60 * 60 * 1000) : prev.start,
-                    end: newDate
+                    start:
+                      newDate < prev.start
+                        ? new Date(newDate.getTime() - 60 * 60 * 1000)
+                        : prev.start,
+                    end: newDate,
                   }));
                 }}
                 min={formatDateForInput(formData.start)}
@@ -269,32 +263,32 @@ export default function CalendarPage() {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ start: Date; end: Date } | undefined>();
   const [tours, setTours] = useState<Tour[]>(dummyTours);
-  
+
   const { leads, updateLead, addActivity, setSelectedLead } = useLeadContext();
 
   // Calculate stats
   const stats = {
     total: tours.length,
-    scheduled: tours.filter(t => t.status === 'scheduled').length,
-    completed: tours.filter(t => t.status === 'completed').length,
-    cancelled: tours.filter(t => t.status === 'cancelled').length,
+    scheduled: tours.filter((t) => t.status === 'scheduled').length,
+    completed: tours.filter((t) => t.status === 'completed').length,
+    cancelled: tours.filter((t) => t.status === 'cancelled').length,
   };
 
   const handleScheduleTour = (tourData: Omit<Tour, 'id'>) => {
     const newTour: Tour = {
       ...tourData,
-      id: `tour_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      id: `tour_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     };
-    
-    setTours(prev => [...prev, newTour]);
+
+    setTours((prev) => [...prev, newTour]);
 
     // If linked to a lead, update the lead's stage and add activity
     if (tourData.leadId) {
-      const lead = leads.find(l => l.id === tourData.leadId);
+      const lead = leads.find((l) => l.id === tourData.leadId);
       if (lead && lead.currentStage !== 'tour_scheduled') {
         // Update lead stage to tour_scheduled
         updateLead(tourData.leadId, { currentStage: 'tour_scheduled' });
-        
+
         // Add tour scheduled activity
         addActivity(tourData.leadId, {
           type: 'tour_scheduled',
@@ -302,9 +296,9 @@ export default function CalendarPage() {
           details: {
             tourDate: tourData.start,
             unitRequested: tourData.unit,
-            agentName: tourData.agent
+            agentName: tourData.agent,
           },
-          createdBy: 'agent'
+          createdBy: 'agent',
         });
       }
     }
@@ -316,55 +310,47 @@ export default function CalendarPage() {
   };
 
   const handleCancelTour = (tourId: string) => {
-    setTours(prev => 
-      prev.map(tour => 
-        tour.id === tourId 
-          ? { ...tour, status: 'cancelled' as const }
-          : tour
-      )
+    setTours((prev) =>
+      prev.map((tour) => (tour.id === tourId ? { ...tour, status: 'cancelled' as const } : tour)),
     );
   };
 
   const handleCompleteTour = (tourId: string) => {
-    const tour = tours.find(t => t.id === tourId);
-    setTours(prev => 
-      prev.map(t => 
-        t.id === tourId 
-          ? { ...t, status: 'completed' as const }
-          : t
-      )
+    const tour = tours.find((t) => t.id === tourId);
+    setTours((prev) =>
+      prev.map((t) => (t.id === tourId ? { ...t, status: 'completed' as const } : t)),
     );
 
     // If linked to a lead, update the lead's stage and add activity
     if (tour?.leadId) {
-      const lead = leads.find(l => l.id === tour.leadId);
+      const lead = leads.find((l) => l.id === tour.leadId);
       if (lead) {
         // Update lead stage to tour_completed
         updateLead(tour.leadId, { currentStage: 'tour_completed' });
-        
+
         // Add tour completed activity
         addActivity(tour.leadId, {
           type: 'tour_completed',
           timestamp: new Date(),
           details: {
-            notes: 'Tour completed successfully'
+            notes: 'Tour completed successfully',
           },
-          createdBy: 'agent'
+          createdBy: 'agent',
         });
       }
     }
   };
 
   const handleDeleteTour = (tourId: string) => {
-    setTours(prev => prev.filter(tour => tour.id !== tourId));
+    setTours((prev) => prev.filter((tour) => tour.id !== tourId));
   };
 
   const handleTourClick = (tour: Tour) => {
     setSelectedTour(tour);
-    
+
     // If tour is linked to a lead, select that lead for cross-tab navigation
     if (tour.leadId) {
-      const lead = leads.find(l => l.id === tour.leadId);
+      const lead = leads.find((l) => l.id === tour.leadId);
       if (lead) {
         setSelectedLead(lead);
       }
@@ -446,4 +432,4 @@ export default function CalendarPage() {
       />
     </div>
   );
-} 
+}

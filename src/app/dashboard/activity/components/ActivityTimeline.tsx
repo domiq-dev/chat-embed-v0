@@ -4,7 +4,13 @@ import { useState } from 'react';
 
 export interface TimelineEvent {
   id: string;
-  type: 'chat_started' | 'tour_scheduled' | 'agent_handoff' | 'tour_completed' | 'follow_up' | 'application_sent';
+  type:
+    | 'chat_started'
+    | 'tour_scheduled'
+    | 'agent_handoff'
+    | 'tour_completed'
+    | 'follow_up'
+    | 'application_sent';
   timestamp: Date;
   status: 'completed' | 'pending' | 'in_progress';
   details: {
@@ -27,8 +33,8 @@ export default function ActivityTimeline() {
       timestamp: new Date('2024-03-28T10:00:00'),
       status: 'completed',
       details: {
-        chatSummary: 'Initial contact through AI chat. Prospect interested in 2BR units.'
-      }
+        chatSummary: 'Initial contact through AI chat. Prospect interested in 2BR units.',
+      },
     },
     {
       id: '2',
@@ -37,8 +43,8 @@ export default function ActivityTimeline() {
       status: 'completed',
       details: {
         tourDate: new Date('2024-03-30T14:00:00'),
-        notes: 'Scheduled tour for 2PM on Saturday'
-      }
+        notes: 'Scheduled tour for 2PM on Saturday',
+      },
     },
     {
       id: '3',
@@ -46,9 +52,9 @@ export default function ActivityTimeline() {
       timestamp: new Date('2024-03-28T10:20:00'),
       status: 'in_progress',
       details: {
-        agentName: 'Sarah Miller'
-      }
-    }
+        agentName: 'Sarah Miller',
+      },
+    },
   ];
 
   return (
@@ -80,17 +86,23 @@ export default function ActivityTimeline() {
               onClick={() => setSelectedEvent(event.id)}
             >
               {/* Status dot */}
-              <div className={`absolute left-[14px] w-2.5 h-2.5 rounded-full ${
-                event.status === 'completed' ? 'bg-green-500' :
-                event.status === 'in_progress' ? 'bg-blue-500' :
-                'bg-gray-500'
-              }`} />
+              <div
+                className={`absolute left-[14px] w-2.5 h-2.5 rounded-full ${
+                  event.status === 'completed'
+                    ? 'bg-green-500'
+                    : event.status === 'in_progress'
+                      ? 'bg-blue-500'
+                      : 'bg-gray-500'
+                }`}
+              />
 
-              <div className={`p-4 rounded-lg border ${
-                selectedEvent === event.id
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-gray-200 hover:border-purple-200'
-              }`}>
+              <div
+                className={`p-4 rounded-lg border ${
+                  selectedEvent === event.id
+                    ? 'border-purple-500 bg-purple-50'
+                    : 'border-gray-200 hover:border-purple-200'
+                }`}
+              >
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-medium">{formatEventType(event.type)}</h3>
                   <span className="text-sm text-gray-500">
@@ -99,18 +111,12 @@ export default function ActivityTimeline() {
                 </div>
 
                 <div className="text-sm text-gray-600 space-y-1">
-                  {event.details.chatSummary && (
-                    <p>{event.details.chatSummary}</p>
-                  )}
+                  {event.details.chatSummary && <p>{event.details.chatSummary}</p>}
                   {event.details.tourDate && (
                     <p>Tour scheduled for: {event.details.tourDate.toLocaleString()}</p>
                   )}
-                  {event.details.agentName && (
-                    <p>Assigned to: {event.details.agentName}</p>
-                  )}
-                  {event.details.notes && (
-                    <p>{event.details.notes}</p>
-                  )}
+                  {event.details.agentName && <p>Assigned to: {event.details.agentName}</p>}
+                  {event.details.notes && <p>{event.details.notes}</p>}
                 </div>
               </div>
             </div>
@@ -128,7 +134,7 @@ function formatEventType(type: TimelineEvent['type']): string {
     agent_handoff: 'Assigned to Agent',
     tour_completed: 'Tour Completed',
     follow_up: 'Follow-up',
-    application_sent: 'Application Sent'
+    application_sent: 'Application Sent',
   };
   return formats[type];
-} 
+}

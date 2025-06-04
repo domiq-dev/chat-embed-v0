@@ -33,6 +33,7 @@ npm install --save-dev @testing-library/react @testing-library/jest-dom jest
 ### 🎯 Critical Test Scenarios
 
 #### Test 1: Dialogue Mode Setup
+
 ```
 1. Open chat
 2. Wait for avatar to load
@@ -41,6 +42,7 @@ npm install --save-dev @testing-library/react @testing-library/jest-dom jest
 ```
 
 #### Test 2: No Echo Test
+
 ```
 1. Send message: "Hello"
 2. Avatar should respond conversationally
@@ -49,6 +51,7 @@ npm install --save-dev @testing-library/react @testing-library/jest-dom jest
 ```
 
 #### Test 3: Message Order Test
+
 ```
 1. Monitor network tab or console
 2. Verify set-params command is sent BEFORE chat messages
@@ -172,4 +175,4 @@ mode: 2, // Dialogue mode (avatar engages in conversation)
 3. **Verification**: Use manual test checklist above
 4. **Deploy**: Run test suite before deployment
 
-**Contact**: Development team immediately if dialogue mode tests fail. 
+**Contact**: Development team immediately if dialogue mode tests fail.

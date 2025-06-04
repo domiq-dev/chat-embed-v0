@@ -24,4 +24,4 @@ declare global {
   interface Window {
     domIQChat?: DomIQChatAPI;
   }
-} 
+}

@@ -1,24 +1,34 @@
-"use client";
+'use client';
 import React, { FC, useEffect, useRef, useState } from 'react';
 import { X, MessageSquare, Phone, Mail, Star, Volume2, Mic, MicOff } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { toast } from 'react-hot-toast';
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import QuickReplyButtons, { QuickReplyHint, QuickReplyType } from "@/components/ui/QuicklyReplyButtons";
-import FloatingBanner from "@/components/ui/FloatingBanner";
-import CountdownOffer from "@/components/ui/CountdownOffer";
-import AvatarLoadingScreen from "@/components/ui/AvatarLoadingScreen";
-import ContactFormModal from "@/components/ui/ContactFormModal";
-import TourBookingModal from "@/components/ui/TourBookingModal";
-import CTAButtons from "@/components/ui/CTAButtons";
-import { DEFAULT_APARTMENT_CONFIG } from "@/types/apartment";
+import QuickReplyButtons, {
+  QuickReplyHint,
+  QuickReplyType,
+} from '@/components/ui/QuicklyReplyButtons';
+import FloatingBanner from '@/components/ui/FloatingBanner';
+import CountdownOffer from '@/components/ui/CountdownOffer';
+import AvatarLoadingScreen from '@/components/ui/AvatarLoadingScreen';
+import ContactFormModal from '@/components/ui/ContactFormModal';
+import TourBookingModal from '@/components/ui/TourBookingModal';
+import CTAButtons from '@/components/ui/CTAButtons';
+import { DEFAULT_APARTMENT_CONFIG } from '@/types/apartment';
 import { Session as AkoolSessionType } from '../services/apiService';
 import { useChatLifecycle } from '@/hooks/useChatLifecycle';
 import { useLeadDataCollection } from '@/hooks/useLeadDataCollection';
 
 // Dynamically import AgoraRTC types
-import type { IAgoraRTCClient, IRemoteVideoTrack, IRemoteAudioTrack, UID, SDK_MODE, SDK_CODEC } from 'agora-rtc-sdk-ng';
+import type {
+  IAgoraRTCClient,
+  IRemoteVideoTrack,
+  IRemoteAudioTrack,
+  UID,
+  SDK_MODE,
+  SDK_CODEC,
+} from 'agora-rtc-sdk-ng';
 
 // Chat message structure (remains the same)
 interface ChatMessageForDisplay {
@@ -40,7 +50,7 @@ interface ChatModalProps {
 }
 
 // AKOOL video player ID
-const AKOOL_PLAYER_ID = "akool-avatar-video-player";
+const AKOOL_PLAYER_ID = 'akool-avatar-video-player';
 
 // Minimal particle effect for celebrations
 const SparkleBurst: FC = () => (
@@ -60,7 +70,7 @@ const SparkleBurst: FC = () => (
           }}
           transition={{
             duration: 0.8,
-            ease: "easeOut",
+            ease: 'easeOut',
             times: [0, 0.5, 1],
             delay: i * 0.1,
           }}
@@ -96,9 +106,7 @@ const TypingIndicator: FC = () => (
 
 // Live Agent Badge without pulse
 const LiveAgentBadge: FC = () => (
-  <span className="bg-green-50 text-green-700 text-xs px-2 py-0.5 rounded-full">
-    Live Agent
-  </span>
+  <span className="bg-green-50 text-green-700 text-xs px-2 py-0.5 rounded-full">Live Agent</span>
 );
 
 // Star Rating Component
@@ -116,15 +124,27 @@ const StarRating: FC<{ rating: number }> = ({ rating }) => {
     }
     return { index: i, fillPercentage };
   });
-  
+
   return (
     <div className="flex items-center gap-1">
       {stars.map(({ index, fillPercentage }) => (
         <div key={index} className="relative" style={{ width: '14px', height: '14px' }}>
-          <Star size={14} className="absolute top-0 left-0 text-gray-200 fill-gray-200" strokeWidth={1} />
+          <Star
+            size={14}
+            className="absolute top-0 left-0 text-gray-200 fill-gray-200"
+            strokeWidth={1}
+          />
           {fillPercentage > 0 && (
-            <div className="absolute top-0 left-0 h-full overflow-hidden" style={{ width: `${fillPercentage}%` }}>
-              <Star size={14} className="text-yellow-400 fill-yellow-400" strokeWidth={1} style={{ width: '14px', height: '14px' }} />
+            <div
+              className="absolute top-0 left-0 h-full overflow-hidden"
+              style={{ width: `${fillPercentage}%` }}
+            >
+              <Star
+                size={14}
+                className="text-yellow-400 fill-yellow-400"
+                strokeWidth={1}
+                style={{ width: '14px', height: '14px' }}
+              />
             </div>
           )}
         </div>
@@ -145,7 +165,13 @@ interface ChatHeaderProps {
     trackPhoneCallClick: (location: string) => void;
   };
 }
-const ChatHeader: FC<ChatHeaderProps> = ({ config, onClose, headerRef, lastMailtoClickTime, analytics }) => {
+const ChatHeader: FC<ChatHeaderProps> = ({
+  config,
+  onClose,
+  headerRef,
+  lastMailtoClickTime,
+  analytics,
+}) => {
   return (
     <motion.div
       ref={headerRef}
@@ -155,31 +181,56 @@ const ChatHeader: FC<ChatHeaderProps> = ({ config, onClose, headerRef, lastMailt
       transition={{ duration: 0.3 }}
     >
       <div className="flex items-center gap-3">
-        <img src={config.agent.avatar} alt="Leasing Agent" className="w-10 h-10 rounded-full object-cover border border-gray-100"/>
+        <img
+          src={config.agent.avatar}
+          alt="Leasing Agent"
+          className="w-10 h-10 rounded-full object-cover border border-gray-100"
+        />
         <div>
-          <div className="flex items-center gap-2"><span className="font-medium text-gray-900">{config.agent.name}</span><LiveAgentBadge /></div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-900">{config.agent.name}</span>
+            <LiveAgentBadge />
+          </div>
           <p className="text-xs text-gray-500">{config.agent.title}</p>
           <StarRating rating={config.reviews.googleRating} />
         </div>
       </div>
       <div className="flex items-center gap-2">
-        {config.socialLinks.facebook && (<motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => window.open(config.socialLinks.facebook, '_blank')} className="p-2 hover:bg-gray-50 rounded-full transition-colors" title="Visit our Facebook page"><img src="/social/facebook.svg" alt="Facebook"className="w-[18px] h-[18px]"/></motion.button>)}
-        <motion.button 
-          whileHover={{ scale: 1.05 }} 
-          whileTap={{ scale: 0.95 }} 
+        {config.socialLinks.facebook && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => window.open(config.socialLinks.facebook, '_blank')}
+            className="p-2 hover:bg-gray-50 rounded-full transition-colors"
+            title="Visit our Facebook page"
+          >
+            <img src="/social/facebook.svg" alt="Facebook" className="w-[18px] h-[18px]" />
+          </motion.button>
+        )}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => {
             analytics.trackEmailOfficeClick('header');
             if (lastMailtoClickTime) {
               lastMailtoClickTime.current = Date.now();
             }
             window.location.href = 'mailto:leasing@grandoaks.com';
-          }} 
-          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" 
+          }}
+          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors"
           title="Email us"
         >
           <Mail size={18} />
         </motion.button>
-        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={onClose} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors" title="Close chat"><X size={18} /></motion.button>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onClose}
+          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
+          title="Close chat"
+        >
+          <X size={18} />
+        </motion.button>
       </div>
     </motion.div>
   );
@@ -208,35 +259,36 @@ const ChatBody: FC<ChatBodyProps> = ({
   sendMessage,
   trackAnswerButtonClick,
   setCurrentHint,
-  setCurrentQuestion
+  setCurrentQuestion,
 }) => {
-  const lastAgentMessageIndex = messages.findLastIndex(msg => msg.from === 'agent');
-  const shouldShowQuickReply = !isTyping && (currentHint || currentQuestion) && lastAgentMessageIndex !== -1;
+  const lastAgentMessageIndex = messages.findLastIndex((msg) => msg.from === 'agent');
+  const shouldShowQuickReply =
+    !isTyping && (currentHint || currentQuestion) && lastAgentMessageIndex !== -1;
 
   // Extract rendering of quick reply buttons to a separate element with more control
   const renderQuickReplyButtons = () => {
     if (!shouldShowQuickReply) return null;
-    
+
     return (
-      <motion.div 
+      <motion.div
         key="quick-reply-buttons"
-        initial={{ opacity: 0, y: 10 }} 
-        animate={{ opacity: 1, y: 0 }} 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
         className="ml-10 mt-2"
       >
-        <QuickReplyButtons 
-          currentQuestion={currentQuestion} 
-          hint={currentHint || undefined} 
+        <QuickReplyButtons
+          currentQuestion={currentQuestion}
+          hint={currentHint || undefined}
           onSelect={(value: string) => {
             // Clear the quick reply state immediately when user clicks
             setCurrentHint(null);
             setCurrentQuestion(null);
-            
+
             // Send the message
             sendMessage(value);
           }}
-          trackAnswerButtonClick={trackAnswerButtonClick} 
+          trackAnswerButtonClick={trackAnswerButtonClick}
         />
       </motion.div>
     );
@@ -252,7 +304,8 @@ const ChatBody: FC<ChatBodyProps> = ({
         className="flex-1 overflow-y-auto px-4 pt-10 pb-4 space-y-4"
         style={{
           maskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20px, black 40px)', // Smoother fade to black
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20px, black 40px)' // For Safari compatibility
+          WebkitMaskImage:
+            'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.7) 20px, black 40px)', // For Safari compatibility
         }}
       >
         <AnimatePresence>
@@ -267,24 +320,37 @@ const ChatBody: FC<ChatBodyProps> = ({
                 {message.from === 'agent' && (
                   <img src={config.agent.avatar} alt="Agent" className="w-8 h-8 rounded-full" />
                 )}
-                <div className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-md ${
-                  message.from === 'agent'
-                    ? 'bg-white/90 text-black rounded-bl-none'
-                    : 'bg-gradient-to-br from-blue-500/[.90] to-purple-500/[.90] text-white rounded-br-none'
-                }`}>
-                  <div className={`prose prose-sm max-w-none break-words ${message.from === 'user' ? 'text-white' : ''}`}>
+                <div
+                  className={`max-w-[75%] rounded-2xl px-4 py-2 shadow-md ${
+                    message.from === 'agent'
+                      ? 'bg-white/90 text-black rounded-bl-none'
+                      : 'bg-gradient-to-br from-blue-500/[.90] to-purple-500/[.90] text-white rounded-br-none'
+                  }`}
+                >
+                  <div
+                    className={`prose prose-sm max-w-none break-words ${message.from === 'user' ? 'text-white' : ''}`}
+                  >
                     <ReactMarkdown>{message.text}</ReactMarkdown>
                   </div>
                   {message.sentAt && (
-                    <div className={`text-[10px] mt-1 ${message.from === 'agent' ? 'text-gray-500' : 'text-white/90'}`}>
-                      {new Date(message.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <div
+                      className={`text-[10px] mt-1 ${message.from === 'agent' ? 'text-gray-500' : 'text-white/90'}`}
+                    >
+                      {new Date(message.sentAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </div>
                   )}
                 </div>
               </motion.div>
-              
+
               {/* Only show quick reply buttons once after the very last agent message */}
-              {shouldShowQuickReply && index === lastAgentMessageIndex && index === messages.length - 1 && !isTyping && renderQuickReplyButtons()}
+              {shouldShowQuickReply &&
+                index === lastAgentMessageIndex &&
+                index === messages.length - 1 &&
+                !isTyping &&
+                renderQuickReplyButtons()}
             </React.Fragment>
           ))}
           {/* Typing indicator as agent bubble */}
@@ -329,20 +395,20 @@ const TimerSection: FC<TimerSectionProps> = ({
   savings,
   analytics,
   tourBooked,
-  onPromptTour
+  onPromptTour,
 }) => {
   return (
     <div className="relative z-10 bg-white/80 backdrop-blur-sm">
       <AnimatePresence>
         {showOffer && !qualified && (
-          <CountdownOffer 
-            initialMinutes={5} 
-            onExpire={onOfferExpire} 
+          <CountdownOffer
+            initialMinutes={5}
+            onExpire={onOfferExpire}
             offerText="Lock in your special move-in rate"
             analytics={{
               trackIncentiveOffered: analytics?.trackIncentiveOffered,
               trackIncentiveExpired: analytics?.trackIncentiveExpired,
-              trackIncentiveAccepted: analytics?.trackIncentiveAccepted
+              trackIncentiveAccepted: analytics?.trackIncentiveAccepted,
             }}
             tourBooked={tourBooked}
             onPromptTour={onPromptTour}
@@ -351,9 +417,23 @@ const TimerSection: FC<TimerSectionProps> = ({
         )}
       </AnimatePresence>
       {savings > 0 && (
-        <motion.div className="px-5 py-1 border-t" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-          <div className="text-[11px] font-medium text-gray-600 mb-0.5">Savings Progress: ${savings}</div>
-          <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden"><motion.div initial={{ width: 0 }} animate={{ width: `${(savings / 90) * 100}%` }} className="h-full bg-gradient-to-r from-green-400 to-blue-500" transition={{ duration: 0.5, ease: "easeOut" }}/></div>
+        <motion.div
+          className="px-5 py-1 border-t"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="text-[11px] font-medium text-gray-600 mb-0.5">
+            Savings Progress: ${savings}
+          </div>
+          <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${(savings / 90) * 100}%` }}
+              className="h-full bg-gradient-to-r from-green-400 to-blue-500"
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+            />
+          </div>
         </motion.div>
       )}
     </div>
@@ -377,7 +457,7 @@ const MessagingInput: FC<MessagingInputProps> = ({
   akoolSession,
   isAgoraConnected,
   isDialogueModeReady,
-  agentState
+  agentState,
 }) => {
   return (
     <motion.div
@@ -389,9 +469,13 @@ const MessagingInput: FC<MessagingInputProps> = ({
       <div className="flex items-center gap-2">
         <input
           type="text"
-          placeholder={akoolSession && isAgoraConnected ? 
-            (isDialogueModeReady ? "Chat with Us..." : "Preparing Leasing Agent...") : 
-            "Type your message..."}
+          placeholder={
+            akoolSession && isAgoraConnected
+              ? isDialogueModeReady
+                ? 'Chat with Us...'
+                : 'Preparing Leasing Agent...'
+              : 'Type your message...'
+          }
           className="flex-1 px-3 py-1.5 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all bg-white/70 text-sm"
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
@@ -402,9 +486,13 @@ const MessagingInput: FC<MessagingInputProps> = ({
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => sendMessage(inputText)}
-          disabled={!inputText.trim() || (!(akoolSession && isAgoraConnected && isDialogueModeReady) && !agentState)}
+          disabled={
+            !inputText.trim() ||
+            (!(akoolSession && isAgoraConnected && isDialogueModeReady) && !agentState)
+          }
           className={`p-1.5 rounded-full transition-colors ${
-            (inputText.trim() && ((akoolSession && isAgoraConnected && isDialogueModeReady) || agentState))
+            inputText.trim() &&
+            ((akoolSession && isAgoraConnected && isDialogueModeReady) || agentState)
               ? 'bg-blue-600 text-white hover:bg-blue-700'
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }`}
@@ -416,15 +504,15 @@ const MessagingInput: FC<MessagingInputProps> = ({
   );
 };
 
-const ChatModal: FC<ChatModalProps> = ({ 
-  onClose, 
-  unreadCount = 0, 
+const ChatModal: FC<ChatModalProps> = ({
+  onClose,
+  unreadCount = 0,
   onClearUnread,
   config = DEFAULT_APARTMENT_CONFIG,
   akoolSession,
   isSessionLoading,
   sessionError,
-  lastMailtoClickTime
+  lastMailtoClickTime,
 }) => {
   const [messages, setMessages] = useState<ChatMessageForDisplay[]>(() => {
     // Clear localStorage and start fresh session on every page load
@@ -448,7 +536,7 @@ const ChatModal: FC<ChatModalProps> = ({
   const [offerExpired, setOfferExpired] = useState(false);
   const [showSessionEndedOverlay, setShowSessionEndedOverlay] = useState(false);
   const [tourBooked, setTourBooked] = useState(false);
-  
+
   // Modal states for new components
   const [showContactForm, setShowContactForm] = useState(false);
   const [showTourBooking, setShowTourBooking] = useState(false);
@@ -458,7 +546,9 @@ const ChatModal: FC<ChatModalProps> = ({
   const [lastActivityTime, setLastActivityTime] = useState(Date.now());
   const [lastActivityType, setLastActivityType] = useState<string>('session_start');
   const [inactivityTimeout, setInactivityTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [conversationStage, setConversationStage] = useState<'initial' | 'engaged' | 'qualified' | 'converted'>('initial');
+  const [conversationStage, setConversationStage] = useState<
+    'initial' | 'engaged' | 'qualified' | 'converted'
+  >('initial');
 
   // AKOOL/Agora specific state
   const [AgoraRTCModule, setAgoraRTCModule] = useState<any>(null);
@@ -476,14 +566,14 @@ const ChatModal: FC<ChatModalProps> = ({
 
   // Add this state near the other state variables in ChatModal
   const [afterTypingCallback, setAfterTypingCallback] = useState<(() => void) | null>(null);
-  
+
   // Track if opening statement has been delivered to prevent duplicates
   const [hasDeliveredOpening, setHasDeliveredOpening] = useState(false);
 
   // Determine video player background - now always black when session is active
   const videoPlayerBgColor = akoolSession ? '#222' : 'white';
   // Initial message color if no session (white background)
-  const initialMessageColor = akoolSession ? 'text-white' : 'text-gray-700'; 
+  const initialMessageColor = akoolSession ? 'text-white' : 'text-gray-700';
 
   // Ref and state for header height
   const headerRef = useRef<HTMLDivElement>(null);
@@ -496,38 +586,36 @@ const ChatModal: FC<ChatModalProps> = ({
   });
 
   // Initialize lead data collection with chatbot ID
-  const {
-    leadData,
-    updateUser,
-    updateConversation,
-    addMessage,
-    sendLeadData
-  } = useLeadDataCollection('your-chatbot-uuid-here'); // We'll use real ID later
+  const { leadData, updateUser, updateConversation, addMessage, sendLeadData } =
+    useLeadDataCollection('your-chatbot-uuid-here'); // We'll use real ID later
 
   // Helper function to set avatar parameters
-  const setAvatarParams = async (client: any, params: {
-    vid: string; // voice ID
-    lang: string; // language 
-    mode: number; // mode (1 or 2)
-  }) => {
+  const setAvatarParams = async (
+    client: any,
+    params: {
+      vid: string; // voice ID
+      lang: string; // language
+      mode: number; // mode (1 or 2)
+    },
+  ) => {
     if (!client || typeof client.sendStreamMessage !== 'function') {
       throw new Error('Client does not support sendStreamMessage');
     }
-    
+
     const message = {
       v: 2,
-      type: "command",
+      type: 'command',
       mid: `set-params-${Date.now()}`,
       pld: {
-        cmd: "set-params",
+        cmd: 'set-params',
         data: {
           vid: params.vid,
           lang: params.lang,
-          mode: params.mode
-        }
-      }
+          mode: params.mode,
+        },
+      },
     };
-    
+
     await client.sendStreamMessage(JSON.stringify(message), false);
   };
 
@@ -536,16 +624,16 @@ const ChatModal: FC<ChatModalProps> = ({
     if (!client || typeof client.sendStreamMessage !== 'function') {
       throw new Error('Client does not support sendStreamMessage');
     }
-    
+
     const message = {
       v: 2,
-      type: "chat",
+      type: 'chat',
       mid: messageId,
       idx: 0,
       fin: true,
-      pld: { text: text }
+      pld: { text: text },
     };
-    
+
     await client.sendStreamMessage(JSON.stringify(message), false);
   };
 
@@ -553,18 +641,21 @@ const ChatModal: FC<ChatModalProps> = ({
   const updateActivity = (activityType: string) => {
     setLastActivityTime(Date.now());
     setLastActivityType(activityType);
-    
+
     // Clear existing timeout
     if (inactivityTimeout) {
       clearTimeout(inactivityTimeout);
     }
-    
+
     // Set new inactivity timeout (5 minutes)
-    const timeout = setTimeout(() => {
-      const sessionDuration = Date.now() - sessionStartTime;
-      analytics.trackConversationAbandoned(sessionDuration, messages.length, activityType);
-    }, 5 * 60 * 1000); // 5 minutes
-    
+    const timeout = setTimeout(
+      () => {
+        const sessionDuration = Date.now() - sessionStartTime;
+        analytics.trackConversationAbandoned(sessionDuration, messages.length, activityType);
+      },
+      5 * 60 * 1000,
+    ); // 5 minutes
+
     setInactivityTimeout(timeout);
   };
 
@@ -572,12 +663,12 @@ const ChatModal: FC<ChatModalProps> = ({
   const handleClose = async () => {
     const sessionDuration = Date.now() - sessionStartTime;
     analytics.trackWidgetSessionEnded('user_closed', sessionDuration, messages.length);
-    
+
     // Clear timeout
     if (inactivityTimeout) {
       clearTimeout(inactivityTimeout);
     }
-    
+
     // NEW: Send lead data before closing
     try {
       if (leadData.messages.length > 0 || leadData.user.email || leadData.user.phone) {
@@ -587,18 +678,20 @@ const ChatModal: FC<ChatModalProps> = ({
       console.error('Failed to save lead data:', error);
       // Continue with close even if save fails
     }
-    
+
     onClose();
   };
 
   // Dynamically import AgoraRTC SDK
   useEffect(() => {
-    import('agora-rtc-sdk-ng').then(module => {
-      setAgoraRTCModule(module.default);
-    }).catch(err => {
-      console.error("Failed to load Agora RTC SDK in ChatModal:", err);
-      setAkoolSessionError("Agora SDK failed to load. Video features disabled.");
-    });
+    import('agora-rtc-sdk-ng')
+      .then((module) => {
+        setAgoraRTCModule(module.default);
+      })
+      .catch((err) => {
+        console.error('Failed to load Agora RTC SDK in ChatModal:', err);
+        setAkoolSessionError('Agora SDK failed to load. Video features disabled.');
+      });
   }, []);
 
   // Effect to measure header height
@@ -612,16 +705,17 @@ const ChatModal: FC<ChatModalProps> = ({
   useEffect(() => {
     if (!AgoraRTCModule || !akoolSession?.credentials) {
       if (agoraClientRef.current && isAgoraConnected) {
-        agoraClientRef.current.leave()
-          .then(() => { 
-            setIsAgoraConnected(false); 
+        agoraClientRef.current
+          .leave()
+          .then(() => {
+            setIsAgoraConnected(false);
             setHasVideoStarted(false);
             setIsAvatarBuffering(false);
             setIsDialogueModeReady(false); // Reset dialogue mode status
             setHasDeliveredOpening(false); // Reset opening statement flag
-            agoraClientRef.current = null; 
+            agoraClientRef.current = null;
           })
-          .catch(e => console.error('Error leaving Agora channel during cleanup:', e));
+          .catch((e) => console.error('Error leaving Agora channel during cleanup:', e));
       }
       setIsAvatarBuffering(false);
       setShowSessionEndedOverlay(false);
@@ -635,17 +729,20 @@ const ChatModal: FC<ChatModalProps> = ({
     setHasDeliveredOpening(false); // Reset opening statement flag for new session
     let clientInstance: IAgoraRTCClient | null = null;
     try {
-      clientInstance = AgoraRTCModule.createClient({ mode: 'rtc' as SDK_MODE, codec: 'vp8' as SDK_CODEC });
+      clientInstance = AgoraRTCModule.createClient({
+        mode: 'rtc' as SDK_MODE,
+        codec: 'vp8' as SDK_CODEC,
+      });
     } catch (error) {
-      console.error("ChatModal: Failed to create Agora client:", error);
-      setAkoolSessionError("Failed to initialize Agora client. Please refresh.");
+      console.error('ChatModal: Failed to create Agora client:', error);
+      setAkoolSessionError('Failed to initialize Agora client. Please refresh.');
       return;
     }
-    
+
     if (!clientInstance) {
-        console.error("ChatModal: Agora client creation returned null unexpectedly.");
-        setAkoolSessionError("Failed to initialize Agora client (instance is null).");
-        return;
+      console.error('ChatModal: Agora client creation returned null unexpectedly.');
+      setAkoolSessionError('Failed to initialize Agora client (instance is null).');
+      return;
     }
     agoraClientRef.current = clientInstance;
     const currentActiveClient = clientInstance;
@@ -671,7 +768,7 @@ const ChatModal: FC<ChatModalProps> = ({
           } else {
             const warningMsg = `ChatModal: Video track or player div ('${AKOOL_PLAYER_ID}') not found for user ${user.uid}.`;
             console.warn(warningMsg);
-            setAkoolSessionError(prev => prev || "Video player element not found.");
+            setAkoolSessionError((prev) => prev || 'Video player element not found.');
             setIsAvatarBuffering(false);
           }
         }
@@ -685,7 +782,7 @@ const ChatModal: FC<ChatModalProps> = ({
       } catch (e: any) {
         const errorMsg = `ChatModal: Error in handleUserPublished for ${mediaType} track (user ${user.uid}): ${e.message}`;
         console.error(errorMsg, e);
-        setAkoolSessionError(prev => prev || `Failed to handle media: ${e.message}`);
+        setAkoolSessionError((prev) => prev || `Failed to handle media: ${e.message}`);
         setIsAvatarBuffering(false);
       }
     };
@@ -700,16 +797,19 @@ const ChatModal: FC<ChatModalProps> = ({
 
     const handleStreamMessage = (uid: UID, data: Uint8Array | string) => {
       try {
-        const messageStr = typeof data === 'string' ? data : new TextDecoder().decode(data as Uint8Array);
+        const messageStr =
+          typeof data === 'string' ? data : new TextDecoder().decode(data as Uint8Array);
         const parsedMessage = JSON.parse(messageStr);
 
         if (
           parsedMessage.type === 'chat' &&
-          (parsedMessage.pld?.from === 'bot' || parsedMessage.pld?.from === undefined || parsedMessage.pld?.from === null) &&
+          (parsedMessage.pld?.from === 'bot' ||
+            parsedMessage.pld?.from === undefined ||
+            parsedMessage.pld?.from === null) &&
           parsedMessage.pld?.text
         ) {
           const displayBotMessageId = `bot-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-          setMessages(prev => [
+          setMessages((prev) => [
             ...prev,
             {
               id: displayBotMessageId,
@@ -750,7 +850,7 @@ const ChatModal: FC<ChatModalProps> = ({
         setHasVideoStarted(false);
         setIsAvatarBuffering(false);
         setIsDialogueModeReady(false); // Reset dialogue mode status when disconnected
-        
+
         // Only show session ended if we were previously connected
         if (revState === 'CONNECTED') {
           setShowSessionEndedOverlay(true);
@@ -760,14 +860,13 @@ const ChatModal: FC<ChatModalProps> = ({
         setIsAgoraConnected(true);
         setAkoolSessionError(null); // Clear any previous errors
         setShowSessionEndedOverlay(false);
-        
+
         // Only re-establish dialogue mode for RECONNECTIONS, not initial connections
         if (revState === 'RECONNECTING') {
           setTimeout(() => {
             setupAvatarDialogueMode();
           }, 1000); // Give connection a moment to stabilize
         }
-        
       } else if (curState === 'CONNECTING' || curState === 'RECONNECTING') {
         setIsAvatarBuffering(true);
         setAkoolSessionError(null);
@@ -777,25 +876,28 @@ const ChatModal: FC<ChatModalProps> = ({
 
     // Set up avatar for dialogue mode with opening statement once connected
     const setupAvatarDialogueMode = async (isRetry = false) => {
-      if (currentActiveClient && typeof (currentActiveClient as any).sendStreamMessage === 'function') {
+      if (
+        currentActiveClient &&
+        typeof (currentActiveClient as any).sendStreamMessage === 'function'
+      ) {
         try {
           // Define voice and language settings
-          const voiceId = "Xb7hH8MSUJpSbSDYk0k2"; // Alice voice
-          const language = "en"; // English
-          
+          const voiceId = 'Xb7hH8MSUJpSbSDYk0k2'; // Alice voice
+          const language = 'en'; // English
+
           // Initial setup with dialogue mode
           await setAvatarParams(currentActiveClient, {
             vid: voiceId,
             lang: language,
             mode: 1, // Start with dialogue mode
           });
-          
+
           setIsDialogueModeReady(true);
-          
+
           // Only deliver opening statement once
           if (!hasDeliveredOpening) {
             setHasDeliveredOpening(true);
-            
+
             // Opening statement with voice configuration sequence
             setTimeout(async () => {
               try {
@@ -810,7 +912,7 @@ const ChatModal: FC<ChatModalProps> = ({
                 await sendMessageToAvatar(
                   currentActiveClient,
                   `welcome-${Date.now()}`,
-                  'Hi! Welcome to Grand Oaks Apartments! I\'m Ava, your leasing specialist. How can I help you today?'
+                  "Hi! Welcome to Grand Oaks Apartments! I'm Ava, your leasing specialist. How can I help you today?",
                 );
 
                 // Switch back to dialogue mode
@@ -819,22 +921,22 @@ const ChatModal: FC<ChatModalProps> = ({
                   lang: language,
                   mode: 1,
                 });
-                
               } catch (error) {
-                console.warn("ChatModal: Failed to deliver opening statement:", error);
+                console.warn('ChatModal: Failed to deliver opening statement:', error);
               }
             }, 2000);
           }
-          
         } catch (error) {
-          console.error("ChatModal: Failed to setup avatar dialogue mode:", error);
+          console.error('ChatModal: Failed to setup avatar dialogue mode:', error);
           // More aggressive retry for dialogue mode
           if (!isRetry) {
             setTimeout(() => {
               setupAvatarDialogueMode(true);
             }, 3000); // Longer delay before retry
           } else {
-            console.error("ChatModal: Dialogue mode setup failed after retry - may experience echoing");
+            console.error(
+              'ChatModal: Dialogue mode setup failed after retry - may experience echoing',
+            );
             setAkoolSessionError('Dialogue mode setup failed - avatar may echo messages');
             setIsDialogueModeReady(true); // Allow chat to continue even if setup failed
           }
@@ -843,31 +945,32 @@ const ChatModal: FC<ChatModalProps> = ({
     };
 
     const { agora_app_id, agora_channel, agora_token, agora_uid } = akoolSession.credentials;
-    
+
     // Set up all event handlers
     currentActiveClient.on('user-published', handleUserPublished);
     currentActiveClient.on('user-unpublished', handleUserUnpublished);
     currentActiveClient.on('stream-message', handleStreamMessage);
-    
+
     // NEW: Add token expiration handlers
     currentActiveClient.on('token-privilege-will-expire', handleTokenWillExpire);
     currentActiveClient.on('token-privilege-did-expire', handleTokenDidExpire);
-    
+
     // NEW: Add connection state handler
     currentActiveClient.on('connection-state-change', handleConnectionStateChange);
-    
-    currentActiveClient.join(agora_app_id, agora_channel, agora_token, agora_uid)
+
+    currentActiveClient
+      .join(agora_app_id, agora_channel, agora_token, agora_uid)
       .then(() => {
         setIsAgoraConnected(true);
         hasJoined = true;
         setupAvatarDialogueMode();
       })
-      .catch(err => {
+      .catch((err) => {
         setAkoolSessionError(`Agora join error: ${err.message}`);
         setIsAgoraConnected(false);
         setHasVideoStarted(false);
         setIsAvatarBuffering(false);
-        console.error("ChatModal: Agora join error:", err);
+        console.error('ChatModal: Agora join error:', err);
       });
 
     return () => {
@@ -879,10 +982,15 @@ const ChatModal: FC<ChatModalProps> = ({
         currentActiveClient.off('token-privilege-will-expire', handleTokenWillExpire);
         currentActiveClient.off('token-privilege-did-expire', handleTokenDidExpire);
         currentActiveClient.off('connection-state-change', handleConnectionStateChange);
-        
-        if (hasJoined || currentActiveClient.connectionState === 'CONNECTING' || currentActiveClient.connectionState === 'CONNECTED') {
-          currentActiveClient.leave()
-            .catch(e => console.error('ChatModal: Error leaving Agora channel on cleanup:', e))
+
+        if (
+          hasJoined ||
+          currentActiveClient.connectionState === 'CONNECTING' ||
+          currentActiveClient.connectionState === 'CONNECTED'
+        ) {
+          currentActiveClient
+            .leave()
+            .catch((e) => console.error('ChatModal: Error leaving Agora channel on cleanup:', e))
             .finally(() => {
               if (agoraClientRef.current === currentActiveClient) {
                 setIsAgoraConnected(false);
@@ -892,12 +1000,12 @@ const ChatModal: FC<ChatModalProps> = ({
               }
             });
         } else {
-           if (agoraClientRef.current === currentActiveClient) {
-             setIsAgoraConnected(false);
-             setHasVideoStarted(false);
-             setIsDialogueModeReady(false);
-             agoraClientRef.current = null; 
-           }
+          if (agoraClientRef.current === currentActiveClient) {
+            setIsAgoraConnected(false);
+            setHasVideoStarted(false);
+            setIsDialogueModeReady(false);
+            agoraClientRef.current = null;
+          }
         }
       }
     };
@@ -912,10 +1020,12 @@ const ChatModal: FC<ChatModalProps> = ({
         setTimeout(() => {
           if (agoraClientRef.current && akoolSession) {
             const connectionState = agoraClientRef.current.connectionState;
-            
+
             if (connectionState === 'DISCONNECTED' && !showSessionEndedOverlay) {
               setShowSessionEndedOverlay(true);
-              setAkoolSessionError('Connection lost while tab was inactive. Please close and reopen chat.');
+              setAkoolSessionError(
+                'Connection lost while tab was inactive. Please close and reopen chat.',
+              );
             }
           }
         }, 500); // Wait 500ms before checking
@@ -936,9 +1046,9 @@ const ChatModal: FC<ChatModalProps> = ({
         try {
           const keepAliveMessage = {
             v: 2,
-            type: "ping",
+            type: 'ping',
             mid: `ping-${Date.now()}`,
-            pld: {}
+            pld: {},
           };
           // @ts-ignore
           agoraClientRef.current.sendStreamMessage(JSON.stringify(keepAliveMessage), false);
@@ -952,24 +1062,35 @@ const ChatModal: FC<ChatModalProps> = ({
   }, [akoolSession, isAgoraConnected]);
 
   // Existing useEffects for local chat functionality (unread count, scroll, localStorage)
-  useEffect(() => { onClearUnread?.(); }, [onClearUnread]);
+  useEffect(() => {
+    onClearUnread?.();
+  }, [onClearUnread]);
   useEffect(() => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.from === 'agent') {
-      if (document.visibilityState === 'hidden') setLocalUnreadCount(prev => prev + 1);
+      if (document.visibilityState === 'hidden') setLocalUnreadCount((prev) => prev + 1);
     }
   }, [messages]);
   useEffect(() => {
     if (containerRef.current) containerRef.current.scrollTop = containerRef.current.scrollHeight;
   }, [messages]);
   useEffect(() => {
-    if (savings > 0) { setShowSparkles(true); const timer = setTimeout(() => setShowSparkles(false), 2000); return () => clearTimeout(timer); }
+    if (savings > 0) {
+      setShowSparkles(true);
+      const timer = setTimeout(() => setShowSparkles(false), 2000);
+      return () => clearTimeout(timer);
+    }
   }, [savings]);
   useEffect(() => {
-    const timer = setTimeout(() => { if (messages.length > 1 && !qualified && !offerExpired) setShowOffer(true); }, 30000);
+    const timer = setTimeout(() => {
+      if (messages.length > 1 && !qualified && !offerExpired) setShowOffer(true);
+    }, 30000);
     return () => clearTimeout(timer);
   }, [messages.length, qualified, offerExpired]);
-  const handleOfferExpire = () => { setOfferExpired(true); setShowOffer(false); };
+  const handleOfferExpire = () => {
+    setOfferExpired(true);
+    setShowOffer(false);
+  };
 
   // Expand the helper function to include all variable types
   const getQuickReplyHint = (variable: string): QuickReplyHint | null => {
@@ -977,102 +1098,106 @@ const ChatModal: FC<ChatModalProps> = ({
       case 'Full_name':
         return {
           type: QuickReplyType.TEXT_INPUT,
-          placeholder: 'Enter your full name'
+          placeholder: 'Enter your full name',
         };
-        
+
       case 'Bedroom_size':
         return {
           type: QuickReplyType.MULTIPLE_CHOICE,
           options: ['1BR', '2BR', '3BR'],
-          placeholder: 'How many bedrooms would you like?'
+          placeholder: 'How many bedrooms would you like?',
         };
-        
+
       case 'Calendar':
         return {
           type: QuickReplyType.DATE,
           placeholder: 'When are you planning to move?',
           min: new Date().toISOString().split('T')[0],
-          max: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+          max: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         };
-        
+
       case 'User_action':
         return {
           type: QuickReplyType.MULTIPLE_CHOICE,
           options: ['Ask Some Questions', 'Schedule A Tour', 'Get Pre-Qualified', 'Apply Now'],
-          placeholder: 'How can I best help you, what would you like to do now?'
+          placeholder: 'How can I best help you, what would you like to do now?',
         };
-        
+
       case 'Faq':
         return {
           type: QuickReplyType.MULTIPLE_CHOICE,
-          options: ['What is Grand Oaks near?', 'What are the amenities?', 'What\'s available/pricing?'],
-          placeholder: 'What would you like to know?'
+          options: [
+            'What is Grand Oaks near?',
+            'What are the amenities?',
+            "What's available/pricing?",
+          ],
+          placeholder: 'What would you like to know?',
         };
-        
+
       case 'YES/NO':
         return {
           type: QuickReplyType.BOOLEAN,
           options: ['Yes', 'No'],
-          placeholder: 'Please choose:'
+          placeholder: 'Please choose:',
         };
-        
+
       case 'Incentive':
         return {
           type: QuickReplyType.INCENTIVE,
           options: ['Sign Me Up!', 'Turn it Down'],
-          placeholder: 'Would you like to save money?'
+          placeholder: 'Would you like to save money?',
         };
-        
+
       case 'Price_range':
         return {
           type: QuickReplyType.RANGE,
           placeholder: 'Do you have a price range in mind?',
           min: 1000,
-          max: 5000
+          max: 5000,
         };
-        
+
       case 'Work_place':
         return {
           type: QuickReplyType.TEXT_INPUT,
-          placeholder: 'Enter your company name'
+          placeholder: 'Enter your company name',
         };
-        
+
       case 'Occupancy':
         return {
           type: QuickReplyType.MULTIPLE_CHOICE,
           options: ['1', '2', '3', '4'],
-          placeholder: 'How many people will be living at your apartment home?'
+          placeholder: 'How many people will be living at your apartment home?',
         };
-        
+
       case 'Pet':
         return {
           type: QuickReplyType.PET_INPUT,
           options: ['Yes', 'No'],
-          placeholder: 'Are you bringing any furry friends with you?'
+          placeholder: 'Are you bringing any furry friends with you?',
         };
-        
+
       case 'Features':
         return {
           type: QuickReplyType.MULTIPLE_CHOICE,
           options: [
             'Cable & Wifi incl.',
-            'Spacious Units', 
+            'Spacious Units',
             'W/D Connections',
             'W/D Included',
             'Quiet and Great Location',
             'Pool & Clubhouse',
-            'Business Ctr'
+            'Business Ctr',
           ],
-          placeholder: 'Are you looking for any special features in your home?'
+          placeholder: 'Are you looking for any special features in your home?',
         };
-        
+
       case 'Tour':
         return {
           type: QuickReplyType.MULTIPLE_CHOICE,
           options: ['In-Person Tour', 'Self-guided Tour', 'Virtual Tour'],
-          placeholder: 'What type of tour would you prefer?'
+          placeholder: 'What type of tour would you prefer?',
         };
-        
+
       default:
         return null;
     }
@@ -1091,30 +1216,30 @@ const ChatModal: FC<ChatModalProps> = ({
   // sendMessage function: decides whether to send to backend agent or AKOOL
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
-    
+
     // Clear any existing hints immediately to prevent flashing
     setCurrentHint(null);
     setCurrentQuestion(null);
     setAfterTypingCallback(null);
-    
+
     // NEW: Update activity tracking
     updateActivity('user_message');
-    
+
     // NEW: Update conversation stage based on message content and context
     if (conversationStage === 'initial' && messages.length > 2) {
       setConversationStage('engaged');
     } else if (qualified && conversationStage === 'engaged') {
       setConversationStage('qualified');
     }
-    
+
     const userMessageId = `user-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const userMessage: ChatMessageForDisplay = { 
-        id: userMessageId, 
-        from: 'user', 
-        text: text.trim(), 
-        sentAt: new Date() 
+    const userMessage: ChatMessageForDisplay = {
+      id: userMessageId,
+      from: 'user',
+      text: text.trim(),
+      sentAt: new Date(),
     };
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInputText('');
 
     // Track user message sent
@@ -1130,12 +1255,12 @@ const ChatModal: FC<ChatModalProps> = ({
         postTextToBackendAgent(text.trim(), userMessageId);
         return;
       }
-      
+
       if (isSendingRef.current) {
         return;
       }
       isSendingRef.current = true;
-      
+
       // Add a slight delay before showing typing indicator to make it feel more natural
       setTimeout(() => {
         setIsTyping(true); // Show typing indicator for LLM/AKOOL
@@ -1153,7 +1278,7 @@ const ChatModal: FC<ChatModalProps> = ({
 
       // Call LLM API to get response
       let llmResponse = text.trim(); // fallback
-      
+
       // Generate conversation ID once, then reuse it
       const currentConversationId = conversationId || `conv-${Date.now()}`;
       const currentTurnId = turnId + 1;
@@ -1164,48 +1289,49 @@ const ChatModal: FC<ChatModalProps> = ({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             user_message: text.trim(),
-            conversation_id: currentConversationId,  // ✅ Always has a value
-            turn_id: currentTurnId,                  // ✅ Incrementing turn number
-            end_signal: false
+            conversation_id: currentConversationId, // ✅ Always has a value
+            turn_id: currentTurnId, // ✅ Incrementing turn number
+            end_signal: false,
           }),
         });
 
         if (response.ok && response.body) {
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
-          
+
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
-            
+
             const chunk = decoder.decode(value);
-            const lines = chunk.split('\n').filter(line => line.trim());
-            
+            const lines = chunk.split('\n').filter((line) => line.trim());
+
             for (const line of lines) {
               try {
                 const data = JSON.parse(line);
                 if (data.completed_reply) {
                   llmResponse = data.completed_reply;
                 }
-                
+
                 // ✅ NEW: Capture initial summary data
                 if (data.data?.final_summary) {
                   // Update lead data with summary (no book_tour)
                   updateConversation({
-                    ai_intent_summary: data.data.final_summary.ai_intent_summary
+                    ai_intent_summary: data.data.final_summary.ai_intent_summary,
                   });
                 }
-                
+
                 // ✨ EXISTING: Variables update logic
                 if (data.final_variables_update) {
                   // Find which variable is currently true (being asked for)
                   const activeVariable = Object.keys(data.final_variables_update).find(
-                    key => data.final_variables_update[key] === true
+                    (key) => data.final_variables_update[key] === true,
                   );
-                  
-                  if (activeVariable && !isTyping) { // Only set when not typing
+
+                  if (activeVariable && !isTyping) {
+                    // Only set when not typing
                     setCurrentQuestion(activeVariable);
-                    
+
                     // Set appropriate quick reply hint based on the variable
                     const hint = getQuickReplyHint(activeVariable);
                     if (hint) {
@@ -1216,7 +1342,7 @@ const ChatModal: FC<ChatModalProps> = ({
                     if (activeVariable) {
                       const pendingVariable = activeVariable;
                       const pendingHint = getQuickReplyHint(activeVariable);
-                      
+
                       // Set a callback to be executed after typing finishes
                       const setHintsAfterTyping = () => {
                         if (pendingVariable) {
@@ -1226,7 +1352,7 @@ const ChatModal: FC<ChatModalProps> = ({
                           }
                         }
                       };
-                      
+
                       // Store this callback to be used when typing finishes
                       setAfterTypingCallback(() => setHintsAfterTyping);
                     } else {
@@ -1243,45 +1369,45 @@ const ChatModal: FC<ChatModalProps> = ({
                   // Update lead data with qualification results
                   updateConversation({
                     is_qualified: data.is_qualified,
-                    kb_pending: data.kb_pending
+                    kb_pending: data.kb_pending,
                   });
-                  
+
                   // NEW: Trigger qualification banner if qualified
                   if (data.is_qualified === true) {
                     setQualified(true);
                     setShowSparkles(true);
-                    
+
                     // Extract and store user information from conversation
                     const nameMatch = llmResponse.match(/\b([A-Z][a-z]+ [A-Z][a-z]+)\b/);
                     if (nameMatch) {
                       const fullName = nameMatch[1];
                       const [firstName, lastName] = fullName.split(' ');
                       setUserName(firstName);
-                      
+
                       // Update lead data with extracted name
                       updateUser({
                         first_name: firstName,
-                        last_name: lastName || ''
+                        last_name: lastName || '',
                       });
                     }
-                    
+
                     // Extract other qualification info from data if available
                     if (data.data?.final_summary) {
                       const summary = data.data.final_summary;
-                      
+
                       // Update conversation data with any extracted information
                       updateConversation({
                         is_qualified: true,
-                        ai_intent_summary: summary.ai_intent_summary
+                        ai_intent_summary: summary.ai_intent_summary,
                       });
                     }
-                    
+
                     // Trigger confetti effect
                     setTimeout(() => {
                       confetti({
                         particleCount: 100,
                         spread: 70,
-                        origin: { y: 0.3 }
+                        origin: { y: 0.3 },
                       });
                     }, 500);
                   }
@@ -1298,33 +1424,50 @@ const ChatModal: FC<ChatModalProps> = ({
           setTurnId(currentTurnId);
         }
       } catch (error) {
-        console.error("LLM API error:", error);
+        console.error('LLM API error:', error);
       }
 
       const agoraMessage = {
-        v: 2, type: "chat", mid: userMessageId, idx: 0, fin: true,
+        v: 2,
+        type: 'chat',
+        mid: userMessageId,
+        idx: 0,
+        fin: true,
         pld: { text: llmResponse }, // Send LLM response instead of user input
       };
 
       try {
         // @ts-ignore - Assuming sendStreamMessage exists despite type issues seen previously
-        await (localAgoraClient as IAgoraRTCClient).sendStreamMessage(JSON.stringify(agoraMessage), false);
+        await (localAgoraClient as IAgoraRTCClient).sendStreamMessage(
+          JSON.stringify(agoraMessage),
+          false,
+        );
         // Bot response will be handled by 'stream-message' listener
       } catch (error) {
         console.error('ChatModal: Failed to send stream message to AKOOL:', error);
         setAkoolSessionError('Failed to send message to avatar. Check console.');
         // Optionally add an error message to chat for the user
-        setMessages(prev => [...prev, { id: `err-${Date.now()}`, from: 'agent', text: "Sorry, I couldn't say that.", sentAt: new Date()}]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `err-${Date.now()}`,
+            from: 'agent',
+            text: "Sorry, I couldn't say that.",
+            sentAt: new Date(),
+          },
+        ]);
       } finally {
-          setTimeout(() => { isSendingRef.current = false; }, 100); 
-          setIsTyping(false); // Hide typing indicator after response
+        setTimeout(() => {
+          isSendingRef.current = false;
+        }, 100);
+        setIsTyping(false); // Hide typing indicator after response
       }
     } else {
       // Fallback to existing backend agent if AKOOL is not active
       postTextToBackendAgent(text.trim(), userMessageId); // Use separate function for clarity
     }
   };
-  
+
   // Extracted backend posting logic
   const postTextToBackendAgent = async (text: string, originalUserMessageId: string) => {
     // Add a slight delay before showing typing indicator to make it feel more natural
@@ -1332,16 +1475,22 @@ const ChatModal: FC<ChatModalProps> = ({
       setIsTyping(true); // Show backend agent typing indicator
       scrollToBottom(); // Scroll to see typing indicator
     }, 1200); // 1.2 second delay for a more natural feel
-    
+
     // NEW: Track activity for backend agent interaction
     updateActivity('backend_agent_query');
-    
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate typing
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate typing
       const res = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: messages.map(m => ({ role: m.from === 'user' ? 'user' : 'assistant', content: m.text })), agentState })
+        body: JSON.stringify({
+          messages: messages.map((m) => ({
+            role: m.from === 'user' ? 'user' : 'assistant',
+            content: m.text,
+          })),
+          agentState,
+        }),
       });
       if (!res.ok) throw new Error(await res.text());
       let reply = '';
@@ -1353,54 +1502,78 @@ const ChatModal: FC<ChatModalProps> = ({
           if (done) break;
           const chunk = decoder.decode(value);
           reply += chunk;
-          setMessages(prev => {
+          setMessages((prev) => {
             const updated = [...prev];
             // Ensure we are updating/adding the backend agent's response, not the user's echo from AKOOL
             const lastMessage = updated[updated.length - 1];
             if (lastMessage?.from === 'user' && lastMessage.id === originalUserMessageId) {
-              updated.push({ id: `backend-agent-${Date.now()}`, from: 'agent', text: reply, sentAt: new Date() });
-            } else if (lastMessage?.from === 'agent'){
+              updated.push({
+                id: `backend-agent-${Date.now()}`,
+                from: 'agent',
+                text: reply,
+                sentAt: new Date(),
+              });
+            } else if (lastMessage?.from === 'agent') {
               updated[updated.length - 1] = { ...lastMessage, text: reply };
             }
             return updated;
           });
         }
       }
-      
+
       // NEW: Detect escalation patterns in the response
       const lowerReply = reply.toLowerCase();
-      if (lowerReply.includes('contact our leasing office') || 
-          lowerReply.includes('speak with an agent') || 
-          lowerReply.includes('call us directly')) {
+      if (
+        lowerReply.includes('contact our leasing office') ||
+        lowerReply.includes('speak with an agent') ||
+        lowerReply.includes('call us directly')
+      ) {
         analytics.trackAdminHandoffTriggered('automated_escalation', conversationStage);
       }
-      
+
       // NEW: Detect complex queries that might need escalation
-      const complexKeywords = ['legal', 'lawsuit', 'emergency', 'urgent', 'complaint', 'issue', 'problem'];
-      if (complexKeywords.some(keyword => text.toLowerCase().includes(keyword))) {
+      const complexKeywords = [
+        'legal',
+        'lawsuit',
+        'emergency',
+        'urgent',
+        'complaint',
+        'issue',
+        'problem',
+      ];
+      if (complexKeywords.some((keyword) => text.toLowerCase().includes(keyword))) {
         analytics.trackCustomerServiceEscalated('complex_query', text);
       }
-      
+
       // Track bot message received for backend response
       if (reply) {
         analytics.trackBotMessage();
       }
-      
+
       const stateRes = await fetch('/api/agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ messages: [...messages, {from: 'user', text, sentAt: new Date()}, {from: 'agent', text: reply, sentAt: new Date()}], stateFetch: true, agentState })
+        body: JSON.stringify({
+          messages: [
+            ...messages,
+            { from: 'user', text, sentAt: new Date() },
+            { from: 'agent', text: reply, sentAt: new Date() },
+          ],
+          stateFetch: true,
+          agentState,
+        }),
       });
       if (stateRes.ok) {
         const data = await stateRes.json();
         setQualified(data.qualified ?? false);
         setAgentState(data.agentState);
-        
+
         // Only set up hints if we have a question or hint
         if (data.current_question || data.hint) {
           const pendingQuestion = data.current_question;
-          const pendingHint = data.hint || (data.current_question ? getQuickReplyHint(data.current_question) : null);
-          
+          const pendingHint =
+            data.hint || (data.current_question ? getQuickReplyHint(data.current_question) : null);
+
           // Set a callback to be executed after typing finishes
           const setHintsAfterTyping = () => {
             if (pendingQuestion) {
@@ -1410,7 +1583,7 @@ const ChatModal: FC<ChatModalProps> = ({
               setCurrentHint(pendingHint);
             }
           };
-          
+
           // Store this callback to be used when typing finishes
           setAfterTypingCallback(() => setHintsAfterTyping);
         } else {
@@ -1420,21 +1593,31 @@ const ChatModal: FC<ChatModalProps> = ({
             setCurrentHint(null);
           });
         }
-        
+
         if (data.savings && data.savings > savings) {
-            const startValue = savings; const endValue = data.savings; const duration = 1000; const startTime = Date.now();
-            const animateSavings = () => { const now = Date.now(); const progress = Math.min((now - startTime) / duration, 1); const currentValue = Math.floor(startValue + (endValue - startValue) * progress); setSavings(currentValue); if (progress < 1) requestAnimationFrame(animateSavings); };
+          const startValue = savings;
+          const endValue = data.savings;
+          const duration = 1000;
+          const startTime = Date.now();
+          const animateSavings = () => {
+            const now = Date.now();
+            const progress = Math.min((now - startTime) / duration, 1);
+            const currentValue = Math.floor(startValue + (endValue - startValue) * progress);
+            setSavings(currentValue);
+            if (progress < 1) requestAnimationFrame(animateSavings);
+          };
           requestAnimationFrame(animateSavings);
         }
-        if (data.qualified && !showSparkles) { 
-          setShowSparkles(true); 
+        if (data.qualified && !showSparkles) {
+          setShowSparkles(true);
           setTimeout(() => setShowSparkles(false), 2000);
-          
+
           // Set the user's name for the banner
-          const firstName = data.user_info?.full_name ? data.user_info.full_name.split(' ')[0] : 
-                           leadData.user.first_name || "there";
+          const firstName = data.user_info?.full_name
+            ? data.user_info.full_name.split(' ')[0]
+            : leadData.user.first_name || 'there';
           setUserName(firstName);
-          
+
           // Track incentive acceptance when someone qualifies
           analytics.trackIncentiveAccepted('qualification_bonus');
         }
@@ -1442,60 +1625,73 @@ const ChatModal: FC<ChatModalProps> = ({
 
       // Check for fallback patterns in response
       const responseText = reply.toLowerCase();
-      if (responseText.includes("sorry, i don't understand") || 
-          responseText.includes("i'm not sure") ||
-          responseText.includes("could you please") ||
-          responseText.includes("can you rephrase") ||
-          reply.trim().length < 10) {
+      if (
+        responseText.includes("sorry, i don't understand") ||
+        responseText.includes("i'm not sure") ||
+        responseText.includes('could you please') ||
+        responseText.includes('can you rephrase') ||
+        reply.trim().length < 10
+      ) {
         analytics.trackFallback('no_match');
       }
     } catch (err) {
       console.error(err);
-      
+
       // Track fallback event when errors occur
       analytics.trackFallback('error');
-      
-      setMessages(prev => [...prev, { id: `err-backend-${Date.now()}`, from: 'agent', text: 'Sorry, something went wrong 😞', sentAt: new Date() }]);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `err-backend-${Date.now()}`,
+          from: 'agent',
+          text: 'Sorry, something went wrong 😞',
+          sentAt: new Date(),
+        },
+      ]);
     } finally {
       setIsTyping(false);
     }
   };
 
   // Modal handlers for new components
-  const handleContactFormSubmit = (contactData: { 
-    name: string; 
-    email?: string; 
-    phone?: string; 
-    method: 'email' | 'phone' 
+  const handleContactFormSubmit = (contactData: {
+    name: string;
+    email?: string;
+    phone?: string;
+    method: 'email' | 'phone';
   }) => {
     // NEW: Update conversation stage and activity
     if (conversationStage !== 'converted') {
       setConversationStage('qualified');
     }
     updateActivity('contact_capture');
-    
+
     // Add a success message to the chat
     const successMessage = `Thank you ${contactData.name}! We'll reach out to you via ${contactData.method === 'email' ? 'email' : 'phone'} soon.`;
-    setMessages(prev => [...prev, { 
-      id: `contact-success-${Date.now()}`, 
-      from: 'agent', 
-      text: successMessage, 
-      sentAt: new Date() 
-    }]);
-    
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `contact-success-${Date.now()}`,
+        from: 'agent',
+        text: successMessage,
+        sentAt: new Date(),
+      },
+    ]);
+
     // NEW: Update user data only
     const [firstName, ...lastNameParts] = contactData.name.split(' ');
     updateUser({
       first_name: firstName,
       last_name: lastNameParts.join(' '),
       email: contactData.email,
-      phone: contactData.phone
+      phone: contactData.phone,
     });
   };
 
-  const handleTourBookingSubmit = (tourData: { 
-    name: string; 
-    email: string; 
+  const handleTourBookingSubmit = (tourData: {
+    name: string;
+    email: string;
     tourType: 'in_person' | 'self_guided' | 'virtual';
     preferredDate?: string;
     preferredTime?: string;
@@ -1503,32 +1699,40 @@ const ChatModal: FC<ChatModalProps> = ({
     // NEW: Update conversation stage to converted
     setConversationStage('converted');
     updateActivity('tour_booking');
-    
+
     // Add a success message to the chat
-    const tourTypeDisplay = tourData.tourType === 'in_person' ? 'in-person' : 
-                           tourData.tourType === 'self_guided' ? 'self-guided' : 'virtual';
+    const tourTypeDisplay =
+      tourData.tourType === 'in_person'
+        ? 'in-person'
+        : tourData.tourType === 'self_guided'
+          ? 'self-guided'
+          : 'virtual';
     const successMessage = `Great! Your ${tourTypeDisplay} tour has been scheduled. Check your email for confirmation details.`;
-    
-    setMessages(prev => [...prev, { 
-      id: `tour-success-${Date.now()}`, 
-      from: 'agent', 
-      text: successMessage, 
-      sentAt: new Date() 
-    }]);
-    
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `tour-success-${Date.now()}`,
+        from: 'agent',
+        text: successMessage,
+        sentAt: new Date(),
+      },
+    ]);
+
     // NEW: Update user and conversation data
     const [firstName, ...lastNameParts] = tourData.name.split(' ');
     updateUser({
       first_name: firstName,
       last_name: lastNameParts.join(' '),
-      email: tourData.email
+      email: tourData.email,
     });
     updateConversation({
       is_book_tour: true,
       tour_type: tourData.tourType,
-      tour_datetime: tourData.preferredDate && tourData.preferredTime ? 
-        new Date(tourData.preferredDate + ' ' + tourData.preferredTime) : 
-        undefined
+      tour_datetime:
+        tourData.preferredDate && tourData.preferredTime
+          ? new Date(tourData.preferredDate + ' ' + tourData.preferredTime)
+          : undefined,
     });
   };
 
@@ -1541,13 +1745,13 @@ const ChatModal: FC<ChatModalProps> = ({
         // Re-send dialogue mode setup to ensure it hasn't been reset
         const reinforceMessage = {
           v: 2,
-          type: "command",
+          type: 'command',
           mid: `reinforce-${Date.now()}`,
           pld: {
             mode: 1, // Dialogue mode
-          }
+          },
         };
-        
+
         try {
           // @ts-ignore
           agoraClientRef.current.sendStreamMessage(JSON.stringify(reinforceMessage), false);
@@ -1586,7 +1790,7 @@ const ChatModal: FC<ChatModalProps> = ({
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      
+
       // Clear timeout on unmount
       if (inactivityTimeout) {
         clearTimeout(inactivityTimeout);
@@ -1605,7 +1809,7 @@ const ChatModal: FC<ChatModalProps> = ({
         // Clear the callback
         setAfterTypingCallback(null);
       }, 200); // 200ms delay before showing the hints
-      
+
       return () => clearTimeout(timer);
     }
   }, [isTyping, afterTypingCallback]);
@@ -1617,20 +1821,22 @@ const ChatModal: FC<ChatModalProps> = ({
 
   // Add these new state variables
   const [isPreLeaseSigned, setIsPreLeaseSigned] = useState(false);
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState('');
 
   // Add this new function to handle PDF download
   const handleSignPrequalificationPDF = async () => {
     try {
       // Create data object for PDF generation
       const userData = {
-        fullName: leadData.user.first_name ? `${leadData.user.first_name} ${leadData.user.last_name || ''}`.trim() : 'Prospective Resident',
+        fullName: leadData.user.first_name
+          ? `${leadData.user.first_name} ${leadData.user.last_name || ''}`.trim()
+          : 'Prospective Resident',
         moveInDate: leadData.conversation.move_in_date || 'Flexible',
         apartmentSize: leadData.conversation.apartment_size_preference || 'Studio',
         incomeQualified: true, // They are qualified based on income
-        evictionStatus: false // No eviction history
+        evictionStatus: false, // No eviction history
       };
-      
+
       setUserName(userData.fullName.split(' ')[0]); // Set first name for congrats message
 
       // Call the API to generate and download PDF
@@ -1641,43 +1847,43 @@ const ChatModal: FC<ChatModalProps> = ({
         },
         body: JSON.stringify(userData),
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to generate PDF');
       }
-      
+
       // Get the blob from the response
       const blob = await response.blob();
-      
+
       // Create a URL for the blob
       const url = window.URL.createObjectURL(blob);
-      
+
       // Create a temporary link and trigger download
       const a = document.createElement('a');
       a.href = url;
       a.download = `pre-qualification-${userData.fullName.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '')}.pdf`;
       document.body.appendChild(a);
       a.click();
-      
+
       // Clean up
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       // Update state
       setIsPreLeaseSigned(true);
-      
+
       // Track event
       analytics.trackIncentiveAccepted('pre_qualification_form');
-      
+
       // Update the conversation data with pre_lease_signed flag
       updateConversation({
-        is_qualified: true // Using existing property since pre_lease_signed isn't available
+        is_qualified: true, // Using existing property since pre_lease_signed isn't available
       });
-      
+
       return true;
     } catch (error) {
       console.error('Error downloading PDF:', error);
-      toast.error("Failed to download the prequalification form. Please try again.");
+      toast.error('Failed to download the prequalification form. Please try again.');
       return false;
     }
   };
@@ -1685,25 +1891,38 @@ const ChatModal: FC<ChatModalProps> = ({
   return (
     <div className="fixed bottom-20 right-6 z-50">
       {akoolSessionError && (
-        <div style={{ position: 'absolute', bottom: '10px', left: '10px', right: '10px', backgroundColor: 'rgba(255,0,0,0.7)', color: 'white', padding: '5px', borderRadius: '3px', textAlign: 'center', fontSize: '0.8em', zIndex: 20}}>
+        <div
+          style={{
+            position: 'absolute',
+            bottom: '10px',
+            left: '10px',
+            right: '10px',
+            backgroundColor: 'rgba(255,0,0,0.7)',
+            color: 'white',
+            padding: '5px',
+            borderRadius: '3px',
+            textAlign: 'center',
+            fontSize: '0.8em',
+            zIndex: 20,
+          }}
+        >
           Avatar Error: {akoolSessionError}
         </div>
       )}
 
       <div className="bg-white rounded-lg shadow-xl w-[360px] h-[625px] flex flex-col relative overflow-hidden">
         {showSparkles && <SparkleBurst />}
-        
+
         <div
-            id={AKOOL_PLAYER_ID}
-            className="absolute left-0 w-full z-0 flex items-center justify-center"
-            style={{
-              backgroundColor: videoPlayerBgColor,
-              top: `${headerHeight}px`,
-              height: headerHeight > 0 ? `calc(100% - ${headerHeight}px)` : '100%',
-              overflow: 'hidden',
-            }}
-        >
-        </div>
+          id={AKOOL_PLAYER_ID}
+          className="absolute left-0 w-full z-0 flex items-center justify-center"
+          style={{
+            backgroundColor: videoPlayerBgColor,
+            top: `${headerHeight}px`,
+            height: headerHeight > 0 ? `calc(100% - ${headerHeight}px)` : '100%',
+            overflow: 'hidden',
+          }}
+        ></div>
 
         <ChatHeader
           config={config}
@@ -1732,7 +1951,7 @@ const ChatModal: FC<ChatModalProps> = ({
             <FloatingBanner
               onClickCTA={handleSignPrequalificationPDF}
               isPrequalified={qualified}
-              userName={userName || "Test User"}
+              userName={userName || 'Test User'}
             />
           </div>
         )}
@@ -1746,7 +1965,7 @@ const ChatModal: FC<ChatModalProps> = ({
           tourBooked={tourBooked}
           onPromptTour={() => setShowTourBooking(true)}
         />
-        
+
         <MessagingInput
           inputText={inputText}
           setInputText={setInputText}
@@ -1767,12 +1986,14 @@ const ChatModal: FC<ChatModalProps> = ({
           <div className="absolute inset-0 bg-black bg-opacity-80 z-30 flex flex-col items-center justify-center text-white p-6 text-center rounded-lg">
             <X size={48} className="text-red-400 mb-4" />
             <p className="text-xl font-semibold mb-2">Session Ended</p>
-            <p className="mb-4">Your live video session has ended. This might be due to inactivity.</p>
+            <p className="mb-4">
+              Your live video session has ended. This might be due to inactivity.
+            </p>
             <p className="text-sm">
               Please close and reopen the chat window to start a new session with Ava.
             </p>
-            <button 
-              onClick={handleClose} 
+            <button
+              onClick={handleClose}
               className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75"
             >
               Close Chat

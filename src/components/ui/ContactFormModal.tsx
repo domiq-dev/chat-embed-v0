@@ -12,35 +12,40 @@ type FormData = {
 interface ContactFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (contactData: { name: string; email?: string; phone?: string; method: 'email' | 'phone' }) => void;
+  onSubmit: (contactData: {
+    name: string;
+    email?: string;
+    phone?: string;
+    method: 'email' | 'phone';
+  }) => void;
   analytics: {
     trackContactCapture: (method: 'email' | 'phone', isValid: boolean) => void;
   };
 }
 
-const ContactFormModal: React.FC<ContactFormModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  analytics 
+const ContactFormModal: React.FC<ContactFormModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  analytics,
 }) => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     phone: '',
     method: 'email',
-    moveInDate: ''
+    moveInDate: '',
   });
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
-    
+
     if (formData.method === 'email') {
       if (!formData.email.trim()) {
         newErrors.email = 'Email is required';
@@ -48,7 +53,7 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
         newErrors.email = 'Please enter a valid email';
       }
     }
-    
+
     if (formData.method === 'phone') {
       if (!formData.phone.trim()) {
         newErrors.phone = 'Phone number is required';
@@ -56,38 +61,38 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
         newErrors.phone = 'Please enter a valid phone number';
       }
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     // Track contact capture with analytics (with error handling)
     try {
       analytics.trackContactCapture(formData.method, true);
     } catch (error) {
       console.warn('Contact capture analytics error:', error);
     }
-    
+
     // Submit form data
     onSubmit({
       name: formData.name,
       email: formData.method === 'email' ? formData.email : undefined,
       phone: formData.method === 'phone' ? formData.phone : undefined,
-      method: formData.method
+      method: formData.method,
     });
-    
+
     // Reset form
     setFormData({
       name: '',
       email: '',
       phone: '',
       method: 'email',
-      moveInDate: ''
+      moveInDate: '',
     });
     setErrors({});
     onClose();
@@ -100,14 +105,11 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Get In Touch</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <p className="text-gray-600 mb-6">
           Let's stay connected! How would you like us to reach out?
         </p>
@@ -228,4 +230,4 @@ const ContactFormModal: React.FC<ContactFormModalProps> = ({
   );
 };
 
-export default ContactFormModal; 
+export default ContactFormModal;

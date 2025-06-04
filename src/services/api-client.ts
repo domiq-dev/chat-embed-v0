@@ -16,7 +16,7 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // Leads API
@@ -58,4 +58,4 @@ export const fetchConversations = async () => {
   return response.data;
 };
 
-export default apiClient; 
+export default apiClient;

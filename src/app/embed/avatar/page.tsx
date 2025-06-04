@@ -8,23 +8,29 @@ export default function AvatarPage() {
   // Function to run after the page loads
   useEffect(() => {
     // This will run only on the client side after the component mounts
-    ;
   }, []);
 
   return (
-    <div id="app" style={{
-      maxWidth: '1280px',
-      margin: '0 auto',
-      padding: '2rem',
-      textAlign: 'center'
-    }}>
+    <div
+      id="app"
+      style={{
+        maxWidth: '1280px',
+        margin: '0 auto',
+        padding: '2rem',
+        textAlign: 'center',
+      }}
+    >
       <h1>Streaming Avatar Demo</h1>
-      <div id="yourAvatarContainer" className="avatarContainer" style={{
-        width: '100%',
-        height: '400px',
-        border: '1px solid #ccc',
-        borderRadius: '8px'
-      }}></div>
+      <div
+        id="yourAvatarContainer"
+        className="avatarContainer"
+        style={{
+          width: '100%',
+          height: '400px',
+          border: '1px solid #ccc',
+          borderRadius: '8px',
+        }}
+      ></div>
 
       {/* Load the SDK first */}
       <Script

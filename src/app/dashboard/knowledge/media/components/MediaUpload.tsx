@@ -26,11 +26,9 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    
-    const files = Array.from(e.dataTransfer.files).filter(file => 
-      file.type.startsWith('image/')
-    );
-    
+
+    const files = Array.from(e.dataTransfer.files).filter((file) => file.type.startsWith('image/'));
+
     if (files.length > 0) {
       setPreviewFiles(files);
       uploadFiles(files);
@@ -39,9 +37,7 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const files = Array.from(e.target.files).filter(file => 
-        file.type.startsWith('image/')
-      );
+      const files = Array.from(e.target.files).filter((file) => file.type.startsWith('image/'));
       setPreviewFiles(files);
       uploadFiles(files);
     }
@@ -49,11 +45,11 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
 
   const uploadFiles = async (files: File[]) => {
     if (files.length === 0) return;
-    
+
     setUploading(true);
     try {
       const formData = new FormData();
-      files.forEach(file => {
+      files.forEach((file) => {
         formData.append('files', file);
       });
 
@@ -67,7 +63,7 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         // Convert the API response to match the expected format
         const mediaItems = result.files.map((file: any) => ({
@@ -78,7 +74,7 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
           size: file.size,
           uploadedAt: new Date(file.uploadedAt),
         }));
-        
+
         onUpload(mediaItems);
         setPreviewFiles([]);
       }
@@ -91,16 +87,14 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
   };
 
   const removeFile = (index: number) => {
-    setPreviewFiles(prev => prev.filter((_, i) => i !== index));
+    setPreviewFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
     <div className="space-y-4">
       <div
         className={`relative border-2 border-dashed rounded-lg p-8 text-center ${
-          isDragging 
-            ? 'border-purple-500 bg-purple-50' 
-            : 'border-gray-300 hover:border-purple-400'
+          isDragging ? 'border-purple-500 bg-purple-50' : 'border-gray-300 hover:border-purple-400'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -122,7 +116,9 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
           </div>
           <div className="space-y-2">
             <p className="text-gray-600">
-              {uploading ? 'Uploading...' : (
+              {uploading ? (
+                'Uploading...'
+              ) : (
                 <>
                   Drag and drop your images here, or{' '}
                   <button
@@ -135,9 +131,7 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
                 </>
               )}
             </p>
-            <p className="text-sm text-gray-500">
-              Supported formats: PNG, JPG, GIF up to 10MB
-            </p>
+            <p className="text-sm text-gray-500">Supported formats: PNG, JPG, GIF up to 10MB</p>
           </div>
         </div>
       </div>
@@ -171,4 +165,4 @@ export default function MediaUpload({ onUpload }: MediaUploadProps) {
       )}
     </div>
   );
-} 
+}

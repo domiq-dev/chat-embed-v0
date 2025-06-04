@@ -3,16 +3,20 @@
 ## 🚨 **CRITICAL ISSUES** - Must Fix Before Production
 
 ### 1. **Hard-coded API Credentials**
+
 - **File**: `src/app/api/avatar/session/route.ts`
 - **Issue**: Contains fallback API keys in source code
+
 ```typescript
-const AKOOL_CLIENT_ID = process.env.AKOOL_CLIENT_ID
-const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
+const AKOOL_CLIENT_ID = process.env.AKOOL_CLIENT_ID;
+const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY;
 ```
+
 - **Risk**: API credentials exposed in source code, security vulnerability
 - **Fix**: Remove fallbacks, ensure environment variables are required
 
 ### 2. **Property-Specific Hard-coding**
+
 - **Files**: Multiple files contain "Grand Oaks" and "Alinna" references
 - **Issue**: Application is hard-coded for specific property
 - **Impact**: Won't work for other property managers without code changes
@@ -23,6 +27,7 @@ const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
   - `src/components/VoicePanel.tsx` - Booking URLs
 
 ### 3. **Missing Environment Variables Documentation**
+
 - **Issue**: No `.env.example` file
 - **Impact**: Property managers won't know what credentials to set up
 - **Required Variables**:
@@ -41,16 +46,19 @@ const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
 ## ⚠️ **HIGH PRIORITY** - Should Fix Before Production
 
 ### 4. **Development Console Logs**
+
 - **Issue**: Extensive console.log statements throughout codebase
 - **Impact**: Performance impact, exposed debugging info
 - **Files**: Multiple components have development logging
 
 ### 5. **Security Headers Too Permissive**
+
 - **File**: `vercel.json`
 - **Issue**: CSP allows `*` for most sources
 - **Risk**: XSS vulnerabilities, not production-ready security
 
 ### 6. **No User Configuration System**
+
 - **Issue**: Property managers can't configure their property details
 - **Need**: Admin interface to set:
   - Property name
@@ -62,32 +70,39 @@ const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
 ## 📋 **MEDIUM PRIORITY** - Quality of Life Issues
 
 ### 7. **Error Handling**
+
 - **Issue**: Some API calls lack proper error handling for end users
 - **Impact**: Technical errors shown to property managers
 
 ### 8. **Performance**
+
 - **Issue**: No image optimization for uploaded media
 - **Impact**: Slow loading for large files
 
 ### 9. **Mobile Responsiveness**
+
 - **Status**: Needs testing on various devices
 - **Impact**: Property managers may use tablets/phones
 
 ## ✅ **GOOD** - These Work Well for Production
 
 ### 10. **File Upload System**
+
 - **Status**: ✅ Works with proper persistence
 - **Details**: Files saved to filesystem, metadata in JSON
 
 ### 11. **Lead Management**
+
 - **Status**: ✅ Cross-tab persistence works
 - **Details**: Lead data properly managed across dashboard tabs
 
 ### 12. **Build System**
+
 - **Status**: ✅ Production builds work
 - **Details**: `npm run build` succeeds, standalone output configured
 
 ### 13. **Chat Functionality**
+
 - **Status**: ✅ Core chat works (with property-specific content)
 - **Details**: Avatar integration functional
 
@@ -96,6 +111,7 @@ const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
 ### Immediate Actions Required:
 
 1. **Create Configuration System**
+
    ```typescript
    // Need: Property configuration interface
    interface PropertyConfig {
@@ -112,11 +128,13 @@ const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
    ```
 
 2. **Environment Variables Setup**
+
    - Create `.env.example`
    - Add validation for required variables
    - Remove hard-coded fallbacks
 
 3. **Remove Property-Specific Code**
+
    - Make prompts configurable
    - Replace hard-coded URLs
    - Dynamic welcome messages
@@ -129,6 +147,7 @@ const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
 ## 🎯 **DEPLOYMENT CHECKLIST**
 
 ### Pre-Production:
+
 - [ ] Remove hard-coded API credentials
 - [ ] Create property configuration system
 - [ ] Add environment variables documentation
@@ -136,6 +155,7 @@ const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
 - [ ] Test with different property configurations
 
 ### Production:
+
 - [ ] Set up proper environment variables
 - [ ] Configure property-specific settings
 - [ ] Test chat functionality
@@ -145,7 +165,7 @@ const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
 ## 📊 **ESTIMATED EFFORT**
 
 - **Critical Issues**: 2-3 days development
-- **High Priority**: 1-2 days development  
+- **High Priority**: 1-2 days development
 - **Medium Priority**: 1-2 days development
 - **Total**: 4-7 days to be fully production-ready
 
@@ -155,4 +175,4 @@ const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
 **Primary Blocker**: Hard-coded property information
 **Timeline**: ~1 week to be fully production-ready for any property manager
 
-The core functionality works well, but customization is needed for different properties. 
+The core functionality works well, but customization is needed for different properties.

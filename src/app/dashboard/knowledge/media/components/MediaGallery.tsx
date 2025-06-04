@@ -23,7 +23,7 @@ export default function MediaGallery({ items, onDelete }: MediaGalleryProps) {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
 
-  const filteredItems = items.filter(item => {
+  const filteredItems = items.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = selectedType === 'all' || item.type === selectedType;
     return matchesSearch && matchesType;
@@ -73,11 +73,7 @@ export default function MediaGallery({ items, onDelete }: MediaGalleryProps) {
             className="group relative aspect-square border rounded-lg overflow-hidden cursor-pointer"
             onClick={() => setSelectedItem(item)}
           >
-            <img
-              src={item.url}
-              alt={item.name}
-              className="w-full h-full object-cover"
-            />
+            <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 to-transparent">
                 <p className="text-white text-sm font-medium truncate">{item.name}</p>
@@ -123,9 +119,7 @@ export default function MediaGallery({ items, onDelete }: MediaGalleryProps) {
                     </div>
                     <div>
                       <dt className="text-xs text-gray-500">Uploaded</dt>
-                      <dd className="text-sm">
-                        {selectedItem.uploadedAt.toLocaleDateString()}
-                      </dd>
+                      <dd className="text-sm">{selectedItem.uploadedAt.toLocaleDateString()}</dd>
                     </div>
                   </dl>
                 </div>
@@ -154,4 +148,4 @@ export default function MediaGallery({ items, onDelete }: MediaGalleryProps) {
       )}
     </div>
   );
-} 
+}

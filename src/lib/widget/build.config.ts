@@ -3,7 +3,7 @@ import type { BuildOptions } from 'esbuild';
 
 export default defineConfig({
   entry: {
-    'widget': 'src/lib/widget/build.ts'
+    widget: 'src/lib/widget/build.ts',
   },
   outDir: 'public',
   format: ['iife'],
@@ -12,12 +12,12 @@ export default defineConfig({
   dts: false,
   outExtension({ format }) {
     return {
-      js: `.min.js`
-    }
+      js: `.min.js`,
+    };
   },
   esbuildOptions: (options: BuildOptions) => {
     options.footer = {
       js: '//# sourceURL=domiq-chat-widget.js',
     };
   },
-}); 
+});

@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from '@/components/ui/card';
 
 export function LanguageBar() {
   return (
@@ -12,7 +12,7 @@ export function LanguageBar() {
               <span>94.4%</span>
             </div>
             <div className="w-full bg-muted h-2 rounded">
-              <div className="h-2 bg-black rounded" style={{ width: "94.4%" }} />
+              <div className="h-2 bg-black rounded" style={{ width: '94.4%' }} />
             </div>
           </div>
           <div>
@@ -21,7 +21,7 @@ export function LanguageBar() {
               <span>5.6%</span>
             </div>
             <div className="w-full bg-muted h-2 rounded">
-              <div className="h-2 bg-black rounded" style={{ width: "5.6%" }} />
+              <div className="h-2 bg-black rounded" style={{ width: '5.6%' }} />
             </div>
           </div>
         </div>

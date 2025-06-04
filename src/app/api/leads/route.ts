@@ -59,101 +59,87 @@ function serializeDates(obj: any): any {
 export async function POST(request: NextRequest) {
   try {
     const leadData: LeadSubmission = await request.json();
-    
+
     // Ensure dates are properly serialized for JSON
     const serializedData = serializeDates(leadData);
-    
-    ;
-    
+
     // Forward to Python API
     const response = await fetch(`${PYTHON_API_URL}/api/leads/`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json',
       },
       body: JSON.stringify(serializedData),
-      signal: AbortSignal.timeout(30000) // 30 second timeout
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ FastAPI error:', errorText);
       throw new Error(`FastAPI error: ${response.status} - ${errorText}`);
     }
-    
+
     const result = await response.json();
-    ;
-    
     return NextResponse.json(result);
-    
   } catch (error) {
     console.error('❌ Error creating lead:', error);
-    
+
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Failed to create lead',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function GET() {
   try {
-    ;
-    ;
-    
     // Fetch conversations with expanded user data
-    const response = await axios.get(`${DATABASE_API_URL}/api/v1/conversations?expand=user,property_manager`, {
-      timeout: 10000, // 10 second timeout
-      headers: {
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache',
-      }
-    });
-    
-    ;
-    
+    const response = await axios.get(
+      `${DATABASE_API_URL}/api/v1/conversations?expand=user,property_manager`,
+      {
+        timeout: 10000, // 10 second timeout
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
+      },
+    );
+
     if (!response.data.items || response.data.items.length === 0) {
       console.warn('⚠️ No conversations found in the database API response');
       return NextResponse.json([]);
     }
-    
-    ;
-    
+
     // Transform the data to match our frontend model
     const leads = await Promise.all(
       (response.data.items || []).map(async (conversation: any) => {
         try {
           // Fetch activities for this conversation
-          ;
           const activitiesResponse = await axios.get(
-            `${DATABASE_API_URL}/api/v1/conversations/${conversation.id}/activities`
+            `${DATABASE_API_URL}/api/v1/conversations/${conversation.id}/activities`,
           );
-          
-          ;
-          
-          return mapToLead(
-            conversation,
-            conversation.user,
-            activitiesResponse.data.items || []
-          );
+
+          return mapToLead(conversation, conversation.user, activitiesResponse.data.items || []);
         } catch (activityError) {
-          console.error(`❌ Error fetching activities for conversation ${conversation.id}:`, activityError);
+          console.error(
+            `❌ Error fetching activities for conversation ${conversation.id}:`,
+            activityError,
+          );
           // Still return the lead even if activities failed
           return mapToLead(conversation, conversation.user, []);
         }
-      })
+      }),
     );
-    
-    ;
+
     return NextResponse.json(leads);
   } catch (error) {
     console.error('❌ Error fetching leads:', error);
-    
+
     // Provide more specific error information
     if (axios.isAxiosError(error)) {
       console.error('Network Error Details:', {
@@ -165,10 +151,10 @@ export async function GET() {
           url: error.config?.url,
           method: error.config?.method,
           baseURL: error.config?.baseURL,
-        }
+        },
       });
     }
-    
+
     // Return empty array instead of error to prevent UI from breaking
     return NextResponse.json([]);
   }

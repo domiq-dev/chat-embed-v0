@@ -1,26 +1,22 @@
-"use client";
+'use client';
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect } from 'react';
 
 interface WelcomeHomeModalProps {
   onDoneText: () => void;
   onDoneVoice: () => void;
 }
 
-const prizes = [
-  "Special Gift at Tour",
-  "$50 off Rent",
-  "First Month Rent Free",
-];
+const prizes = ['Special Gift at Tour', '$50 off Rent', 'First Month Rent Free'];
 
 const colors = [
-  "#3b82f6", // blue
-  "#22c55e", // green
-  "#facc15", // yellow
+  '#3b82f6', // blue
+  '#22c55e', // green
+  '#facc15', // yellow
 ];
 
 // You can randomize icons if you want, for now just 🎁
-const mysteryIcon = "🎁";
+const mysteryIcon = '🎁';
 
 const WelcomeHomeModal: React.FC<WelcomeHomeModalProps> = ({ onDoneText, onDoneVoice }) => {
   const [hasSpun, setHasSpun] = useState(false);
@@ -39,7 +35,7 @@ const WelcomeHomeModal: React.FC<WelcomeHomeModalProps> = ({ onDoneText, onDoneV
     const random = Math.random();
     let prizeIndex: number;
 
-    if (random < 0.80) {
+    if (random < 0.8) {
       prizeIndex = 0; // Special Gift at Tour
     } else if (random < 0.95) {
       prizeIndex = 1; // $50 off Rent
@@ -67,25 +63,20 @@ const WelcomeHomeModal: React.FC<WelcomeHomeModalProps> = ({ onDoneText, onDoneV
 
   useEffect(() => {
     if (!hasSpun && wheelRef.current) {
-      wheelRef.current.style.transition = "none";
-      wheelRef.current.style.transform = "rotate(0deg)";
+      wheelRef.current.style.transition = 'none';
+      wheelRef.current.style.transform = 'rotate(0deg)';
     }
   }, [hasSpun]);
 
   return (
     <div className="bg-white w-full max-w-md h-[95vh] rounded-2xl shadow-2xl flex flex-col p-6 overflow-auto">
       <div className="flex flex-col items-center justify-between h-full">
-
         {/* Header */}
         <div className="text-center space-y-2">
-          <h2 className="text-3xl font-bold text-green-600 animate-bounce">
-            🎉 Welcome Home!
-          </h2>
+          <h2 className="text-3xl font-bold text-green-600 animate-bounce">🎉 Welcome Home!</h2>
           <p className="text-gray-700 text-lg">
-            You've secured your spot at{" "}
-            <span className="text-blue-600 font-semibold">
-              Grand Oaks Apartments
-            </span>!
+            You've secured your spot at{' '}
+            <span className="text-blue-600 font-semibold">Grand Oaks Apartments</span>!
           </p>
           <p className="text-gray-500">Special Reward: Spin the wheel now to reveal!</p>
         </div>
@@ -97,7 +88,7 @@ const WelcomeHomeModal: React.FC<WelcomeHomeModalProps> = ({ onDoneText, onDoneV
             ref={wheelRef}
             className="w-56 h-56 rounded-full shadow-xl border-[6px] border-green-400 bg-gradient-to-b from-green-100 to-green-300"
             viewBox="0 0 100 100"
-            style={{ transformOrigin: "50% 50%", willChange: "transform" }}
+            style={{ transformOrigin: '50% 50%', willChange: 'transform' }}
           >
             {prizes.map((_, i) => {
               const startAngle = i * sliceAngle;
@@ -139,8 +130,8 @@ const WelcomeHomeModal: React.FC<WelcomeHomeModalProps> = ({ onDoneText, onDoneV
                     textAnchor="middle"
                     alignmentBaseline="middle"
                     style={{
-                      userSelect: "none",
-                      pointerEvents: "none",
+                      userSelect: 'none',
+                      pointerEvents: 'none',
                     }}
                   >
                     {mysteryIcon}
@@ -165,23 +156,19 @@ const WelcomeHomeModal: React.FC<WelcomeHomeModalProps> = ({ onDoneText, onDoneV
               w-20 h-20 rounded-full flex items-center justify-center font-bold 
               shadow-lg text-white text-lg ${
                 hasSpun || spinning
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 animate-pulse"
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 animate-pulse'
               } transition-colors duration-300`}
           >
-            {spinning ? "..." : hasSpun ? "✓" : "Spin"}
+            {spinning ? '...' : hasSpun ? '✓' : 'Spin'}
           </button>
         </div>
 
         {/* Result Section */}
         {result && (
           <div className="text-center mt-6">
-            <p className="text-green-700 font-semibold text-lg">
-              🎉 You earned:
-            </p>
-            <p className="underline text-xl font-bold text-green-500 mt-1">
-              {result}
-            </p>
+            <p className="text-green-700 font-semibold text-lg">🎉 You earned:</p>
+            <p className="underline text-xl font-bold text-green-500 mt-1">{result}</p>
           </div>
         )}
 
@@ -210,7 +197,6 @@ const WelcomeHomeModal: React.FC<WelcomeHomeModalProps> = ({ onDoneText, onDoneV
         <p className="text-xs text-gray-400 text-center mt-4">
           We’re here to make your move-in journey easy. 🎈
         </p>
-
       </div>
     </div>
   );

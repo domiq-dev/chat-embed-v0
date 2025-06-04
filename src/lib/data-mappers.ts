@@ -7,10 +7,10 @@ export const mapPropertyManagerToAgent = (manager: any): DummyAgent => {
       console.warn('⚠️ mapPropertyManagerToAgent: No manager data provided');
       return { id: 'unknown', name: 'Unknown Manager' };
     }
-    
+
     return {
       id: manager.id || 'unknown',
-      name: `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || 'Unknown Manager'
+      name: `${manager.first_name || ''} ${manager.last_name || ''}`.trim() || 'Unknown Manager',
     };
   } catch (error) {
     console.error('❌ mapPropertyManagerToAgent error:', error);
@@ -23,11 +23,11 @@ export const mapToLead = (conversation: any, user: any, activities: any[] = []):
   try {
     // Map conversation status to frontend stage
     const stageMap: Record<string, Lead['currentStage']> = {
-      'new': 'chat_initiated',
-      'qualified': 'info_collected',
-      'tour_requested': 'tour_scheduled',
-      'tour_completed': 'tour_completed',
-      'handoff': 'handed_off'
+      new: 'chat_initiated',
+      qualified: 'info_collected',
+      tour_requested: 'tour_scheduled',
+      tour_completed: 'tour_completed',
+      handoff: 'handed_off',
     };
 
     // Handle potential missing data
@@ -40,12 +40,12 @@ export const mapToLead = (conversation: any, user: any, activities: any[] = []):
         source: 'chat',
         createdAt: new Date(),
         lastActivity: new Date(),
-        timeline: []
+        timeline: [],
       };
     }
 
     // Map timeline activities
-    const mappedActivities: LeadActivity[] = (activities || []).map(activity => {
+    const mappedActivities: LeadActivity[] = (activities || []).map((activity) => {
       try {
         return {
           id: activity.id || `activity-${Math.random().toString(36).substring(2, 9)}`,
@@ -62,7 +62,7 @@ export const mapToLead = (conversation: any, user: any, activities: any[] = []):
             emailCollected: activity.details?.emailCollected,
             phoneCollected: activity.details?.phoneCollected,
           },
-          createdBy: activity.created_by || 'system'
+          createdBy: activity.created_by || 'system',
         };
       } catch (error) {
         console.error('❌ Error mapping activity:', error, activity);
@@ -72,7 +72,7 @@ export const mapToLead = (conversation: any, user: any, activities: any[] = []):
           type: 'chat_initiated',
           timestamp: new Date(),
           details: { chatSummary: 'Error mapping activity' },
-          createdBy: 'system'
+          createdBy: 'system',
         };
       }
     });
@@ -87,12 +87,14 @@ export const mapToLead = (conversation: any, user: any, activities: any[] = []):
       tourBooked: conversation.is_book_tour || false,
       sessionDuration: 0,
       engagementScore: 'C',
-      qualified: conversation.is_qualified || false
+      qualified: conversation.is_qualified || false,
     };
 
     const result: Lead = {
       id: conversation.id || `lead-${Math.random().toString(36).substring(2, 9)}`,
-      name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Anonymous User' : 'Anonymous User',
+      name: user
+        ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Anonymous User'
+        : 'Anonymous User',
       email: user?.email,
       phone: user?.phone,
       currentStage: stageMap[conversation.status] || 'chat_initiated',
@@ -104,9 +106,9 @@ export const mapToLead = (conversation: any, user: any, activities: any[] = []):
       unitInterest: conversation.apartment_size_preference,
       timeline: mappedActivities,
       notes: conversation.ai_intent_summary,
-      amplitudeData
+      amplitudeData,
     };
-    
+
     return result;
   } catch (error) {
     console.error('❌ mapToLead error:', error, { conversation, user });
@@ -118,20 +120,26 @@ export const mapToLead = (conversation: any, user: any, activities: any[] = []):
       source: 'chat',
       createdAt: new Date(),
       lastActivity: new Date(),
-      timeline: [{
-        id: 'error',
-        leadId: 'error',
-        type: 'chat_initiated',
-        timestamp: new Date(),
-        details: { chatSummary: 'Error mapping lead data' },
-        createdBy: 'system'
-      }]
+      timeline: [
+        {
+          id: 'error',
+          leadId: 'error',
+          type: 'chat_initiated',
+          timestamp: new Date(),
+          details: { chatSummary: 'Error mapping lead data' },
+          createdBy: 'system',
+        },
+      ],
     };
   }
 };
 
 // Map conversations to tours
-export const mapConversationToTour = (conversation: any, user: any, agent: any): DummyTour | null => {
+export const mapConversationToTour = (
+  conversation: any,
+  user: any,
+  agent: any,
+): DummyTour | null => {
   if (!conversation.is_book_tour || !conversation.tour_datetime) {
     return null;
   }
@@ -152,18 +160,18 @@ export const mapConversationToTour = (conversation: any, user: any, agent: any):
     agent: agent ? `${agent.first_name} ${agent.last_name}` : undefined,
     agentId: agent?.id,
     status: conversation.status === 'tour_completed' ? 'completed' : 'scheduled',
-    source: conversation.source || 'chat'
+    source: conversation.source || 'chat',
   };
 };
 
 export function mapConversationToLead(conversation: any, activities: any[] = []): Lead {
   // Map conversation status to frontend stage
   const stageMap: Record<string, Lead['currentStage']> = {
-    'new': 'chat_initiated',
-    'qualified': 'info_collected',
-    'tour_requested': 'tour_scheduled',
-    'tour_completed': 'tour_completed',
-    'handoff': 'handed_off'
+    new: 'chat_initiated',
+    qualified: 'info_collected',
+    tour_requested: 'tour_scheduled',
+    tour_completed: 'tour_completed',
+    handoff: 'handed_off',
   };
 
   // Handle potential missing data
@@ -176,12 +184,12 @@ export function mapConversationToLead(conversation: any, activities: any[] = [])
       source: 'chat',
       createdAt: new Date(),
       lastActivity: new Date(),
-      timeline: []
+      timeline: [],
     };
   }
 
   // Map timeline activities
-  const mappedActivities: LeadActivity[] = (activities || []).map(activity => {
+  const mappedActivities: LeadActivity[] = (activities || []).map((activity) => {
     try {
       return {
         id: activity.id || `activity-${Math.random().toString(36).substring(2, 9)}`,
@@ -198,7 +206,7 @@ export function mapConversationToLead(conversation: any, activities: any[] = [])
           emailCollected: activity.details?.emailCollected,
           phoneCollected: activity.details?.phoneCollected,
         },
-        createdBy: activity.created_by || 'system'
+        createdBy: activity.created_by || 'system',
       };
     } catch (error) {
       console.error('❌ Error mapping activity:', error, activity);
@@ -208,7 +216,7 @@ export function mapConversationToLead(conversation: any, activities: any[] = [])
         type: 'chat_initiated',
         timestamp: new Date(),
         details: { chatSummary: 'Error mapping activity' },
-        createdBy: 'system'
+        createdBy: 'system',
       };
     }
   });
@@ -219,16 +227,23 @@ export function mapConversationToLead(conversation: any, activities: any[] = [])
     userMessagesSent: 0,
     botMessagesReceived: 0,
     contactCaptured: !!(conversation.user?.email || conversation.user?.phone),
-    contactMethod: conversation.user?.email ? 'email' : conversation.user?.phone ? 'phone' : undefined,
+    contactMethod: conversation.user?.email
+      ? 'email'
+      : conversation.user?.phone
+        ? 'phone'
+        : undefined,
     tourBooked: conversation.is_book_tour || false,
     sessionDuration: 0,
     engagementScore: 'C',
-    qualified: conversation.is_qualified || false
+    qualified: conversation.is_qualified || false,
   };
 
   const mappedLead: Lead = {
     id: conversation.id || `lead-${Math.random().toString(36).substring(2, 9)}`,
-    name: conversation.user ? `${conversation.user.first_name || ''} ${conversation.user.last_name || ''}`.trim() || 'Anonymous User' : 'Anonymous User',
+    name: conversation.user
+      ? `${conversation.user.first_name || ''} ${conversation.user.last_name || ''}`.trim() ||
+        'Anonymous User'
+      : 'Anonymous User',
     email: conversation.user?.email,
     phone: conversation.user?.phone,
     currentStage: stageMap[conversation.status] || 'chat_initiated',
@@ -240,8 +255,8 @@ export function mapConversationToLead(conversation: any, activities: any[] = [])
     unitInterest: conversation.apartment_size_preference,
     timeline: mappedActivities,
     notes: conversation.ai_intent_summary,
-    amplitudeData
+    amplitudeData,
   };
 
   return mappedLead;
-} 
+}

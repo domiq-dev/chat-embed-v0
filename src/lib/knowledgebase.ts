@@ -22,7 +22,7 @@ export async function getKnowledgebaseText(): Promise<string[]> {
     if (error) throw error;
 
     // Extract content from all knowledge items
-    return data?.map(item => item.content) || [];
+    return data?.map((item) => item.content) || [];
   } catch (error) {
     console.error('Error retrieving knowledge base text:', error);
     return [];
@@ -33,14 +33,11 @@ export async function getKnowledgebaseText(): Promise<string[]> {
 export async function generateEmbedding(text: string): Promise<number[]> {
   try {
     // Clean and prepare text
-    const cleanedText = text
-      .trim()
-      .replace(/\s+/g, ' ')
-      .slice(0, 8000); // OpenAI has token limits
+    const cleanedText = text.trim().replace(/\s+/g, ' ').slice(0, 8000); // OpenAI has token limits
 
     const openai = getOpenAIClient();
     const response = await openai.embeddings.create({
-      model: "text-embedding-ada-002",
+      model: 'text-embedding-ada-002',
       input: cleanedText,
     });
 
@@ -61,7 +58,7 @@ export async function queryKnowledge(query: string, limit: number = 5): Promise<
     const { data, error } = await supabase.rpc('match_documents', {
       query_embedding: embedding,
       match_threshold: 0.7,
-      match_count: limit
+      match_count: limit,
     });
 
     if (error) {

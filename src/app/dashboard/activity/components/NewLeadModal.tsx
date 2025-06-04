@@ -24,7 +24,7 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) return;
 
     // Create the new lead
@@ -36,7 +36,7 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
     if (phone) updates.phone = phone;
     if (unitInterest) updates.unitInterest = unitInterest;
     if (assignedAgentId) {
-      const agent = dummyAgents.find(a => a.id === assignedAgentId);
+      const agent = dummyAgents.find((a) => a.id === assignedAgentId);
       updates.assignedAgent = agent?.name;
       updates.assignedAgentId = assignedAgentId;
     }
@@ -52,9 +52,9 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
         timestamp: new Date(),
         details: {
           emailCollected: email || undefined,
-          phoneCollected: phone || undefined
+          phoneCollected: phone || undefined,
         },
-        createdBy: 'agent'
+        createdBy: 'agent',
       });
 
       // Update stage to info_collected
@@ -63,16 +63,16 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
 
     // Add agent assignment activity if agent selected
     if (assignedAgentId) {
-      const agent = dummyAgents.find(a => a.id === assignedAgentId);
+      const agent = dummyAgents.find((a) => a.id === assignedAgentId);
       if (agent) {
         addActivity(newLead.id, {
           type: 'agent_assigned',
           timestamp: new Date(),
           details: {
             agentName: agent.name,
-            agentId: assignedAgentId
+            agentId: assignedAgentId,
           },
-          createdBy: 'system'
+          createdBy: 'system',
         });
       }
     }
@@ -99,7 +99,7 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -108,7 +108,7 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
             <input
               type="text"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={(e) => setName(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
               placeholder="Enter lead name"
@@ -120,7 +120,7 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
             <input
               type="email"
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="example@email.com"
             />
@@ -131,7 +131,7 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
             <input
               type="tel"
               value={phone}
-              onChange={e => setPhone(e.target.value)}
+              onChange={(e) => setPhone(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="(555) 123-4567"
             />
@@ -141,7 +141,7 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
             <select
               value={source}
-              onChange={e => setSource(e.target.value as Lead['source'])}
+              onChange={(e) => setSource(e.target.value as Lead['source'])}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="manual">Manual Entry</option>
@@ -155,7 +155,7 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
             <input
               type="text"
               value={unitInterest}
-              onChange={e => setUnitInterest(e.target.value)}
+              onChange={(e) => setUnitInterest(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="e.g., 1BR, 2BR, Studio"
             />
@@ -165,11 +165,11 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
             <label className="block text-sm font-medium text-gray-700 mb-1">Assign Agent</label>
             <select
               value={assignedAgentId}
-              onChange={e => setAssignedAgentId(e.target.value)}
+              onChange={(e) => setAssignedAgentId(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="">No agent assigned</option>
-              {dummyAgents.map(agent => (
+              {dummyAgents.map((agent) => (
                 <option key={agent.id} value={agent.id}>
                   {agent.name}
                 </option>
@@ -196,4 +196,4 @@ export default function NewLeadModal({ isOpen, onClose }: NewLeadModalProps) {
       </div>
     </div>
   );
-} 
+}

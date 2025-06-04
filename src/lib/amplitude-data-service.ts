@@ -24,29 +24,29 @@ interface AggregatedAmplitudeData {
   userMessagesSent?: number;
   botMessagesReceived?: number;
   answerButtonClicks?: number;
-  
+
   // Contact & Tour Metrics
   contactCaptured?: boolean;
   contactMethod?: 'email' | 'phone';
   tourBooked?: boolean;
   tourType?: 'in_person' | 'self_guided' | 'virtual';
-  
+
   // CTA Interactions
   emailOfficeClicked?: number;
   phoneCallClicked?: number;
-  
+
   // Incentive Tracking
   incentiveOffered?: boolean;
   incentiveAccepted?: boolean;
   incentiveExpired?: boolean;
-  
+
   // Advanced Session Management
   adminHandoffTriggered?: boolean;
   customerServiceEscalated?: boolean;
   conversationAbandoned?: boolean;
   widgetSessionEnded?: boolean;
   widgetMinimized?: number;
-  
+
   // Calculated Metrics
   sessionDuration?: number;
   engagementScore?: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | 'F';
@@ -67,7 +67,7 @@ class AmplitudeDataService {
   constructor() {
     this.apiKey = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY || '';
     this.secretKey = process.env.AMPLITUDE_SECRET_KEY || '';
-    
+
     if (!this.apiKey || !this.secretKey) {
       console.warn('Amplitude API credentials not found - data service disabled');
     }
@@ -76,7 +76,7 @@ class AmplitudeDataService {
   private createAbortController(): AbortController {
     const controller = new AbortController();
     this.activeRequests.add(controller);
-    
+
     // Auto-timeout after REQUEST_TIMEOUT
     const timeoutId = setTimeout(() => {
       if (!controller.signal.aborted) {
@@ -103,7 +103,7 @@ class AmplitudeDataService {
 
   async fetchEvents(query: AmplitudeEventQuery): Promise<AmplitudeResponse> {
     const controller = this.createAbortController();
-    
+
     try {
       const params = new URLSearchParams({
         start: query.start,
@@ -115,7 +115,7 @@ class AmplitudeDataService {
 
       const response = await fetch(`${this.baseUrl}?${params}`, {
         headers: {
-          'Authorization': `Basic ${btoa(`${this.apiKey}:${this.secretKey}`)}`,
+          Authorization: `Basic ${btoa(`${this.apiKey}:${this.secretKey}`)}`,
           'Content-Type': 'application/json',
         },
         signal: controller.signal,
@@ -128,10 +128,9 @@ class AmplitudeDataService {
       const data = await response.json();
       this.cleanupRequest(controller);
       return data;
-
     } catch (error) {
       this.cleanupRequest(controller);
-      
+
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           throw new Error('Amplitude API request was cancelled (timeout or manual abort)');
@@ -146,10 +145,13 @@ class AmplitudeDataService {
     const data: AggregatedAmplitudeData = {};
 
     // Group events by type and count them
-    const eventCounts = events.reduce((acc, event) => {
-      acc[event.event_type] = (acc[event.event_type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const eventCounts = events.reduce(
+      (acc, event) => {
+        acc[event.event_type] = (acc[event.event_type] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     // Core Engagement Metrics
     data.chatSessionStarted = eventCounts['chat_session_started'] > 0;
@@ -158,15 +160,18 @@ class AmplitudeDataService {
     data.answerButtonClicks = eventCounts['answer_button_clicked'] || 0;
 
     // Contact & Tour Metrics
-    const contactEvents = events.filter(e => e.event_type === 'contact_captured');
+    const contactEvents = events.filter((e) => e.event_type === 'contact_captured');
     data.contactCaptured = contactEvents.length > 0;
     data.contactMethod = contactEvents[0]?.event_properties?.contact_method as 'email' | 'phone';
 
-    const tourEvents = events.filter(e => e.event_type === 'tour_booked');
+    const tourEvents = events.filter((e) => e.event_type === 'tour_booked');
     data.tourBooked = tourEvents.length > 0;
-    data.tourType = tourEvents[0]?.event_properties?.tour_type as 'in_person' | 'self_guided' | 'virtual';
+    data.tourType = tourEvents[0]?.event_properties?.tour_type as
+      | 'in_person'
+      | 'self_guided'
+      | 'virtual';
 
-    // CTA Interactions  
+    // CTA Interactions
     data.emailOfficeClicked = eventCounts['email_office_clicked'] || 0;
     data.phoneCallClicked = eventCounts['phone_call_clicked'] || 0;
 
@@ -183,10 +188,12 @@ class AmplitudeDataService {
     data.widgetMinimized = eventCounts['widget_minimized'] || 0;
 
     // Calculate session duration
-    const sessionStartEvent = events.find(e => e.event_type === 'chat_session_started');
-    const sessionEndEvent = events.find(e => e.event_type === 'widget_session_ended');
+    const sessionStartEvent = events.find((e) => e.event_type === 'chat_session_started');
+    const sessionEndEvent = events.find((e) => e.event_type === 'widget_session_ended');
     if (sessionStartEvent && sessionEndEvent) {
-      const duration = new Date(sessionEndEvent.timestamp).getTime() - new Date(sessionStartEvent.timestamp).getTime();
+      const duration =
+        new Date(sessionEndEvent.timestamp).getTime() -
+        new Date(sessionStartEvent.timestamp).getTime();
       data.sessionDuration = Math.round(duration / 1000); // in seconds
     }
 
@@ -203,7 +210,9 @@ class AmplitudeDataService {
     return data;
   }
 
-  private calculateEngagementScore(data: AggregatedAmplitudeData): 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | 'F' {
+  private calculateEngagementScore(
+    data: AggregatedAmplitudeData,
+  ): 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | 'F' {
     let score = 0;
 
     // Message engagement (0-40 points)
@@ -221,7 +230,10 @@ class AmplitudeDataService {
     if (data.tourBooked) score += 25;
 
     // Interaction depth (0-10 points)
-    const interactions = (data.answerButtonClicks || 0) + (data.emailOfficeClicked || 0) + (data.phoneCallClicked || 0);
+    const interactions =
+      (data.answerButtonClicks || 0) +
+      (data.emailOfficeClicked || 0) +
+      (data.phoneCallClicked || 0);
     if (interactions > 5) score += 10;
     else if (interactions > 2) score += 5;
 
@@ -236,7 +248,11 @@ class AmplitudeDataService {
     return 'F';
   }
 
-  async getUserData(userId?: string, deviceId?: string, days = 30): Promise<AggregatedAmplitudeData> {
+  async getUserData(
+    userId?: string,
+    deviceId?: string,
+    days = 30,
+  ): Promise<AggregatedAmplitudeData> {
     try {
       const end = new Date().toISOString();
       const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
@@ -265,12 +281,12 @@ class AmplitudeDataService {
   // Force close all active sessions
   forceCloseAllSessions() {
     // Force close all active requests
-    this.activeRequests.forEach(controller => {
+    this.activeRequests.forEach((controller) => {
       if (!controller.signal.aborted) {
         controller.abort();
       }
     });
-    
+
     // Clear set
     this.activeRequests.clear();
   }
@@ -289,4 +305,4 @@ if (typeof window !== 'undefined') {
   (window as any).forceCloseAmplitudeSessions = () => {
     amplitudeDataService.forceCloseAllSessions();
   };
-} 
+}

@@ -20,9 +20,13 @@ interface Contact extends DummyProspect {
 }
 
 // Calculate toursCount for each prospect
-const initialContacts: Contact[] = dummyProspects.map(prospect => ({
+const initialContacts: Contact[] = dummyProspects.map((prospect) => ({
   ...prospect,
-  toursCount: dummyTours.filter(tour => tour.prospectId === prospect.id && (tour.status === 'completed' || tour.status === 'scheduled')).length,
+  toursCount: dummyTours.filter(
+    (tour) =>
+      tour.prospectId === prospect.id &&
+      (tour.status === 'completed' || tour.status === 'scheduled'),
+  ).length,
 }));
 
 const statusColors = {
@@ -32,7 +36,15 @@ const statusColors = {
 };
 
 // Omit id and toursCount for the AddContactModal form
-function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: () => void; onAdd: (contact: Omit<Contact, 'id' | 'toursCount'>) => void }) {
+function AddContactModal({
+  isOpen,
+  onClose,
+  onAdd,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onAdd: (contact: Omit<Contact, 'id' | 'toursCount'>) => void;
+}) {
   const [form, setForm] = useState<Omit<Contact, 'id' | 'toursCount'>>({
     name: '',
     email: '',
@@ -53,10 +65,16 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
           </button>
         </div>
         <form
-          onSubmit={e => {
+          onSubmit={(e) => {
             e.preventDefault();
             onAdd(form);
-            setForm({ name: '', email: '', phone: '', status: 'prospect', moveInDate: '' });
+            setForm({
+              name: '',
+              email: '',
+              phone: '',
+              status: 'prospect',
+              moveInDate: '',
+            });
             onClose();
           }}
           className="space-y-4"
@@ -66,7 +84,7 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
             <input
               type="text"
               value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
@@ -76,7 +94,7 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
             <input
               type="email"
               value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
@@ -86,7 +104,7 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
             <input
               type="tel"
               value={form.phone}
-              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
@@ -96,7 +114,7 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
             <input
               type="date"
               value={form.moveInDate}
-              onChange={e => setForm(f => ({ ...f, moveInDate: e.target.value || 'N/A' }))}
+              onChange={(e) => setForm((f) => ({ ...f, moveInDate: e.target.value || 'N/A' }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
@@ -104,7 +122,12 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select
               value={form.status}
-              onChange={e => setForm(f => ({ ...f, status: e.target.value as Contact['status'] }))}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  status: e.target.value as Contact['status'],
+                }))
+              }
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="prospect">Prospect</option>
@@ -133,15 +156,15 @@ function AddContactModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose:
   );
 }
 
-function EditContactModal({ 
-  isOpen, 
-  onClose, 
-  onSave, 
-  contact 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onSave: (contact: Contact) => void; 
+function EditContactModal({
+  isOpen,
+  onClose,
+  onSave,
+  contact,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (contact: Contact) => void;
   contact: Contact | null;
 }) {
   const [form, setForm] = useState<Omit<Contact, 'id' | 'toursCount'>>({
@@ -177,7 +200,7 @@ function EditContactModal({
           </button>
         </div>
         <form
-          onSubmit={e => {
+          onSubmit={(e) => {
             e.preventDefault();
             onSave({
               ...contact,
@@ -192,7 +215,7 @@ function EditContactModal({
             <input
               type="text"
               value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
@@ -202,7 +225,7 @@ function EditContactModal({
             <input
               type="email"
               value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
@@ -212,7 +235,7 @@ function EditContactModal({
             <input
               type="tel"
               value={form.phone}
-              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
               required
             />
@@ -222,7 +245,7 @@ function EditContactModal({
             <input
               type="date"
               value={form.moveInDate}
-              onChange={e => setForm(f => ({ ...f, moveInDate: e.target.value || 'N/A' }))}
+              onChange={(e) => setForm((f) => ({ ...f, moveInDate: e.target.value || 'N/A' }))}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
@@ -230,7 +253,12 @@ function EditContactModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select
               value={form.status}
-              onChange={e => setForm(f => ({ ...f, status: e.target.value as Contact['status'] }))}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  status: e.target.value as Contact['status'],
+                }))
+              }
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="prospect">Prospect</option>
@@ -260,15 +288,15 @@ function EditContactModal({
 }
 
 // Delete confirmation modal
-function DeleteConfirmationModal({ 
-  isOpen, 
-  onClose, 
-  onConfirm, 
-  contactName 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  onConfirm: () => void; 
+function DeleteConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  contactName,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
   contactName: string;
 }) {
   if (!isOpen) return null;
@@ -280,9 +308,10 @@ function DeleteConfirmationModal({
           <AlertTriangle className="w-6 h-6 text-red-500" />
           <h2 className="text-xl font-semibold">Delete Contact</h2>
         </div>
-        
+
         <p className="text-gray-600 mb-6">
-          Are you sure you want to delete <strong>{contactName}</strong>? This action cannot be undone.
+          Are you sure you want to delete <strong>{contactName}</strong>? This action cannot be
+          undone.
         </p>
 
         <div className="flex justify-end gap-2">
@@ -340,10 +369,7 @@ export default function ContactsPage() {
     () => [
       columnHelper.accessor('name', {
         header: ({ column }) => (
-          <button
-            onClick={() => column.toggleSorting()}
-            className="flex items-center gap-1"
-          >
+          <button onClick={() => column.toggleSorting()} className="flex items-center gap-1">
             Name
             <SortIcon direction={column.getIsSorted()} />
           </button>
@@ -357,10 +383,7 @@ export default function ContactsPage() {
       }),
       columnHelper.accessor('moveInDate', {
         header: ({ column }) => (
-          <button
-            onClick={() => column.toggleSorting()}
-            className="flex items-center gap-1"
-          >
+          <button onClick={() => column.toggleSorting()} className="flex items-center gap-1">
             Move-in Date
             <SortIcon direction={column.getIsSorted()} />
           </button>
@@ -368,14 +391,14 @@ export default function ContactsPage() {
         sortingFn: (a, b, columnId) => {
           const rawA = a.getValue(columnId) as string;
           const rawB = b.getValue(columnId) as string;
-        
+
           const dateA = rawA === 'N/A' || !rawA ? null : new Date(rawA);
           const dateB = rawB === 'N/A' || !rawB ? null : new Date(rawB);
-        
+
           if (!dateA && !dateB) return 0;
-          if (!dateA) return 1;  // N/A goes to bottom in ascending
+          if (!dateA) return 1; // N/A goes to bottom in ascending
           if (!dateB) return -1;
-        
+
           return dateA.getTime() - dateB.getTime();
         },
         cell: ({ row }) => row.original.moveInDate || 'N/A',
@@ -383,17 +406,16 @@ export default function ContactsPage() {
       columnHelper.accessor('status', {
         header: 'Status',
         cell: ({ row }) => (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[row.original.status]}`}>
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[row.original.status]}`}
+          >
             {row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)}
           </span>
         ),
       }),
       columnHelper.accessor('toursCount', {
         header: ({ column }) => (
-          <button
-            onClick={() => column.toggleSorting()}
-            className="flex items-center gap-1"
-          >
+          <button onClick={() => column.toggleSorting()} className="flex items-center gap-1">
             Tours
             <SortIcon direction={column.getIsSorted()} />
           </button>
@@ -428,7 +450,7 @@ export default function ContactsPage() {
         ),
       }),
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -452,12 +474,12 @@ export default function ContactsPage() {
   };
 
   const handleEditContact = (updatedContact: Contact) => {
-    setContacts(contacts.map(c => c.id === updatedContact.id ? updatedContact : c));
+    setContacts(contacts.map((c) => (c.id === updatedContact.id ? updatedContact : c)));
   };
 
   const handleDeleteConfirm = () => {
     if (selectedContact) {
-      setContacts(contacts.filter(c => c.id !== selectedContact.id));
+      setContacts(contacts.filter((c) => c.id !== selectedContact.id));
       setShowDeleteModal(false);
       setSelectedContact(null);
     }
@@ -478,25 +500,22 @@ export default function ContactsPage() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              {table.getHeaderGroups().map(headerGroup => (
+              {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
+                  {headerGroup.headers.map((header) => (
                     <th key={header.id} className="px-4 py-2 text-left">
                       {header.isPlaceholder
                         ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                        : flexRender(header.column.columnDef.header, header.getContext())}
                     </th>
                   ))}
                 </tr>
               ))}
             </thead>
             <tbody>
-              {table.getRowModel().rows.map(row => (
+              {table.getRowModel().rows.map((row) => (
                 <tr key={row.id} className="border-t border-gray-200 hover:bg-gray-50">
-                  {row.getVisibleCells().map(cell => (
+                  {row.getVisibleCells().map((cell) => (
                     <td key={cell.id} className="px-4 py-2">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
@@ -539,4 +558,4 @@ export default function ContactsPage() {
       />
     </Card>
   );
-} 
+}

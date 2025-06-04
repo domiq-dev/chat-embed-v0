@@ -1,6 +1,6 @@
 /**
  * ChatModal Structure and Configuration Tests
- * 
+ *
  * These tests ensure the ChatModal component maintains proper structure,
  * sizing, and localStorage access patterns for SSR compatibility.
  */
@@ -10,22 +10,23 @@ import path from 'path';
 
 describe('ChatModal Structure and Configuration', () => {
   let chatModalContent: string;
-  
+
   beforeAll(() => {
     const chatModalPath = path.join(__dirname, '..', 'src', 'components', 'ChatModal.tsx');
-    
+
     if (!fs.existsSync(chatModalPath)) {
       throw new Error(`ChatModal.tsx not found at ${chatModalPath}`);
     }
-    
+
     chatModalContent = fs.readFileSync(chatModalPath, 'utf-8');
   });
 
   describe('Component Sizing and Layout', () => {
     it('should have correct modal dimensions (w-[360px] and h-[625px])', () => {
       // Check for the main modal container with proper sizing
-      const sizingClassRegex = /<div className=.*bg-white.*shadow-xl(?=.*w-\[360px\])(?=.*h-\[625px\]).*>/;
-      
+      const sizingClassRegex =
+        /<div className=.*bg-white.*shadow-xl(?=.*w-\[360px\])(?=.*h-\[625px\]).*>/;
+
       expect(chatModalContent).toMatch(sizingClassRegex);
     });
 
@@ -46,65 +47,65 @@ describe('ChatModal Structure and Configuration', () => {
     it('should guard localStorage access with window check', () => {
       const localStoragePattern = /localStorage\.getItem\('chatbotState'\)/;
       const windowGuardPattern = /typeof window !== 'undefined'/;
-      
+
       // Verify localStorage is used
       expect(chatModalContent).toMatch(localStoragePattern);
-      
+
       // Verify window guard exists
       expect(chatModalContent).toMatch(windowGuardPattern);
-      
+
       // More detailed check: ensure localStorage access is properly guarded
       const lines = chatModalContent.split('\n');
       let inWindowGuard = false;
       let foundUnguardedLocalStorage = false;
-      
+
       for (const line of lines) {
-        if (line.includes('typeof window !== \'undefined\'')) {
+        if (line.includes("typeof window !== 'undefined'")) {
           inWindowGuard = true;
         }
-        
-        if (line.includes('localStorage.getItem(\'chatbotState\')')) {
+
+        if (line.includes("localStorage.getItem('chatbotState')")) {
           if (!inWindowGuard) {
             foundUnguardedLocalStorage = true;
             break;
           }
         }
-        
+
         // Simple block end detection (this could be more sophisticated)
         if (inWindowGuard && line.trim() === '}') {
           inWindowGuard = false;
         }
       }
-      
+
       expect(foundUnguardedLocalStorage).toBe(false);
     });
 
     it('should guard localStorage.setItem with window check', () => {
       const setItemPattern = /localStorage\.setItem/;
-      
+
       if (chatModalContent.match(setItemPattern)) {
         // If setItem is used, it should also be guarded
         const lines = chatModalContent.split('\n');
         let inWindowGuard = false;
         let foundUnguardedSetItem = false;
-        
+
         for (const line of lines) {
-          if (line.includes('typeof window !== \'undefined\'')) {
+          if (line.includes("typeof window !== 'undefined'")) {
             inWindowGuard = true;
           }
-          
+
           if (line.includes('localStorage.setItem')) {
             if (!inWindowGuard) {
               foundUnguardedSetItem = true;
               break;
             }
           }
-          
+
           if (inWindowGuard && line.trim() === '}') {
             inWindowGuard = false;
           }
         }
-        
+
         expect(foundUnguardedSetItem).toBe(false);
       }
     });
@@ -157,9 +158,11 @@ describe('ChatModal Structure and Configuration', () => {
     it('should not have console.log statements in production code', () => {
       // Allow console.log for debugging AKOOL integration, but warn about others
       const consoleLogMatches = chatModalContent.match(/console\.log/g);
-      
+
       if (consoleLogMatches && consoleLogMatches.length > 20) {
-        console.warn(`Found ${consoleLogMatches.length} console.log statements. Consider removing non-essential ones for production.`);
+        console.warn(
+          `Found ${consoleLogMatches.length} console.log statements. Consider removing non-essential ones for production.`,
+        );
       }
     });
 
@@ -168,4 +171,4 @@ describe('ChatModal Structure and Configuration', () => {
       expect(chatModalContent).toMatch(/interface ChatMessageForDisplay/);
     });
   });
-}); 
+});

@@ -18,7 +18,8 @@ export default function KnowledgeBasePage() {
       </div>
 
       <p className="text-gray-600">
-        Add additional information or context your AI should know. Pricing and scheduling settings are managed separately.
+        Add additional information or context your AI should know. Pricing and scheduling settings
+        are managed separately.
       </p>
 
       <KnowledgeForm />

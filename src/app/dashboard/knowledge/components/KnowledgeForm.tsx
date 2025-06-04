@@ -23,29 +23,36 @@ const availableCommunities: Community[] = [
   { id: '1', name: 'Alexander Pointe Apartments' },
   { id: '2', name: 'Riverside Gardens' },
   { id: '3', name: 'Oak Valley Residences' },
-  { id: '4', name: 'Highland Park Apartments' }
+  { id: '4', name: 'Highland Park Apartments' },
 ];
 
 const availableDomains: Domain[] = [
   { id: '1', name: 'Leasing' },
   { id: '2', name: 'Resident' },
   { id: '3', name: 'Amenities' },
-  { id: '4', name: 'Policies' }
+  { id: '4', name: 'Policies' },
 ];
 
 export default function KnowledgeForm() {
   const [selectedCommunities, setSelectedCommunities] = useState<Community[]>([
-    { id: '1', name: 'Alexander Pointe Apartments' }
+    { id: '1', name: 'Alexander Pointe Apartments' },
   ]);
-  
+
   const [selectedDomains, setSelectedDomains] = useState<Domain[]>([
     { id: '1', name: 'Leasing' },
-    { id: '2', name: 'Resident' }
+    { id: '2', name: 'Resident' },
   ]);
 
   const [entries, setEntries] = useState<KnowledgeEntry[]>([
-    { topic: 'Pet Policy', information: 'The pet fee is $200 per pet and up to 2 pets per unit.' },
-    { topic: 'Community', information: 'Our community has an Applebees, a Cheesecake Factory, and a diner down the street.' }
+    {
+      topic: 'Pet Policy',
+      information: 'The pet fee is $200 per pet and up to 2 pets per unit.',
+    },
+    {
+      topic: 'Community',
+      information:
+        'Our community has an Applebees, a Cheesecake Factory, and a diner down the street.',
+    },
   ]);
 
   const [showCommunityDropdown, setShowCommunityDropdown] = useState(false);
@@ -67,22 +74,22 @@ export default function KnowledgeForm() {
   };
 
   const removeCommunity = (communityId: string) => {
-    setSelectedCommunities(selectedCommunities.filter(c => c.id !== communityId));
+    setSelectedCommunities(selectedCommunities.filter((c) => c.id !== communityId));
   };
 
   const removeDomain = (domainId: string) => {
-    setSelectedDomains(selectedDomains.filter(d => d.id !== domainId));
+    setSelectedDomains(selectedDomains.filter((d) => d.id !== domainId));
   };
 
   const addCommunity = (community: Community) => {
-    if (!selectedCommunities.find(c => c.id === community.id)) {
+    if (!selectedCommunities.find((c) => c.id === community.id)) {
       setSelectedCommunities([...selectedCommunities, community]);
     }
     setShowCommunityDropdown(false);
   };
 
   const addDomain = (domain: Domain) => {
-    if (!selectedDomains.find(d => d.id === domain.id)) {
+    if (!selectedDomains.find((d) => d.id === domain.id)) {
       setSelectedDomains([...selectedDomains, domain]);
     }
     setShowDomainDropdown(false);
@@ -90,7 +97,7 @@ export default function KnowledgeForm() {
 
   const downloadTemplate = () => {
     const headers = ['topic', 'information'];
-    
+
     // Helper function to escape CSV fields
     const escapeCSV = (field: string) => {
       // If field contains quotes, commas, or newlines, wrap in quotes and escape internal quotes
@@ -102,9 +109,7 @@ export default function KnowledgeForm() {
 
     const csvContent = [
       headers.join(','),
-      ...entries.map(entry => 
-        `${escapeCSV(entry.topic)},${escapeCSV(entry.information)}`
-      )
+      ...entries.map((entry) => `${escapeCSV(entry.topic)},${escapeCSV(entry.information)}`),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -125,16 +130,16 @@ export default function KnowledgeForm() {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      
+
       // Parse CSV properly handling quoted fields
       const parseCSVLine = (line: string) => {
         const entries = [];
         let field = '';
         let inQuotes = false;
-        
+
         for (let i = 0; i < line.length; i++) {
           const char = line[i];
-          
+
           if (char === '"') {
             if (inQuotes && line[i + 1] === '"') {
               // Handle escaped quotes
@@ -152,22 +157,22 @@ export default function KnowledgeForm() {
             field += char;
           }
         }
-        
+
         // Add the last field
         entries.push(field);
         return entries;
       };
 
-      const lines = text.split('\n').filter(line => line.trim());
+      const lines = text.split('\n').filter((line) => line.trim());
       const headers = parseCSVLine(lines[0]);
-      
+
       const newEntries: KnowledgeEntry[] = [];
       for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
         const values = parseCSVLine(lines[i]);
         newEntries.push({
           topic: values[0]?.trim() || '',
-          information: values[1]?.trim() || ''
+          information: values[1]?.trim() || '',
         });
       }
 
@@ -180,25 +185,23 @@ export default function KnowledgeForm() {
     <div className="space-y-6 max-w-4xl">
       <div className="bg-white p-6 rounded-lg border border-gray-200">
         <h2 className="text-xl font-semibold mb-6">Knowledge Base Entry</h2>
-        
+
         {/* Apply To Section */}
         <div className="space-y-4 mb-6">
-          <label className="block text-sm font-medium text-gray-700">
-            Apply To
-          </label>
+          <label className="block text-sm font-medium text-gray-700">Apply To</label>
           <div className="space-y-4">
             {/* Communities */}
             <div className="relative">
-              <label className="block text-sm text-gray-500 mb-2">
-                Communities *
-              </label>
+              <label className="block text-sm text-gray-500 mb-2">Communities *</label>
               <div className="flex flex-wrap gap-2 mb-2">
-                {selectedCommunities.map(community => (
-                  <div key={community.id} 
-                    className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-md">
+                {selectedCommunities.map((community) => (
+                  <div
+                    key={community.id}
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-md"
+                  >
                     <span>{community.name}</span>
-                    <X 
-                      className="w-4 h-4 text-gray-500 cursor-pointer" 
+                    <X
+                      className="w-4 h-4 text-gray-500 cursor-pointer"
                       onClick={() => removeCommunity(community.id)}
                     />
                   </div>
@@ -214,8 +217,8 @@ export default function KnowledgeForm() {
               {showCommunityDropdown && (
                 <div className="absolute z-10 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg">
                   {availableCommunities
-                    .filter(c => !selectedCommunities.find(sc => sc.id === c.id))
-                    .map(community => (
+                    .filter((c) => !selectedCommunities.find((sc) => sc.id === c.id))
+                    .map((community) => (
                       <button
                         key={community.id}
                         onClick={() => addCommunity(community)}
@@ -230,16 +233,16 @@ export default function KnowledgeForm() {
 
             {/* Domains */}
             <div className="relative">
-              <label className="block text-sm text-gray-500 mb-2">
-                Domains *
-              </label>
+              <label className="block text-sm text-gray-500 mb-2">Domains *</label>
               <div className="flex flex-wrap gap-2 mb-2">
-                {selectedDomains.map(domain => (
-                  <div key={domain.id} 
-                    className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-md">
+                {selectedDomains.map((domain) => (
+                  <div
+                    key={domain.id}
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-md"
+                  >
                     <span>{domain.name}</span>
-                    <X 
-                      className="w-4 h-4 text-gray-500 cursor-pointer" 
+                    <X
+                      className="w-4 h-4 text-gray-500 cursor-pointer"
                       onClick={() => removeDomain(domain.id)}
                     />
                   </div>
@@ -255,8 +258,8 @@ export default function KnowledgeForm() {
               {showDomainDropdown && (
                 <div className="absolute z-10 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg">
                   {availableDomains
-                    .filter(d => !selectedDomains.find(sd => sd.id === d.id))
-                    .map(domain => (
+                    .filter((d) => !selectedDomains.find((sd) => sd.id === d.id))
+                    .map((domain) => (
                       <button
                         key={domain.id}
                         onClick={() => addDomain(domain)}
@@ -286,12 +289,10 @@ export default function KnowledgeForm() {
               >
                 <X className="w-4 h-4" />
               </button>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-500 mb-2">
-                    Topic *
-                  </label>
+                  <label className="block text-sm text-gray-500 mb-2">Topic *</label>
                   <input
                     type="text"
                     value={entry.topic}
@@ -300,9 +301,7 @@ export default function KnowledgeForm() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-500 mb-2">
-                    Information *
-                  </label>
+                  <label className="block text-sm text-gray-500 mb-2">Information *</label>
                   <textarea
                     value={entry.information}
                     onChange={(e) => updateEntry(index, 'information', e.target.value)}
@@ -325,7 +324,7 @@ export default function KnowledgeForm() {
 
         {/* Action Buttons */}
         <div className="flex gap-3 mt-6">
-          <button 
+          <button
             onClick={downloadTemplate}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50"
           >
@@ -339,7 +338,7 @@ export default function KnowledgeForm() {
             accept=".csv"
             className="hidden"
           />
-          <button 
+          <button
             onClick={() => fileInputRef.current?.click()}
             className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700"
           >
@@ -350,4 +349,4 @@ export default function KnowledgeForm() {
       </div>
     </div>
   );
-} 
+}

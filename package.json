@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prepare": "husky",
+    "prepare": "husky install",
     "postinstall": "patch-package",
     "build:widget": "tsup --config src/lib/widget/build.config.ts",
     "test:components": "jest --config tests/jest.config.js",

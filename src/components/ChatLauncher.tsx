@@ -18,7 +18,7 @@ const DEFAULT_AVATAR_ID = 'Alinna_background_st01_Domiq';
 const ChatLauncher = () => {
   const [open, setOpen] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
-  
+
   // Track recent mailto/phone clicks to ignore beforeunload events
   const lastMailtoClickTime = useRef<number>(0);
 
@@ -42,11 +42,10 @@ const ChatLauncher = () => {
 
   const closeCurrentSession = useCallback(async () => {
     if (currentSession && apiService) {
-      
       try {
         await apiService.closeSession(currentSession._id);
       } catch (err) {
-        console.error("ChatLauncher: Error closing AKOOL session:", err);
+        console.error('ChatLauncher: Error closing AKOOL session:', err);
       } finally {
         // Always clean up locally
         setCurrentSession(null);
@@ -59,10 +58,11 @@ const ChatLauncher = () => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       // Check if this is a mailto or phone link navigation - don't close session for these
       const timeSinceClickAction = Date.now() - lastMailtoClickTime.current;
-      if (timeSinceClickAction < 2000) { // Within 2 seconds of mailto/phone click
+      if (timeSinceClickAction < 2000) {
+        // Within 2 seconds of mailto/phone click
         return;
       }
-      
+
       if (currentSession && apiService) {
         // Use sendBeacon for reliable cleanup on page unload
         const sessionData = JSON.stringify({ id: currentSession._id });
@@ -91,8 +91,9 @@ const ChatLauncher = () => {
   useEffect(() => {
     return () => {
       if (currentSession && apiService) {
-        apiService.closeSession(currentSession._id)
-          .catch(err => console.error("Error closing session on unmount:", err));
+        apiService
+          .closeSession(currentSession._id)
+          .catch((err) => console.error('Error closing session on unmount:', err));
       }
     };
   }, [currentSession, apiService]);
@@ -130,44 +131,43 @@ const ChatLauncher = () => {
 
     setIsCreatingSession(true);
     setSessionError(null);
-    
+
     try {
-      const sessionData = await apiService.createSession({ 
-        avatar_id: DEFAULT_AVATAR_ID, 
+      const sessionData = await apiService.createSession({
+        avatar_id: DEFAULT_AVATAR_ID,
         duration: DEFAULT_SESSION_DURATION,
         voice_id: 'Xb7hH8MSUJpSbSDYk0k2',
       });
-      
+
       setCurrentSession(sessionData);
-      
     } catch (err) {
       console.error('Error creating AKOOL session:', err);
       const errorMessage = err instanceof Error ? err.message : String(err);
-      
+
       // If avatar is busy, try force-close once and retry
       if (errorMessage.includes('currently busy') || errorMessage.includes('busy')) {
         setSessionError('Avatar busy. Clearing all sessions and retrying...');
-        
+
         try {
           // Call the force-close API
           const response = await fetch('/api/avatar/session/close', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              id: 'force-close-all', 
+            body: JSON.stringify({
+              id: 'force-close-all',
               avatar_id: DEFAULT_AVATAR_ID,
-              force: true
+              force: true,
             }),
           });
-          
+
           if (response.ok) {
             const result = await response.json();
-            
+
             // Wait 5 seconds for AKOOL to process the closures
             setTimeout(async () => {
               try {
-                const retrySessionData = await apiService.createSession({ 
-                  avatar_id: DEFAULT_AVATAR_ID, 
+                const retrySessionData = await apiService.createSession({
+                  avatar_id: DEFAULT_AVATAR_ID,
                   duration: DEFAULT_SESSION_DURATION,
                   voice_id: 'Xb7hH8MSUJpSbSDYk0k2',
                 });
@@ -192,7 +192,7 @@ const ChatLauncher = () => {
       } else {
         setSessionError(errorMessage);
       }
-      
+
       setCurrentSession(null);
     } finally {
       // Only set to false if we're not waiting for a retry
@@ -225,9 +225,12 @@ const ChatLauncher = () => {
   useEffect(() => {
     if (!currentSession) return;
 
-    const sessionTimeout = setTimeout(() => {
-      closeCurrentSession();
-    }, (DEFAULT_SESSION_DURATION - 30) * 1000); // Close 30 seconds before expiry
+    const sessionTimeout = setTimeout(
+      () => {
+        closeCurrentSession();
+      },
+      (DEFAULT_SESSION_DURATION - 30) * 1000,
+    ); // Close 30 seconds before expiry
 
     return () => clearTimeout(sessionTimeout);
   }, [currentSession, closeCurrentSession]);
@@ -235,22 +238,33 @@ const ChatLauncher = () => {
   return (
     <div className="fixed bottom-6 right-6 z-50" style={{ overflow: 'visible' }}>
       {sessionError && (
-        <div style={{ position: 'fixed', bottom: '100px', right: '20px', backgroundColor: 'red', color: 'white', padding: '10px', borderRadius: '5px', zIndex: 1000}}>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '100px',
+            right: '20px',
+            backgroundColor: 'red',
+            color: 'white',
+            padding: '10px',
+            borderRadius: '5px',
+            zIndex: 1000,
+          }}
+        >
           AKOOL Error: {sessionError}
           {sessionError.includes('refresh the page') && (
             <div style={{ marginTop: '10px' }}>
-              <button 
+              <button
                 onClick={() => {
                   window.location.reload();
                 }}
-                style={{ 
-                  backgroundColor: 'white', 
-                  color: 'red', 
-                  padding: '8px 12px', 
-                  border: 'none', 
-                  borderRadius: '4px', 
+                style={{
+                  backgroundColor: 'white',
+                  color: 'red',
+                  padding: '8px 12px',
+                  border: 'none',
+                  borderRadius: '4px',
                   fontWeight: 'bold',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
                 }}
               >
                 🔄 Refresh Page
@@ -267,7 +281,7 @@ const ChatLauncher = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-purple-600/5"></div>
           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-200/20 to-transparent rounded-full -mr-16 -mt-16"></div>
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-purple-200/20 to-transparent rounded-full -ml-20 -mb-20"></div>
-          
+
           {/* Content */}
           <div className="relative z-10 flex flex-col items-center justify-center h-full px-8 text-center">
             {/* Logo/Brand Area */}
@@ -275,12 +289,8 @@ const ChatLauncher = () => {
               <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-4 mx-auto shadow-lg">
                 <span className="text-white text-2xl font-bold">GO</span>
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                Welcome to Grand Oaks
-              </h2>
-              <h3 className="text-lg text-gray-600 font-medium">
-                Luxury Apartments
-              </h3>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Grand Oaks</h2>
+              <h3 className="text-lg text-gray-600 font-medium">Luxury Apartments</h3>
             </div>
 
             {/* Loading Animation */}
@@ -290,11 +300,10 @@ const ChatLauncher = () => {
 
             {/* Loading Messages */}
             <div className="space-y-3">
-              <p className="text-lg font-semibold text-gray-800">
-                Connecting you with Ava
-              </p>
+              <p className="text-lg font-semibold text-gray-800">Connecting you with Ava</p>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Your personal leasing assistant is being prepared.<br />
+                Your personal leasing assistant is being prepared.
+                <br />
                 This will just take a moment...
               </p>
             </div>
@@ -306,11 +315,17 @@ const ChatLauncher = () => {
                 <span>Live Video Chat</span>
               </div>
               <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
+                <div
+                  className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"
+                  style={{ animationDelay: '0.5s' }}
+                ></div>
                 <span>Instant Answers</span>
               </div>
               <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+                <div
+                  className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"
+                  style={{ animationDelay: '1s' }}
+                ></div>
                 <span>Tour Scheduling</span>
               </div>
             </div>
@@ -338,13 +353,15 @@ const ChatLauncher = () => {
         onClick={toggle}
         className={`flex items-center transition-all cursor-pointer hover:shadow-xl
           bg-white/90 backdrop-blur-md shadow-lg border border-gray-300
-          ${open
-            ? 'w-14 h-14 p-0 justify-center rounded-full gap-0'   // avatar-only
-            : 'px-5 py-2 pr-3 rounded-full gap-3'}                // pill banner
+          ${
+            open
+              ? 'w-14 h-14 p-0 justify-center rounded-full gap-0' // avatar-only
+              : 'px-5 py-2 pr-3 rounded-full gap-3'
+          }                // pill banner
         `}
         style={{ overflow: 'visible' }}
       >
-        {!open && ( /* banner text only when closed */
+        {!open /* banner text only when closed */ && (
           <span className="text-sm font-medium text-gray-800 whitespace-nowrap">
             Chat with
             <span className="font-semibold"> Ava</span>
@@ -358,9 +375,7 @@ const ChatLauncher = () => {
             className="w-12 h-12 rounded-full object-cover border-2 shadow-md"
           />
           {!open && unreadCount > 0 && (
-            <div 
-              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce"
-            >
+            <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-bounce">
               {unreadCount}
             </div>
           )}

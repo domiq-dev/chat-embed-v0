@@ -40,6 +40,24 @@ At the end of each push or pull request, include a **cursor log**:
 
 ---
 
+## 5. 🧼 Auto-Formatting on Commit (Prettier + Husky)
+
+We use [Prettier](https://prettier.io/) to automatically format code on every commit via Git hooks. This ensures consistent style across the codebase.
+
+### ✅ To enable auto-formatting:
+
+If you're working on this repo for the first time, or you've just pulled down updates to Husky, run:
+
+```bash
+npm install
+```
+
+This will set up Husky and Prettier for you. From then on, every time you commit, Prettier will automatically format your staged files. If any files are changed by Prettier, you'll need to re-stage and commit again.
+
+If you have issues, make sure you are using a recent version of Node.js and npm.
+
+---
+
 ## 🚀 Widget for Apartment Websites
 
 To add the chat widget to your apartment website, add these two script tags:
@@ -48,8 +66,8 @@ To add the chat widget to your apartment website, add these two script tags:
 <script>
   window.domIQChat = {
     config: {
-      propertyId: 'YOUR_PROPERTY_ID'
-    }
+      propertyId: 'YOUR_PROPERTY_ID',
+    },
   };
 </script>
 <script async src="https://chat.domiq.ai/widget.min.js"></script>

@@ -23,21 +23,21 @@ const LeadOverview = () => {
 
   // Categorize leads based on their status and engagement
   const categorizedData = useMemo(() => {
-    const signed = leads.filter(lead => lead.amplitudeData?.signed);
-    const qualified = leads.filter(lead => 
-      lead.amplitudeData?.qualified && !lead.amplitudeData?.signed
+    const signed = leads.filter((lead) => lead.amplitudeData?.signed);
+    const qualified = leads.filter(
+      (lead) => lead.amplitudeData?.qualified && !lead.amplitudeData?.signed,
     );
-    const hot = leads.filter(lead => 
-      lead.amplitudeData?.hot && !lead.amplitudeData?.qualified
+    const hot = leads.filter((lead) => lead.amplitudeData?.hot && !lead.amplitudeData?.qualified);
+    const active = leads.filter(
+      (lead) =>
+        lead.amplitudeData?.chatSessionStarted &&
+        !lead.amplitudeData?.hot &&
+        !lead.amplitudeData?.conversationAbandoned,
     );
-    const active = leads.filter(lead => 
-      lead.amplitudeData?.chatSessionStarted && 
-      !lead.amplitudeData?.hot &&
-      !lead.amplitudeData?.conversationAbandoned
-    );
-    const abandoned = leads.filter(lead => 
-      lead.amplitudeData?.conversationAbandoned ||
-      (!lead.amplitudeData?.chatSessionStarted && lead.amplitudeData)
+    const abandoned = leads.filter(
+      (lead) =>
+        lead.amplitudeData?.conversationAbandoned ||
+        (!lead.amplitudeData?.chatSessionStarted && lead.amplitudeData),
     );
 
     const categories: LeadCategory[] = [
@@ -47,7 +47,7 @@ const LeadOverview = () => {
         color: '#10B981', // green-500
         icon: <Target className="w-4 h-4" />,
         description: 'Leads who have signed leases',
-        leads: signed
+        leads: signed,
       },
       {
         name: 'Qualified',
@@ -55,7 +55,7 @@ const LeadOverview = () => {
         color: '#3B82F6', // blue-500
         icon: <TrendingUp className="w-4 h-4" />,
         description: 'Qualified prospects ready for conversion',
-        leads: qualified
+        leads: qualified,
       },
       {
         name: 'Hot',
@@ -63,7 +63,7 @@ const LeadOverview = () => {
         color: '#8B5CF6', // violet-500
         icon: <Users className="w-4 h-4" />,
         description: 'Actively engaged prospects',
-        leads: hot
+        leads: hot,
       },
       {
         name: 'Active',
@@ -71,7 +71,7 @@ const LeadOverview = () => {
         color: '#F59E0B', // amber-500
         icon: <Users className="w-4 h-4" />,
         description: 'Started conversation but not yet engaged',
-        leads: active
+        leads: active,
       },
       {
         name: 'Abandoned',
@@ -79,16 +79,16 @@ const LeadOverview = () => {
         color: '#EF4444', // red-500
         icon: <AlertCircle className="w-4 h-4" />,
         description: 'Abandoned conversations or inactive leads',
-        leads: abandoned
-      }
+        leads: abandoned,
+      },
     ];
 
-    return categories.filter(category => category.value > 0);
+    return categories.filter((category) => category.value > 0);
   }, [leads]);
 
   const totalLeads = leads.length;
-  const selectedCategoryData = selectedCategory 
-    ? categorizedData.find(cat => cat.name === selectedCategory)
+  const selectedCategoryData = selectedCategory
+    ? categorizedData.find((cat) => cat.name === selectedCategory)
     : null;
 
   const handlePieClick = (data: any) => {
@@ -102,7 +102,9 @@ const LeadOverview = () => {
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
           <p className="font-medium">{data.name}</p>
-          <p className="text-sm text-gray-600">{data.value} leads ({percentage}%)</p>
+          <p className="text-sm text-gray-600">
+            {data.value} leads ({percentage}%)
+          </p>
           <p className="text-xs text-gray-500">{data.description}</p>
         </div>
       );
@@ -122,7 +124,6 @@ const LeadOverview = () => {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
           {/* Left Side - Pie Chart with Direct Labels */}
           <div className="relative">
             <div className="h-80">
@@ -145,8 +146,8 @@ const LeadOverview = () => {
                     labelLine={false}
                   >
                     {categorizedData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
+                      <Cell
+                        key={`cell-${index}`}
                         fill={entry.color}
                         stroke={selectedCategory === entry.name ? '#374151' : 'none'}
                         strokeWidth={selectedCategory === entry.name ? 2 : 0}
@@ -164,7 +165,7 @@ const LeadOverview = () => {
             {selectedCategoryData ? (
               <>
                 <div className="flex items-center gap-2 p-4 bg-gray-50 rounded-lg">
-                  <div 
+                  <div
                     className="w-4 h-4 rounded-full"
                     style={{ backgroundColor: selectedCategoryData.color }}
                   />
@@ -172,7 +173,8 @@ const LeadOverview = () => {
                     <h3 className="font-semibold text-lg">{selectedCategoryData.name} Leads</h3>
                     <p className="text-sm text-gray-600">{selectedCategoryData.description}</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {selectedCategoryData.value} leads • {((selectedCategoryData.value / totalLeads) * 100).toFixed(1)}% of total
+                      {selectedCategoryData.value} leads •{' '}
+                      {((selectedCategoryData.value / totalLeads) * 100).toFixed(1)}% of total
                     </p>
                   </div>
                 </div>
@@ -191,17 +193,11 @@ const LeadOverview = () => {
                           </Badge>
                         )}
                       </div>
-                      
+
                       <div className="text-xs text-gray-500 space-y-1">
-                        {lead.email && (
-                          <div>📧 {lead.email}</div>
-                        )}
-                        {lead.phone && (
-                          <div>📞 {lead.phone}</div>
-                        )}
-                        {lead.unitInterest && (
-                          <div>🏠 {lead.unitInterest}</div>
-                        )}
+                        {lead.email && <div>📧 {lead.email}</div>}
+                        {lead.phone && <div>📞 {lead.phone}</div>}
+                        {lead.unitInterest && <div>🏠 {lead.unitInterest}</div>}
                         <div>📅 {new Date(lead.lastActivity).toLocaleDateString()}</div>
                       </div>
 
@@ -232,4 +228,4 @@ const LeadOverview = () => {
   );
 };
 
-export default LeadOverview; 
+export default LeadOverview;

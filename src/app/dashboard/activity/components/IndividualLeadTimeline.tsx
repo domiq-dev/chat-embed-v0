@@ -5,7 +5,19 @@ import { Lead, LeadActivity } from '@/lib/dummy-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Clock, User, Phone, Mail, Calendar, CheckCircle, UserPlus, FileText, ExternalLink, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Clock,
+  User,
+  Phone,
+  Mail,
+  Calendar,
+  CheckCircle,
+  UserPlus,
+  FileText,
+  ExternalLink,
+  Trash2,
+} from 'lucide-react';
 import { useState } from 'react';
 
 function getActivityIcon(type: LeadActivity['type']) {
@@ -58,7 +70,7 @@ function formatActivityType(type: LeadActivity['type']): string {
     tour_scheduled: 'Tour Scheduled',
     tour_completed: 'Tour Completed',
     note_added: 'Note Added',
-    handed_off: 'Handed Off to Resman'
+    handed_off: 'Handed Off to Resman',
   };
   return formats[type];
 }
@@ -87,7 +99,12 @@ interface DeleteConfirmationModalProps {
   onCancel: () => void;
 }
 
-function DeleteConfirmationModal({ isOpen, leadName, onConfirm, onCancel }: DeleteConfirmationModalProps) {
+function DeleteConfirmationModal({
+  isOpen,
+  leadName,
+  onConfirm,
+  onCancel,
+}: DeleteConfirmationModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -97,9 +114,10 @@ function DeleteConfirmationModal({ isOpen, leadName, onConfirm, onCancel }: Dele
           <Trash2 className="w-6 h-6 text-red-500" />
           <h2 className="text-xl font-semibold">Delete Lead</h2>
         </div>
-        
+
         <p className="text-gray-600 mb-6">
-          Are you sure you want to delete <strong>{leadName}</strong>? This action cannot be undone and will remove all associated activities and timeline data.
+          Are you sure you want to delete <strong>{leadName}</strong>? This action cannot be undone
+          and will remove all associated activities and timeline data.
         </p>
 
         <div className="flex justify-end gap-2">
@@ -134,7 +152,8 @@ export default function IndividualLeadTimeline() {
           </div>
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Lead Selected</h3>
           <p className="text-gray-500">
-            Click on a lead in the funnel above to view their detailed timeline and activity history.
+            Click on a lead in the funnel above to view their detailed timeline and activity
+            history.
           </p>
         </CardContent>
       </Card>
@@ -142,7 +161,7 @@ export default function IndividualLeadTimeline() {
   }
 
   const sortedTimeline = [...selectedLead.timeline].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
   );
 
   const handleDeleteLead = () => {
@@ -170,9 +189,7 @@ export default function IndividualLeadTimeline() {
                   <Badge className={getCurrentStageColor(selectedLead.currentStage)}>
                     {formatActivityType(selectedLead.currentStage)}
                   </Badge>
-                  <Badge variant="outline">
-                    {selectedLead.source}
-                  </Badge>
+                  <Badge variant="outline">{selectedLead.source}</Badge>
                 </div>
               </div>
             </div>
@@ -187,42 +204,36 @@ export default function IndividualLeadTimeline() {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           {/* Lead Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center gap-2">
               <Mail className="w-4 h-4 text-gray-500" />
-              <span className="text-sm">
-                {selectedLead.email || 'Email not collected'}
-              </span>
+              <span className="text-sm">{selectedLead.email || 'Email not collected'}</span>
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-gray-500" />
-              <span className="text-sm">
-                {selectedLead.phone || 'Phone not collected'}
-              </span>
+              <span className="text-sm">{selectedLead.phone || 'Phone not collected'}</span>
             </div>
             <div className="flex items-center gap-2">
               <UserPlus className="w-4 h-4 text-gray-500" />
-              <span className="text-sm">
-                {selectedLead.assignedAgent || 'No agent assigned'}
-              </span>
+              <span className="text-sm">{selectedLead.assignedAgent || 'No agent assigned'}</span>
             </div>
           </div>
 
           {/* Timeline */}
           <div className="relative">
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
-            
+
             <div className="space-y-6">
               {sortedTimeline.map((activity, index) => (
                 <div key={activity.id} className="relative pl-10">
                   {/* Activity dot */}
-                  <div className={`absolute left-[14px] w-3 h-3 rounded-full ${getActivityColor(activity.type)} flex items-center justify-center`}>
-                    <div className="text-white text-xs">
-                      {getActivityIcon(activity.type)}
-                    </div>
+                  <div
+                    className={`absolute left-[14px] w-3 h-3 rounded-full ${getActivityColor(activity.type)} flex items-center justify-center`}
+                  >
+                    <div className="text-white text-xs">{getActivityIcon(activity.type)}</div>
                   </div>
 
                   <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
@@ -242,25 +253,40 @@ export default function IndividualLeadTimeline() {
 
                     <div className="text-sm text-gray-600 space-y-1">
                       {activity.details.chatSummary && (
-                        <p><strong>Summary:</strong> {activity.details.chatSummary}</p>
+                        <p>
+                          <strong>Summary:</strong> {activity.details.chatSummary}
+                        </p>
                       )}
                       {activity.details.emailCollected && (
-                        <p><strong>Email collected:</strong> {activity.details.emailCollected}</p>
+                        <p>
+                          <strong>Email collected:</strong> {activity.details.emailCollected}
+                        </p>
                       )}
                       {activity.details.phoneCollected && (
-                        <p><strong>Phone collected:</strong> {activity.details.phoneCollected}</p>
+                        <p>
+                          <strong>Phone collected:</strong> {activity.details.phoneCollected}
+                        </p>
                       )}
                       {activity.details.agentName && (
-                        <p><strong>Assigned to:</strong> {activity.details.agentName}</p>
+                        <p>
+                          <strong>Assigned to:</strong> {activity.details.agentName}
+                        </p>
                       )}
                       {activity.details.tourDate && (
-                        <p><strong>Tour scheduled:</strong> {new Date(activity.details.tourDate).toLocaleString()}</p>
+                        <p>
+                          <strong>Tour scheduled:</strong>{' '}
+                          {new Date(activity.details.tourDate).toLocaleString()}
+                        </p>
                       )}
                       {activity.details.unitRequested && (
-                        <p><strong>Unit requested:</strong> {activity.details.unitRequested}</p>
+                        <p>
+                          <strong>Unit requested:</strong> {activity.details.unitRequested}
+                        </p>
                       )}
                       {activity.details.notes && (
-                        <p><strong>Notes:</strong> {activity.details.notes}</p>
+                        <p>
+                          <strong>Notes:</strong> {activity.details.notes}
+                        </p>
                       )}
                     </div>
 
@@ -306,4 +332,4 @@ export default function IndividualLeadTimeline() {
       />
     </>
   );
-} 
+}

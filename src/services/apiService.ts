@@ -25,7 +25,7 @@ export type Voice = {
   preview: string;
   voice_id: string;
   name: string;
-}
+};
 
 export type Language = {
   lang_code: string;
@@ -47,9 +47,9 @@ export type Avatar = {
 export class ApiService {
   private openapiHost: string;
   private openapiToken: string;
-  
+
   // ✅ Hard-coded Alice voice ID (now public)
-  public static readonly DEFAULT_VOICE_ID = "Xb7hH8MSUJpSbSDYk0k2";
+  public static readonly DEFAULT_VOICE_ID = 'Xb7hH8MSUJpSbSDYk0k2';
 
   constructor(openapiHost: string, openapiToken: string) {
     this.openapiHost = openapiHost;
@@ -62,13 +62,13 @@ export class ApiService {
         method,
         headers: {
           Authorization: `Bearer ${this.openapiToken}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: body ? JSON.stringify(body) : undefined,
       });
-      
+
       const responseBody = await response.json();
-      
+
       if (responseBody.code === 1000) {
         return responseBody.data;
       }
@@ -87,29 +87,29 @@ export class ApiService {
     voice_id?: string;
   }): Promise<Session> {
     const sessionData = { ...data };
-    
-    return this.fetchAPI("/api/open/v4/liveAvatar/session/create", "POST", sessionData);
+
+    return this.fetchAPI('/api/open/v4/liveAvatar/session/create', 'POST', sessionData);
   }
 
   public async closeSession(id: string) {
     // Add timeout to prevent hanging on server issues
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-    
+
     try {
       const response = await fetch(`${this.openapiHost}/api/open/v4/liveAvatar/session/close`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${this.openapiToken}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ id }),
-        signal: controller.signal
+        signal: controller.signal,
       });
-      
+
       clearTimeout(timeoutId);
       const responseBody = await response.json();
-      
+
       if (responseBody.code === 1000) {
         return responseBody.data;
       }
@@ -123,28 +123,28 @@ export class ApiService {
       throw new Error(responseBody.msg || `API Error: ${responseBody.code}`);
     } catch (error: any) {
       clearTimeout(timeoutId);
-      
+
       // Handle timeout and network errors gracefully
       if (error.name === 'AbortError') {
         console.warn(`Session close timeout for ${id}, will auto-expire`);
         return { success: true, warning: 'timeout' };
       }
-      
+
       throw error;
     }
   }
 
   public async getLangList(): Promise<Language[]> {
-    const data = await this.fetchAPI("/api/open/v3/language/list", "GET");
+    const data = await this.fetchAPI('/api/open/v3/language/list', 'GET');
     return data?.lang_list;
   }
 
   public async getVoiceList(): Promise<Voice[]> {
-    return this.fetchAPI("/api/open/v3/voice/list", "GET");
+    return this.fetchAPI('/api/open/v3/voice/list', 'GET');
   }
 
   public async getAvatarList(): Promise<Avatar[]> {
-    const data = await this.fetchAPI("/api/open/v4/liveAvatar/avatar/list?page=1&size=100", "GET");
+    const data = await this.fetchAPI('/api/open/v4/liveAvatar/avatar/list?page=1&size=100', 'GET');
     return data?.result;
   }
-} 
+}
