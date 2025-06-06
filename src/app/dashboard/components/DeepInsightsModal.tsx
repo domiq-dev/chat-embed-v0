@@ -1,11 +1,6 @@
-"use client";
+'use client';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function DeepInsightsModal({
   item,
@@ -26,14 +21,13 @@ export default function DeepInsightsModal({
   onClose: () => void;
 }) {
   const getScoreColor = (score: string) =>
-    score === "A+"
-      ? "bg-green-200 text-green-800"
-      : score === "A"
-      ? "bg-yellow-200 text-yellow-800"
-      : "bg-red-200 text-red-800";
+    score === 'A+'
+      ? 'bg-green-200 text-green-800'
+      : score === 'A'
+        ? 'bg-yellow-200 text-yellow-800'
+        : 'bg-red-200 text-red-800';
 
-  const renderCheck = (val?: boolean) =>
-    val ? "✅" : val === false ? "❌" : "—";
+  const renderCheck = (val?: boolean) => (val ? '✅' : val === false ? '❌' : '—');
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -44,11 +38,9 @@ export default function DeepInsightsModal({
 
         <div className="space-y-3 text-sm">
           <p>
-            <strong>Score:</strong>{" "}
+            <strong>Score:</strong>{' '}
             <span
-              className={`px-2 py-1 rounded text-xs font-semibold ${getScoreColor(
-                item.score
-              )}`}
+              className={`px-2 py-1 rounded text-xs font-semibold ${getScoreColor(item.score)}`}
             >
               {item.score}
             </span>
@@ -59,7 +51,7 @@ export default function DeepInsightsModal({
           </p>
 
           <p>
-            <strong>Signed:</strong> {item.signed ? "Yes ✅" : "No ❌"}
+            <strong>Signed:</strong> {item.signed ? 'Yes ✅' : 'No ❌'}
           </p>
 
           <p>

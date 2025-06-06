@@ -2,11 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const unprocessedDirectives = [
-  '@tailwind base;',
-  '@tailwind components;',
-  '@tailwind utilities;'
-];
+const unprocessedDirectives = ['@tailwind base;', '@tailwind components;', '@tailwind utilities;'];
 
 function findCssFiles(dir) {
   let cssFiles = [];
@@ -62,8 +58,7 @@ try {
 
   console.log('Tailwind CSS build check passed! Directives seem processed.');
   process.exit(0);
-
 } catch (error) {
   console.error('An error occurred during the build or check process:', error);
   process.exit(1);
-} 
+}

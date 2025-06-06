@@ -18,10 +18,12 @@ interface MediaItem {
 const LOCAL_STORAGE_KEY = 'mediaLibraryItems';
 
 function serializeMediaItems(items: MediaItem[]): string {
-  return JSON.stringify(items.map(item => ({
-    ...item,
-    uploadedAt: item.uploadedAt.toISOString(),
-  })));
+  return JSON.stringify(
+    items.map((item) => ({
+      ...item,
+      uploadedAt: item.uploadedAt.toISOString(),
+    })),
+  );
 }
 
 function deserializeMediaItems(data: string): MediaItem[] {
@@ -56,24 +58,21 @@ export default function MediaPage() {
               ...item,
               uploadedAt: new Date(item.uploadedAt),
             }));
-            ;
             setMediaItems(items);
-            
+
             // Also save to localStorage as backup
             localStorage.setItem(LOCAL_STORAGE_KEY, serializeMediaItems(items));
             setIsLoaded(true);
             return;
           }
         }
-        
+
         // Fallback to localStorage
-        ;
         const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (stored) {
           const items = deserializeMediaItems(stored);
-          ;
           setMediaItems(items);
-          
+
           // Sync to API
           await syncToAPI(items);
         }
@@ -91,17 +90,16 @@ export default function MediaPage() {
   // Sync data to API
   const syncToAPI = async (items: MediaItem[]) => {
     try {
-      const metadata = items.map(item => ({
+      const metadata = items.map((item) => ({
         ...item,
         uploadedAt: item.uploadedAt.toISOString(),
       }));
-      
+
       await fetch('/api/media-metadata', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ metadata }),
       });
-      ;
     } catch (error) {
       console.error('Failed to sync to API:', error);
     }
@@ -114,8 +112,6 @@ export default function MediaPage() {
         // Save to localStorage
         const serialized = serializeMediaItems(mediaItems);
         localStorage.setItem(LOCAL_STORAGE_KEY, serialized);
-        ;
-        
         // Save to API
         syncToAPI(mediaItems);
       } catch (error) {
@@ -127,15 +123,15 @@ export default function MediaPage() {
 
   const handleUpload = async (newItems: MediaItem[]) => {
     setError(null);
-    
+
     // Add the new items to our collection
-    setMediaItems(prev => [...prev, ...newItems]);
+    setMediaItems((prev) => [...prev, ...newItems]);
     setShowUpload(false);
   };
 
   const handleDelete = async (id: string) => {
     // Find the item to delete
-    const itemToDelete = mediaItems.find(item => item.id === id);
+    const itemToDelete = mediaItems.find((item) => item.id === id);
     if (!itemToDelete) return;
 
     try {
@@ -162,7 +158,7 @@ export default function MediaPage() {
       });
 
       // Remove from state (this will trigger the useEffect to save to localStorage)
-      setMediaItems(prev => prev.filter(item => item.id !== id));
+      setMediaItems((prev) => prev.filter((item) => item.id !== id));
     } catch (error) {
       console.error('Delete failed:', error);
       setError('Failed to delete file. It may still exist on the server.');
@@ -183,17 +179,18 @@ export default function MediaPage() {
         </button>
       </div>
 
-      {!isLoaded && (
-        <div className="text-center text-gray-500 py-8">
-          Loading media library...
-        </div>
-      )}
+      {!isLoaded && <div className="text-center text-gray-500 py-8">Loading media library...</div>}
 
       {error && (
         <div className="flex items-center gap-2 bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg border border-yellow-300">
           <AlertTriangle className="w-5 h-5" />
           <span>{error}</span>
-          <button onClick={() => setError(null)} className="ml-auto text-yellow-700 hover:underline">Dismiss</button>
+          <button
+            onClick={() => setError(null)}
+            className="ml-auto text-yellow-700 hover:underline"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -233,14 +230,16 @@ export default function MediaPage() {
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-500">Image Types</p>
             <p className="text-2xl font-semibold">
-              {new Set(mediaItems.map(item => item.type.split('/')[1].toUpperCase())).size}
+              {new Set(mediaItems.map((item) => item.type.split('/')[1].toUpperCase())).size}
             </p>
           </div>
           <div className="bg-white p-4 rounded-lg border border-gray-200">
             <p className="text-sm text-gray-500">Last Upload</p>
             <p className="text-2xl font-semibold">
               {mediaItems.length > 0
-                ? new Date(Math.max(...mediaItems.map(item => item.uploadedAt.getTime()))).toLocaleDateString()
+                ? new Date(
+                    Math.max(...mediaItems.map((item) => item.uploadedAt.getTime())),
+                  ).toLocaleDateString()
                 : '-'}
             </p>
           </div>
@@ -251,4 +250,4 @@ export default function MediaPage() {
       {isLoaded && <MediaGallery items={mediaItems} onDelete={handleDelete} />}
     </div>
   );
-} 
+}

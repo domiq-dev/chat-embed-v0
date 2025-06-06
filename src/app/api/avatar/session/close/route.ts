@@ -38,71 +38,58 @@ export async function POST(request: Request) {
 
     // Handle force-close-all requests (simplified)
     if (id === 'force-close-all') {
-      ;
-      
       // Just clear local data - don't overcomplicate with server calls
-      const response = NextResponse.json({ 
-        success: true, 
-        message: 'Local sessions cleared - avatar should be available' 
+      const response = NextResponse.json({
+        success: true,
+        message: 'Local sessions cleared - avatar should be available',
       });
-      
+
       return response;
     }
 
     if (!id) {
-      return NextResponse.json(
-        { error: 'Session ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
-
-    ;
 
     // Get proper AKOOL token
     const token = await getAkoolToken();
-    ;
-    
     const response = await fetch('https://openapi.akool.com/api/open/v4/liveAvatar/session/close', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ id }),
     });
 
     const responseData = await response.json();
-    ;
-    
     if (responseData.code === 1000) {
-      ;
       return NextResponse.json({ success: true });
     } else {
       console.error(`[CLOSE] ❌ Failed to close AKOOL session ${id}:`, responseData);
-      
+
       // Handle specific error cases gracefully
-      if (responseData.message?.includes('unavailable') || responseData.msg?.includes('unavailable')) {
-        ;
-        return NextResponse.json({ 
-          success: true, 
-          warning: 'Server unavailable, session may auto-expire' 
+      if (
+        responseData.message?.includes('unavailable') ||
+        responseData.msg?.includes('unavailable')
+      ) {
+        return NextResponse.json({
+          success: true,
+          warning: 'Server unavailable, session may auto-expire',
         });
       }
-      
+
       return NextResponse.json(
-        { 
+        {
           error: responseData.message || responseData.msg || 'Failed to close session',
           code: responseData.code,
-          sessionId: id
+          sessionId: id,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
   } catch (error) {
     console.error('[CLOSE] ❌ Unexpected error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
-} 
+}

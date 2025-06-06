@@ -18,9 +18,9 @@ interface CTAButtonsProps {
   };
 }
 
-const CTAButtons: React.FC<CTAButtonsProps> = ({ 
-  location, 
-  analytics, 
+const CTAButtons: React.FC<CTAButtonsProps> = ({
+  location,
+  analytics,
   onContactFormOpen,
   onTourBookingOpen,
   lastMailtoClickTime,
@@ -29,11 +29,11 @@ const CTAButtons: React.FC<CTAButtonsProps> = ({
     phone: '+1-555-123-4567',
     showContactForm: true,
     showTourBooking: true,
-  }
+  },
 }) => {
   const handleEmailClick = () => {
     analytics.trackEmailOfficeClick(location);
-    
+
     if (lastMailtoClickTime) {
       lastMailtoClickTime.current = Date.now();
     }
@@ -66,4 +66,4 @@ const CTAButtons: React.FC<CTAButtonsProps> = ({
   );
 };
 
-export default CTAButtons; 
+export default CTAButtons;

@@ -48,4 +48,4 @@ export const dashboardRoutes: Route[] = [
     path: '/embed/radial-test',
     label: 'Chat Interface',
   },
-]; 
+];

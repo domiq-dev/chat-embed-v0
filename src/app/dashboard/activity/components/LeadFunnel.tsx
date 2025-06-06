@@ -18,16 +18,22 @@ interface FunnelStageProps {
   selectedLead: Lead | null;
 }
 
-function FunnelStage({ stage, title, color, leads, onLeadClick, onDeleteLead, selectedLead }: FunnelStageProps) {
+function FunnelStage({
+  stage,
+  title,
+  color,
+  leads,
+  onLeadClick,
+  onDeleteLead,
+  selectedLead,
+}: FunnelStageProps) {
   return (
     <div className="flex-1">
       <div className={`${color} rounded-lg p-4 mb-4`}>
         <h3 className="font-semibold text-white text-center">{title}</h3>
-        <div className="text-center text-white text-2xl font-bold mt-2">
-          {leads.length}
-        </div>
+        <div className="text-center text-white text-2xl font-bold mt-2">{leads.length}</div>
       </div>
-      
+
       <div className="space-y-2 max-h-96 overflow-y-auto">
         {leads.map((lead) => (
           <div
@@ -41,12 +47,8 @@ function FunnelStage({ stage, title, color, leads, onLeadClick, onDeleteLead, se
           >
             <div className="font-medium text-sm">{lead.name}</div>
             <div className="text-xs text-gray-500 mt-1">
-              {lead.unitInterest && (
-                <span className="mr-2">{lead.unitInterest}</span>
-              )}
-              <span>
-                {new Date(lead.lastActivity).toLocaleDateString()}
-              </span>
+              {lead.unitInterest && <span className="mr-2">{lead.unitInterest}</span>}
+              <span>{new Date(lead.lastActivity).toLocaleDateString()}</span>
             </div>
             {lead.assignedAgent && (
               <Badge variant="secondary" className="text-xs mt-1">
@@ -73,11 +75,9 @@ function FunnelStage({ stage, title, color, leads, onLeadClick, onDeleteLead, se
             </div>
           </div>
         ))}
-        
+
         {leads.length === 0 && (
-          <div className="text-center text-gray-400 py-8">
-            No leads in this stage
-          </div>
+          <div className="text-center text-gray-400 py-8">No leads in this stage</div>
         )}
       </div>
     </div>
@@ -91,7 +91,12 @@ interface DeleteConfirmationModalProps {
   onCancel: () => void;
 }
 
-function DeleteConfirmationModal({ isOpen, lead, onConfirm, onCancel }: DeleteConfirmationModalProps) {
+function DeleteConfirmationModal({
+  isOpen,
+  lead,
+  onConfirm,
+  onCancel,
+}: DeleteConfirmationModalProps) {
   if (!isOpen || !lead) return null;
 
   return (
@@ -101,9 +106,10 @@ function DeleteConfirmationModal({ isOpen, lead, onConfirm, onCancel }: DeleteCo
           <AlertTriangle className="w-6 h-6 text-red-500" />
           <h2 className="text-xl font-semibold">Delete Lead</h2>
         </div>
-        
+
         <p className="text-gray-600 mb-6">
-          Are you sure you want to delete <strong>{lead.name}</strong>? This action cannot be undone and will remove all associated activities and timeline data.
+          Are you sure you want to delete <strong>{lead.name}</strong>? This action cannot be undone
+          and will remove all associated activities and timeline data.
         </p>
 
         <div className="flex justify-end gap-2">
@@ -135,32 +141,32 @@ export default function LeadFunnel() {
       stage: 'chat_initiated' as const,
       title: 'Chat Started',
       color: 'bg-blue-500',
-      leads: getLeadsByStage('chat_initiated')
+      leads: getLeadsByStage('chat_initiated'),
     },
     {
       stage: 'info_collected' as const,
       title: 'Info Collected',
       color: 'bg-indigo-500',
-      leads: getLeadsByStage('info_collected')
+      leads: getLeadsByStage('info_collected'),
     },
     {
       stage: 'tour_scheduled' as const,
       title: 'Tour Scheduled',
       color: 'bg-purple-500',
-      leads: getLeadsByStage('tour_scheduled')
+      leads: getLeadsByStage('tour_scheduled'),
     },
     {
       stage: 'tour_completed' as const,
       title: 'Tour Completed',
       color: 'bg-green-500',
-      leads: getLeadsByStage('tour_completed')
+      leads: getLeadsByStage('tour_completed'),
     },
     {
       stage: 'handed_off' as const,
       title: 'Handed Off',
       color: 'bg-gray-500',
-      leads: getLeadsByStage('handed_off')
-    }
+      leads: getLeadsByStage('handed_off'),
+    },
   ];
 
   const handleLeadClick = (lead: Lead) => {
@@ -215,7 +221,7 @@ export default function LeadFunnel() {
               />
             ))}
           </div>
-          
+
           {/* Conversion rates */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
             {conversionRates.map((rate, index) => (
@@ -244,4 +250,4 @@ export default function LeadFunnel() {
       />
     </>
   );
-} 
+}

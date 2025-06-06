@@ -20,7 +20,7 @@ interface CountdownOfferProps {
 const CountdownOffer: FC<CountdownOfferProps> = ({
   initialMinutes = 15,
   onExpire,
-  offerText = "Lock in your special rate",
+  offerText = 'Lock in your special rate',
   analytics,
   tourBooked = false,
   onPromptTour,
@@ -40,16 +40,16 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
     // Get the current element's position to constrain confetti
     const element = document.querySelector('.px-4.pr-8.py-2.border-t');
     if (!element) return;
-    
+
     const rect = element.getBoundingClientRect();
     const elementWidth = rect.width;
     const windowWidth = window.innerWidth;
-    
+
     // Calculate relative position (0-1) for the confetti origin
     const leftEdge = rect.left / windowWidth;
     const rightEdge = (rect.left + elementWidth) / windowWidth;
     const centerX = (leftEdge + rightEdge) / 2;
-    
+
     // Initial burst
     confetti({
       particleCount: 25,
@@ -62,7 +62,7 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
       decay: 0.94,
       gravity: 1,
     });
-    
+
     // Add a few more bursts with slight delays
     setTimeout(() => {
       // Left side burst
@@ -78,7 +78,7 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
         gravity: 1,
       });
     }, 150);
-    
+
     setTimeout(() => {
       // Right side burst
       confetti({
@@ -93,7 +93,7 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
         gravity: 1,
       });
     }, 300);
-    
+
     // One final burst at the end
     setTimeout(() => {
       confetti({
@@ -121,18 +121,18 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
   useEffect(() => {
     if (timeLeft <= 0) {
       setIsVisible(false);
-      
+
       // Track incentive expired only if not accepted
       if (!hasAccepted && analytics?.trackIncentiveExpired) {
         analytics.trackIncentiveExpired('waive_app_fee');
       }
-      
+
       onExpire?.();
       return;
     }
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(timer);
@@ -141,14 +141,14 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
   const handleClaimOffer = () => {
     // Launch the confetti celebration
     launchConfetti();
-    
+
     // Track incentive accepted
     if (analytics?.trackIncentiveAccepted) {
       analytics.trackIncentiveAccepted('waive_app_fee');
     }
-    
+
     setHasAccepted(true);
-    
+
     // Delay hiding the offer
     setTimeout(() => {
       setIsVisible(false);
@@ -160,14 +160,14 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
     if (analytics?.trackIncentiveExpired) {
       analytics.trackIncentiveExpired('waive_app_fee_dismissed');
     }
-    
+
     // Call the parent's onClose handler
     if (onClose) {
       onClose();
     } else if (onExpire) {
       onExpire(); // Fallback to onExpire if onClose is not provided
     }
-    
+
     setIsVisible(false);
   };
 
@@ -190,7 +190,7 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
       >
         <X size={14} />
       </button>
-      
+
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <Clock size={14} className="text-blue-600" />
@@ -203,7 +203,7 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
           <span className="text-[10px] text-gray-500">remaining</span>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between gap-2">
         <div className="text-[10px] font-medium text-gray-700 whitespace-nowrap">
           💰 <span>$25 Application Fee Waiver</span>
@@ -218,11 +218,11 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
           {tourBooked ? 'Claim $25' : 'Schedule a Tour to Claim'}
         </motion.button>
       </div>
-      
+
       <div className="mt-2 w-full h-1 bg-gray-100 rounded-full overflow-hidden">
         <motion.div
           className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-          initial={{ width: "100%" }}
+          initial={{ width: '100%' }}
           animate={{ width: `${(timeLeft / (initialMinutes * 60)) * 100}%` }}
           transition={{ duration: 1 }}
         />
@@ -231,4 +231,4 @@ const CountdownOffer: FC<CountdownOfferProps> = ({
   );
 };
 
-export default CountdownOffer; 
+export default CountdownOffer;

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       // Convert file to buffer and save
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
-      
+
       const filepath = path.join(uploadsDir, filename);
       await writeFile(filepath, buffer);
 
@@ -50,15 +50,17 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    return NextResponse.json({ 
-      success: true, 
-      files: uploadedFiles 
+    return NextResponse.json({
+      success: true,
+      files: uploadedFiles,
     });
-
   } catch (error: any) {
     console.error('Error uploading files:', error);
-    return NextResponse.json({ 
-      error: 'Failed to upload files' 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to upload files',
+      },
+      { status: 500 },
+    );
   }
-} 
+}

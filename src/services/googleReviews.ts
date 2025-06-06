@@ -1,4 +1,4 @@
-import { ApartmentReviews } from "@/types/apartment";
+import { ApartmentReviews } from '@/types/apartment';
 
 export class GoogleReviewsService {
   private static instance: GoogleReviewsService;
@@ -52,4 +52,4 @@ export class GoogleReviewsService {
     const now = new Date().getTime();
     return now - lastUpdate < this.CACHE_DURATION;
   }
-} 
+}

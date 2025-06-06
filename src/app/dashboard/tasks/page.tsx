@@ -2,7 +2,14 @@
 
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableFooter } from '@/components/ui/table';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableFooter,
+} from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { X, Plus, CheckCircle, Trash2, User, Filter, Edit2, Check, X as XIcon } from 'lucide-react';
 import { useLeadContext } from '@/lib/lead-context';
@@ -19,11 +26,11 @@ const statusColors = {
 };
 
 // Inline editable answer component
-function EditableAnswer({ 
-  task, 
-  onSave 
-}: { 
-  task: Task; 
+function EditableAnswer({
+  task,
+  onSave,
+}: {
+  task: Task;
   onSave: (taskId: string, answer: string) => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -74,9 +81,7 @@ function EditableAnswer({
             Cancel
           </button>
         </div>
-        <div className="text-xs text-gray-500">
-          Tip: Press Ctrl+Enter to save, Esc to cancel
-        </div>
+        <div className="text-xs text-gray-500">Tip: Press Ctrl+Enter to save, Esc to cancel</div>
       </div>
     );
   }
@@ -102,13 +107,21 @@ function EditableAnswer({
   );
 }
 
-function AddTaskModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: () => void; onAdd: (question: string, leadId?: string) => void }) {
+function AddTaskModal({
+  isOpen,
+  onClose,
+  onAdd,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onAdd: (question: string, leadId?: string) => void;
+}) {
   const [question, setQuestion] = useState('');
   const [selectedLeadId, setSelectedLeadId] = useState('');
   const { leads } = useLeadContext();
-  
+
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-lg">
@@ -119,7 +132,7 @@ function AddTaskModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: ()
           </button>
         </div>
         <form
-          onSubmit={e => {
+          onSubmit={(e) => {
             e.preventDefault();
             if (question.trim()) {
               onAdd(question.trim(), selectedLeadId || undefined);
@@ -131,14 +144,16 @@ function AddTaskModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: ()
           className="space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Associated Lead (Optional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Associated Lead (Optional)
+            </label>
             <select
               value={selectedLeadId}
-              onChange={e => setSelectedLeadId(e.target.value)}
+              onChange={(e) => setSelectedLeadId(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="">Select a lead (optional)</option>
-              {leads.map(lead => (
+              {leads.map((lead) => (
                 <option key={lead.id} value={lead.id}>
                   {lead.name} - {lead.currentStage.replace('_', ' ')}
                 </option>
@@ -149,7 +164,7 @@ function AddTaskModal({ isOpen, onClose, onAdd }: { isOpen: boolean; onClose: ()
             <label className="block text-sm font-medium text-gray-700 mb-1">User Question</label>
             <textarea
               value={question}
-              onChange={e => setQuestion(e.target.value)}
+              onChange={(e) => setQuestion(e.target.value)}
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 min-h-[80px]"
               required
             />
@@ -185,18 +200,18 @@ export default function TasksPage() {
 
   const getLeadName = (leadId?: string) => {
     if (!leadId) return null;
-    const lead = leads.find(l => l.id === leadId);
+    const lead = leads.find((l) => l.id === leadId);
     return lead?.name || 'Unknown Lead';
   };
 
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tasks.filter((task) => {
     const leadMatch = !filterByLead || task.leadId === filterByLead;
     const statusMatch = !statusFilter || task.status === statusFilter;
     return leadMatch && statusMatch;
   });
 
   const handleAddTask = (question: string, leadId?: string) => {
-    setTasks(prev => [
+    setTasks((prev) => [
       ...prev,
       {
         id: Math.random().toString(36).substr(2, 9),
@@ -205,42 +220,38 @@ export default function TasksPage() {
         status: 'pending',
         createdAt: new Date(),
         leadId,
-        assignedTo: leadId ? leads.find(l => l.id === leadId)?.assignedAgentId : undefined,
+        assignedTo: leadId ? leads.find((l) => l.id === leadId)?.assignedAgentId : undefined,
       },
     ]);
   };
 
   const handleSaveAnswer = (id: string, answer: string) => {
-    setTasks(prev =>
-      prev.map(task =>
+    setTasks((prev) =>
+      prev.map((task) =>
         task.id === id
-          ? { 
-              ...task, 
-              answer, 
-              status: answer.trim() ? 'answered' : 'pending'
+          ? {
+              ...task,
+              answer,
+              status: answer.trim() ? 'answered' : 'pending',
             }
-          : task
-      )
+          : task,
+      ),
     );
   };
 
   const handleResolve = (id: string) => {
-    setTasks(prev =>
-      prev.map(task =>
-        task.id === id
-          ? { ...task, status: 'resolved' }
-          : task
-      )
+    setTasks((prev) =>
+      prev.map((task) => (task.id === id ? { ...task, status: 'resolved' } : task)),
     );
   };
 
   const handleDelete = (id: string) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
+    setTasks((prev) => prev.filter((task) => task.id !== id));
   };
 
   const handleLeadClick = (leadId?: string) => {
     if (leadId) {
-      const lead = leads.find(l => l.id === leadId);
+      const lead = leads.find((l) => l.id === leadId);
       if (lead) {
         setSelectedLead(lead);
         // Navigate to activity page - in a real app you'd use router
@@ -250,9 +261,9 @@ export default function TasksPage() {
   };
 
   const tasksByStatus = {
-    pending: filteredTasks.filter(t => t.status === 'pending').length,
-    answered: filteredTasks.filter(t => t.status === 'answered').length,
-    resolved: filteredTasks.filter(t => t.status === 'resolved').length,
+    pending: filteredTasks.filter((t) => t.status === 'pending').length,
+    answered: filteredTasks.filter((t) => t.status === 'answered').length,
+    resolved: filteredTasks.filter((t) => t.status === 'resolved').length,
   };
 
   return (
@@ -302,11 +313,11 @@ export default function TasksPage() {
             <Filter className="w-4 h-4 text-gray-500" />
             <select
               value={filterByLead}
-              onChange={e => setFilterByLead(e.target.value)}
+              onChange={(e) => setFilterByLead(e.target.value)}
               className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="">All Leads</option>
-              {leads.map(lead => (
+              {leads.map((lead) => (
                 <option key={lead.id} value={lead.id}>
                   {lead.name}
                 </option>
@@ -314,7 +325,7 @@ export default function TasksPage() {
             </select>
             <select
               value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="">All Statuses</option>
@@ -403,8 +414,12 @@ export default function TasksPage() {
               </TableBody>
               <TableFooter>
                 <TableRow>
-                  <TableCell colSpan={3} className="text-right font-semibold">Total Questions</TableCell>
-                  <TableCell colSpan={3} className="font-semibold">{filteredTasks.length}</TableCell>
+                  <TableCell colSpan={3} className="text-right font-semibold">
+                    Total Questions
+                  </TableCell>
+                  <TableCell colSpan={3} className="font-semibold">
+                    {filteredTasks.length}
+                  </TableCell>
                 </TableRow>
               </TableFooter>
             </Table>
@@ -414,4 +429,4 @@ export default function TasksPage() {
       <AddTaskModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onAdd={handleAddTask} />
     </div>
   );
-} 
+}

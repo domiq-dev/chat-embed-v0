@@ -1,8 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from '@/components/ui/card';
 
 const leads = [
-  { name: "Sarah Miller", status: "Interested", date: "2025-04-18" },
-  { name: "Tom Chen", status: "Scheduled Tour", date: "2025-04-19" },
+  { name: 'Sarah Miller', status: 'Interested', date: '2025-04-18' },
+  { name: 'Tom Chen', status: 'Scheduled Tour', date: '2025-04-19' },
 ];
 
 export function LeadsTable() {

@@ -28,4 +28,4 @@ export function initializeWidget() {
 
   // Add to page
   document.body.appendChild(iframe);
-} 
+}

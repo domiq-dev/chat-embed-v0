@@ -35,12 +35,7 @@ export default function UploadFaq() {
   return (
     <div className="p-4 border rounded shadow max-w-md mx-auto my-6 bg-white">
       <h2 className="text-lg font-bold mb-2">Upload Leasing FAQ (PDF or TXT)</h2>
-      <input
-        type="file"
-        accept=".pdf,.txt"
-        onChange={handleFileUpload}
-        className="mb-2"
-      />
+      <input type="file" accept=".pdf,.txt" onChange={handleFileUpload} className="mb-2" />
       {uploading && <p>Uploading...</p>}
       {success && <p className="text-green-600">Upload successful! FAQ updated.</p>}
     </div>

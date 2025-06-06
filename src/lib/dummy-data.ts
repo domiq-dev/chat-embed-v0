@@ -21,7 +21,12 @@ export interface Lead {
   name: string;
   email?: string;
   phone?: string;
-  currentStage: 'chat_initiated' | 'info_collected' | 'tour_scheduled' | 'tour_completed' | 'handed_off';
+  currentStage:
+    | 'chat_initiated'
+    | 'info_collected'
+    | 'tour_scheduled'
+    | 'tour_completed'
+    | 'handed_off';
   source: 'chat' | 'manual' | 'referral';
   createdAt: Date;
   lastActivity: Date;
@@ -37,29 +42,29 @@ export interface Lead {
     userMessagesSent?: number;
     botMessagesReceived?: number;
     answerButtonClicks?: number;
-    
+
     // Contact & Tour Metrics
     contactCaptured?: boolean;
     contactMethod?: 'email' | 'phone';
     tourBooked?: boolean;
     tourType?: 'in_person' | 'self_guided' | 'virtual';
-    
+
     // CTA Interactions
     emailOfficeClicked?: number;
     phoneCallClicked?: number;
-    
+
     // Incentive Tracking
     incentiveOffered?: boolean;
     incentiveAccepted?: boolean;
     incentiveExpired?: boolean;
-    
+
     // Advanced Session Management
     adminHandoffTriggered?: boolean;
     customerServiceEscalated?: boolean;
     conversationAbandoned?: boolean;
     widgetSessionEnded?: boolean;
     widgetMinimized?: number;
-    
+
     // Calculated Metrics
     sessionDuration?: number; // in minutes
     engagementScore?: 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | 'F';
@@ -74,7 +79,14 @@ export interface Lead {
 export interface LeadActivity {
   id: string;
   leadId: string;
-  type: 'chat_initiated' | 'info_collected' | 'tour_scheduled' | 'tour_completed' | 'agent_assigned' | 'note_added' | 'handed_off';
+  type:
+    | 'chat_initiated'
+    | 'info_collected'
+    | 'tour_scheduled'
+    | 'tour_completed'
+    | 'agent_assigned'
+    | 'note_added'
+    | 'handed_off';
   timestamp: Date;
   details: {
     agentName?: string;
@@ -139,29 +151,29 @@ export const leads: Lead[] = [
       userMessagesSent: 8,
       botMessagesReceived: 12,
       answerButtonClicks: 5,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: true,
       contactMethod: 'email',
       tourBooked: true,
       tourType: 'in_person',
-      
+
       // CTA Interactions
       emailOfficeClicked: 2,
       phoneCallClicked: 1,
-      
+
       // Incentive Tracking
       incentiveOffered: true,
       incentiveAccepted: false,
       incentiveExpired: true,
-      
+
       // Advanced Session Management
       adminHandoffTriggered: false,
       customerServiceEscalated: false,
       conversationAbandoned: false,
       widgetSessionEnded: true,
       widgetMinimized: 3,
-      
+
       // Calculated Metrics
       sessionDuration: 73, // 1m 12s in seconds converted to 1.2 minutes
       engagementScore: 'A+',
@@ -178,9 +190,9 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 25, 9, 30),
         details: {
-          chatSummary: 'Prospect interested in 1BR units, budget around $1,500/month'
+          chatSummary: 'Prospect interested in 1BR units, budget around $1,500/month',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity2',
@@ -189,9 +201,9 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 25, 9, 45),
         details: {
           emailCollected: 'alex.johnson@example.com',
-          phoneCollected: '(555) 111-2222'
+          phoneCollected: '(555) 111-2222',
         },
-        createdBy: 'ai'
+        createdBy: 'ai',
       },
       {
         id: 'activity3',
@@ -200,9 +212,9 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 25, 10, 0),
         details: {
           agentName: 'Sarah Miller',
-          agentId: 'agent1'
+          agentId: 'agent1',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity4',
@@ -211,11 +223,11 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 25, 10, 15),
         details: {
           tourDate: new Date(2024, 2, 28, 14, 0),
-          unitRequested: '1BR - Unit A101'
+          unitRequested: '1BR - Unit A101',
         },
-        createdBy: 'agent'
-      }
-    ]
+        createdBy: 'agent',
+      },
+    ],
   },
   {
     id: 'lead2',
@@ -235,29 +247,29 @@ export const leads: Lead[] = [
       userMessagesSent: 15,
       botMessagesReceived: 18,
       answerButtonClicks: 8,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: true,
       contactMethod: 'phone',
       tourBooked: true,
       tourType: 'in_person',
-      
+
       // CTA Interactions
       emailOfficeClicked: 1,
       phoneCallClicked: 3,
-      
+
       // Incentive Tracking
       incentiveOffered: true,
       incentiveAccepted: true,
       incentiveExpired: false,
-      
+
       // Advanced Session Management
       adminHandoffTriggered: true,
       customerServiceEscalated: false,
       conversationAbandoned: false,
       widgetSessionEnded: true,
       widgetMinimized: 1,
-      
+
       // Calculated Metrics
       sessionDuration: 235, // ~4 minutes
       engagementScore: 'A',
@@ -274,9 +286,9 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 24, 14, 20),
         details: {
-          chatSummary: 'Looking for 2BR unit, has pets (1 cat)'
+          chatSummary: 'Looking for 2BR unit, has pets (1 cat)',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity6',
@@ -285,9 +297,9 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 24, 14, 35),
         details: {
           emailCollected: 'maria.garcia@example.com',
-          phoneCollected: '(555) 333-4444'
+          phoneCollected: '(555) 333-4444',
         },
-        createdBy: 'ai'
+        createdBy: 'ai',
       },
       {
         id: 'activity7',
@@ -296,9 +308,9 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 24, 15, 0),
         details: {
           tourDate: new Date(2024, 2, 26, 11, 0),
-          unitRequested: '2BR - Unit B205'
+          unitRequested: '2BR - Unit B205',
         },
-        createdBy: 'agent'
+        createdBy: 'agent',
       },
       {
         id: 'activity8',
@@ -306,9 +318,9 @@ export const leads: Lead[] = [
         type: 'tour_completed',
         timestamp: new Date(2024, 2, 26, 12, 0),
         details: {
-          notes: 'Very interested, asked about move-in timeline'
+          notes: 'Very interested, asked about move-in timeline',
         },
-        createdBy: 'agent'
+        createdBy: 'agent',
       },
       {
         id: 'activity9',
@@ -316,11 +328,11 @@ export const leads: Lead[] = [
         type: 'handed_off',
         timestamp: new Date(2024, 2, 26, 16, 30),
         details: {
-          notes: 'Qualified lead handed off to Resman for leasing process'
+          notes: 'Qualified lead handed off to Resman for leasing process',
         },
-        createdBy: 'agent'
-      }
-    ]
+        createdBy: 'agent',
+      },
+    ],
   },
   {
     id: 'lead3',
@@ -337,27 +349,27 @@ export const leads: Lead[] = [
       userMessagesSent: 3,
       botMessagesReceived: 4,
       answerButtonClicks: 2,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: true,
       contactMethod: 'email',
       tourBooked: false,
-      
+
       // CTA Interactions
       emailOfficeClicked: 0,
       phoneCallClicked: 0,
-      
+
       // Incentive Tracking
       incentiveOffered: false,
       incentiveAccepted: false,
       incentiveExpired: false,
-      
+
       // Advanced Session Management
       adminHandoffTriggered: false,
       customerServiceEscalated: false,
       conversationAbandoned: true,
       widgetSessionEnded: true,
-      
+
       // Calculated Metrics
       sessionDuration: 30, // 30 seconds
       engagementScore: 'C+',
@@ -374,9 +386,9 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 26, 10, 0),
         details: {
-          chatSummary: 'Student looking for affordable studio apartment'
+          chatSummary: 'Student looking for affordable studio apartment',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity11',
@@ -384,11 +396,11 @@ export const leads: Lead[] = [
         type: 'info_collected',
         timestamp: new Date(2024, 2, 26, 10, 30),
         details: {
-          emailCollected: 'david.kim@example.com'
+          emailCollected: 'david.kim@example.com',
         },
-        createdBy: 'ai'
-      }
-    ]
+        createdBy: 'ai',
+      },
+    ],
   },
   {
     id: 'lead4',
@@ -403,27 +415,27 @@ export const leads: Lead[] = [
       userMessagesSent: 1,
       botMessagesReceived: 2,
       answerButtonClicks: 0,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: false,
       // contactMethod intentionally undefined since contact not captured
       tourBooked: false,
       // tourType intentionally undefined since no tour booked
-      
+
       // CTA Interactions
       emailOfficeClicked: 0,
       phoneCallClicked: 0,
       // widgetMinimized intentionally undefined to show N/A
-      
+
       // Incentive Tracking
       // All incentive fields intentionally undefined to show N/A
-      
+
       // Advanced Session Management
       adminHandoffTriggered: false,
       customerServiceEscalated: false,
       conversationAbandoned: true,
       widgetSessionEnded: false,
-      
+
       // Calculated Metrics
       sessionDuration: 15, // 15 seconds
       engagementScore: 'D',
@@ -440,11 +452,11 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 26, 15, 45),
         details: {
-          chatSummary: 'Just started asking about pricing'
+          chatSummary: 'Just started asking about pricing',
         },
-        createdBy: 'system'
-      }
-    ]
+        createdBy: 'system',
+      },
+    ],
   },
   {
     id: 'lead5',
@@ -464,29 +476,29 @@ export const leads: Lead[] = [
       userMessagesSent: 12,
       botMessagesReceived: 14,
       answerButtonClicks: 6,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: true,
       contactMethod: 'phone',
       tourBooked: true,
       tourType: 'in_person',
-      
+
       // CTA Interactions
       emailOfficeClicked: 1,
       phoneCallClicked: 2,
-      
+
       // Incentive Tracking
       incentiveOffered: true,
       incentiveAccepted: false,
       incentiveExpired: true,
-      
+
       // Advanced Session Management
       adminHandoffTriggered: false,
       customerServiceEscalated: true,
       conversationAbandoned: false,
       widgetSessionEnded: true,
       widgetMinimized: 2,
-      
+
       // Calculated Metrics
       sessionDuration: 145, // ~2.5 minutes
       engagementScore: 'B+',
@@ -503,9 +515,9 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 23, 11, 15),
         details: {
-          chatSummary: 'Young professional relocating for work'
+          chatSummary: 'Young professional relocating for work',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity14',
@@ -514,9 +526,9 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 23, 11, 30),
         details: {
           emailCollected: 'ben.carter@example.com',
-          phoneCollected: '(555) 999-0000'
+          phoneCollected: '(555) 999-0000',
         },
-        createdBy: 'ai'
+        createdBy: 'ai',
       },
       {
         id: 'activity15',
@@ -525,9 +537,9 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 23, 12, 0),
         details: {
           tourDate: new Date(2024, 2, 25, 16, 0),
-          unitRequested: '2BR - Unit C102'
+          unitRequested: '2BR - Unit C102',
         },
-        createdBy: 'agent'
+        createdBy: 'agent',
       },
       {
         id: 'activity16',
@@ -535,11 +547,11 @@ export const leads: Lead[] = [
         type: 'tour_completed',
         timestamp: new Date(2024, 2, 25, 17, 0),
         details: {
-          notes: 'Completed tour, seemed hesitant about price point'
+          notes: 'Completed tour, seemed hesitant about price point',
         },
-        createdBy: 'agent'
-      }
-    ]
+        createdBy: 'agent',
+      },
+    ],
   },
   {
     id: 'lead6',
@@ -559,29 +571,29 @@ export const leads: Lead[] = [
       userMessagesSent: 22,
       botMessagesReceived: 25,
       answerButtonClicks: 12,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: true,
       contactMethod: 'email',
       tourBooked: true,
       tourType: 'virtual',
-      
+
       // CTA Interactions
       emailOfficeClicked: 3,
       phoneCallClicked: 1,
-      
+
       // Incentive Tracking
       incentiveOffered: true,
       incentiveAccepted: true,
       incentiveExpired: false,
-      
+
       // Advanced Session Management
       adminHandoffTriggered: false,
       customerServiceEscalated: false,
       conversationAbandoned: false,
       widgetSessionEnded: true,
       widgetMinimized: 4,
-      
+
       // Calculated Metrics
       sessionDuration: 420, // 7 minutes
       engagementScore: 'A+',
@@ -598,9 +610,9 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 26, 8, 15),
         details: {
-          chatSummary: 'Looking for 2BR apartment, prefers top floor with good natural light'
+          chatSummary: 'Looking for 2BR apartment, prefers top floor with good natural light',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity18',
@@ -609,9 +621,9 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 26, 8, 30),
         details: {
           emailCollected: 'emma.wilson@example.com',
-          phoneCollected: '(555) 444-7777'
+          phoneCollected: '(555) 444-7777',
         },
-        createdBy: 'ai'
+        createdBy: 'ai',
       },
       {
         id: 'activity19',
@@ -620,9 +632,9 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 26, 14, 0),
         details: {
           agentName: 'Sarah Miller',
-          agentId: 'agent1'
+          agentId: 'agent1',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity20',
@@ -631,11 +643,11 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 26, 14, 30),
         details: {
           tourDate: new Date(2024, 2, 29, 10, 0),
-          unitRequested: '2BR - Unit B301'
+          unitRequested: '2BR - Unit B301',
         },
-        createdBy: 'agent'
-      }
-    ]
+        createdBy: 'agent',
+      },
+    ],
   },
   {
     id: 'lead7',
@@ -655,29 +667,29 @@ export const leads: Lead[] = [
       userMessagesSent: 31,
       botMessagesReceived: 35,
       answerButtonClicks: 15,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: true,
       contactMethod: 'phone',
       tourBooked: true,
       tourType: 'self_guided',
-      
+
       // CTA Interactions
       emailOfficeClicked: 4,
       phoneCallClicked: 7,
-      
+
       // Incentive Tracking
       incentiveOffered: true,
       incentiveAccepted: true,
       incentiveExpired: false,
-      
+
       // Advanced Session Management
       adminHandoffTriggered: true,
       customerServiceEscalated: false,
       conversationAbandoned: false,
       widgetSessionEnded: true,
       widgetMinimized: 2,
-      
+
       // Calculated Metrics
       sessionDuration: 650, // ~11 minutes
       engagementScore: 'A+',
@@ -694,9 +706,9 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 22, 16, 45),
         details: {
-          chatSummary: 'High-intent prospect looking for luxury 3BR unit'
+          chatSummary: 'High-intent prospect looking for luxury 3BR unit',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity22',
@@ -705,9 +717,9 @@ export const leads: Lead[] = [
         timestamp: new Date(2024, 2, 22, 17, 0),
         details: {
           emailCollected: 'jessica.chen@example.com',
-          phoneCollected: '(555) 222-3333'
+          phoneCollected: '(555) 222-3333',
         },
-        createdBy: 'ai'
+        createdBy: 'ai',
       },
       {
         id: 'activity23',
@@ -715,9 +727,9 @@ export const leads: Lead[] = [
         type: 'tour_completed',
         timestamp: new Date(2024, 2, 23, 14, 30),
         details: {
-          notes: 'Extremely interested, ready to sign lease immediately'
+          notes: 'Extremely interested, ready to sign lease immediately',
         },
-        createdBy: 'agent'
+        createdBy: 'agent',
       },
       {
         id: 'activity24',
@@ -725,11 +737,11 @@ export const leads: Lead[] = [
         type: 'handed_off',
         timestamp: new Date(2024, 2, 24, 11, 20),
         details: {
-          notes: 'Priority lead - lease signed and approved'
+          notes: 'Priority lead - lease signed and approved',
         },
-        createdBy: 'agent'
-      }
-    ]
+        createdBy: 'agent',
+      },
+    ],
   },
   {
     id: 'lead8',
@@ -744,26 +756,26 @@ export const leads: Lead[] = [
       userMessagesSent: 2,
       botMessagesReceived: 3,
       answerButtonClicks: 1,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: false,
       tourBooked: false,
-      
+
       // CTA Interactions
       emailOfficeClicked: 0,
       phoneCallClicked: 1,
-      
+
       // Incentive Tracking
       incentiveOffered: false,
       incentiveAccepted: false,
       incentiveExpired: false,
-      
+
       // Advanced Session Management
       adminHandoffTriggered: false,
       customerServiceEscalated: false,
       conversationAbandoned: true,
       widgetSessionEnded: false,
-      
+
       // Calculated Metrics
       sessionDuration: 5, // 5 seconds
       engagementScore: 'F',
@@ -780,11 +792,11 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 27, 9, 15),
         details: {
-          chatSummary: 'Asked about pricing, left immediately'
+          chatSummary: 'Asked about pricing, left immediately',
         },
-        createdBy: 'system'
-      }
-    ]
+        createdBy: 'system',
+      },
+    ],
   },
   {
     id: 'lead9',
@@ -801,27 +813,27 @@ export const leads: Lead[] = [
       userMessagesSent: 6,
       botMessagesReceived: 8,
       answerButtonClicks: 3,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: true,
       contactMethod: 'email',
       tourBooked: false,
-      
+
       // CTA Interactions
       emailOfficeClicked: 2,
       phoneCallClicked: 0,
-      
+
       // Incentive Tracking
       incentiveOffered: true,
       incentiveAccepted: false,
       incentiveExpired: true,
-      
+
       // Advanced Session Management
       adminHandoffTriggered: false,
       customerServiceEscalated: true,
       conversationAbandoned: false,
       widgetSessionEnded: true,
-      
+
       // Calculated Metrics
       sessionDuration: 75, // 1m 15s
       engagementScore: 'B',
@@ -838,9 +850,9 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 26, 13, 30),
         details: {
-          chatSummary: 'Graduate student interested in 1BR units'
+          chatSummary: 'Graduate student interested in 1BR units',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity27',
@@ -848,11 +860,11 @@ export const leads: Lead[] = [
         type: 'info_collected',
         timestamp: new Date(2024, 2, 26, 14, 45),
         details: {
-          emailCollected: 'sarah.martinez@example.com'
+          emailCollected: 'sarah.martinez@example.com',
         },
-        createdBy: 'ai'
-      }
-    ]
+        createdBy: 'ai',
+      },
+    ],
   },
   {
     id: 'lead10',
@@ -871,27 +883,27 @@ export const leads: Lead[] = [
       userMessagesSent: 18,
       botMessagesReceived: 21,
       answerButtonClicks: 9,
-      
-      // Contact & Tour Metrics  
+
+      // Contact & Tour Metrics
       contactCaptured: true,
       contactMethod: 'phone',
       tourBooked: true,
       tourType: 'in_person',
-      
+
       // CTA Interactions
       phoneCallClicked: 5,
-      
+
       // Incentive Tracking
       incentiveOffered: true,
       incentiveAccepted: false,
       incentiveExpired: true,
-      
+
       // Advanced Session Management
       adminHandoffTriggered: false,
       customerServiceEscalated: false,
       conversationAbandoned: false,
       widgetSessionEnded: true,
-      
+
       // Calculated Metrics
       sessionDuration: 280, // ~4.5 minutes
       engagementScore: 'B+',
@@ -908,9 +920,9 @@ export const leads: Lead[] = [
         type: 'chat_initiated',
         timestamp: new Date(2024, 2, 20, 11, 0),
         details: {
-          chatSummary: 'Professional interested in 2BR with home office space'
+          chatSummary: 'Professional interested in 2BR with home office space',
         },
-        createdBy: 'system'
+        createdBy: 'system',
       },
       {
         id: 'activity29',
@@ -918,9 +930,9 @@ export const leads: Lead[] = [
         type: 'info_collected',
         timestamp: new Date(2024, 2, 20, 11, 30),
         details: {
-          phoneCollected: '(555) 888-9999'
+          phoneCollected: '(555) 888-9999',
         },
-        createdBy: 'ai'
+        createdBy: 'ai',
       },
       {
         id: 'activity30',
@@ -928,12 +940,12 @@ export const leads: Lead[] = [
         type: 'tour_completed',
         timestamp: new Date(2024, 2, 22, 15, 30),
         details: {
-          notes: 'Liked the unit but wants to think about it over the weekend'
+          notes: 'Liked the unit but wants to think about it over the weekend',
         },
-        createdBy: 'agent'
-      }
-    ]
-  }
+        createdBy: 'agent',
+      },
+    ],
+  },
 ];
 
 // Keep existing data for backward compatibility
@@ -1012,7 +1024,13 @@ export const dummyTours: DummyTour[] = [
   {
     id: 'tour3',
     title: 'Tour - Studio S30',
-    start: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 11, 30),
+    start: new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      new Date().getDate() + 1,
+      11,
+      30,
+    ),
     end: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 12, 0),
     prospectName: 'David Kim',
     prospectId: 'prospect3',
@@ -1023,10 +1041,16 @@ export const dummyTours: DummyTour[] = [
     status: 'cancelled',
     source: 'manual',
   },
-    {
+  {
     id: 'tour4',
     title: 'Tour - 2BR Unit C102',
-    start: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 16, 0),
+    start: new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      new Date().getDate() + 1,
+      16,
+      0,
+    ),
     end: new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() + 1, 17, 0),
     prospectName: 'Ben Carter',
     prospectId: 'prospect5',
@@ -1047,7 +1071,7 @@ export const dummyTasks: DummyTask[] = [
     status: 'pending',
     createdAt: new Date(new Date().setDate(new Date().getDate() - 5)),
     leadId: 'lead2',
-    assignedTo: 'agent2'
+    assignedTo: 'agent2',
   },
   {
     id: 'task2',
@@ -1056,7 +1080,7 @@ export const dummyTasks: DummyTask[] = [
     status: 'answered',
     createdAt: new Date(new Date().setDate(new Date().getDate() - 3)),
     leadId: 'lead1',
-    assignedTo: 'agent1'
+    assignedTo: 'agent1',
   },
   {
     id: 'task3',
@@ -1065,6 +1089,6 @@ export const dummyTasks: DummyTask[] = [
     status: 'resolved',
     createdAt: new Date(new Date().setDate(new Date().getDate() - 1)),
     leadId: 'lead5',
-    assignedTo: 'agent2'
+    assignedTo: 'agent2',
   },
-]; 
+];

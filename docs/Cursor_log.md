@@ -1,6 +1,7 @@
 # What changes are made
 
 [Cursor Log]
+
 - File: src/lib/widget/index.ts
 - Line ~100: Created TypeScript implementation of widget loader with proper types and interfaces.
 - Reason: Improve type safety and maintainability of the widget code.
@@ -34,6 +35,7 @@
 - Reason: Enable widget building via npm scripts.
 
 Project Structure Updates:
+
 ```
 src/
   ├── lib/
@@ -53,6 +55,7 @@ src/
 ```
 
 ## ChatModal.tsx Enhancements
+
 1. Trimmed and optimized ChatModal component
 2. Added input validation
    - Disabled chat button when no text is entered
@@ -84,7 +87,9 @@ src/
    - Message status indicators
 
 ## New Components
+
 1. QuickReplyButtons Component
+
    - Multiple reply types support
    - Animated buttons
    - Customizable placeholders
@@ -92,6 +97,7 @@ src/
    - Responsive design
 
 2. ChatBox Component
+
    - Clean input interface
    - Disabled state handling
    - Form validation
@@ -105,6 +111,7 @@ src/
    - Visibility state management
 
 ## Other Improvements
+
 1. Added proper TypeScript types and interfaces
 2. Improved error handling
 3. Added loading states
@@ -112,11 +119,13 @@ src/
 5. Optimized performance with proper React hooks usage
 
 Build Process:
+
 1. Run `npm run build:widget` to generate widget bundle
 2. Output: `public/widget.min.js`
 3. Deploy to CDN: `https://chat.domiq.ai/widget.min.js`
 
 ## Route Segment Configuration Updates
+
 1. Updated `/embed/agent/page.tsx` to use modern Next.js configuration
    - Removed deprecated `export const config = { dynamic: 'force-dynamic' }`
    - Replaced with `export const revalidate = 0` for dynamic page revalidation
@@ -125,6 +134,7 @@ Build Process:
 ## New Features and Improvements
 
 ### Countdown Offer Feature
+
 - Added sophisticated countdown timer to increase conversions
 - Files affected:
   - `src/components/ui/CountdownOffer.tsx` (new)
@@ -137,27 +147,30 @@ Build Process:
   - Smooth animations and transitions
   - Configurable timing and messaging
 
-## Configuration Cleanup and __dirname Error Fix
+## Configuration Cleanup and \_\_dirname Error Fix
 
 [Cursor Log]
+
 - File: middleware.ts
 - Line ~3: Added Edge runtime specification and updated matcher patterns.
-- Reason: Fix __dirname errors by ensuring middleware runs in Edge runtime and doesn't process static files.
+- Reason: Fix \_\_dirname errors by ensuring middleware runs in Edge runtime and doesn't process static files.
 
 - File: next.config.js
 - Line 1: Simplified configuration to only handle output mode.
-- Reason: Remove potential conflicts in route handling that were causing __dirname errors.
+- Reason: Remove potential conflicts in route handling that were causing \_\_dirname errors.
 
 [Cursor Log]
+
 - File: tsconfig.json
 - Line ~10: Updated moduleResolution to "node" and cleaned up configuration.
-- Reason: Fix __dirname errors by using Node.js-style module resolution.
+- Reason: Fix \_\_dirname errors by using Node.js-style module resolution.
 
 - File: next.config.js
 - Line ~5: Added webpack configuration to handle Node.js modules.
-- Reason: Fix __dirname errors by properly excluding Node.js-specific packages from client bundle.
+- Reason: Fix \_\_dirname errors by properly excluding Node.js-specific packages from client bundle.
 
 [Cursor Log]
+
 - File: src/app/embed/agent/page.tsx, src/app/embed/agent/layout.tsx
 - Line ~1: Moved revalidation config to layout file and switched to force-dynamic.
 - Reason: Fix build error by properly configuring dynamic rendering at the layout level.
@@ -166,18 +179,19 @@ Build Process:
 
 - **Problem:** Local dev environment (`npm run dev`) failed to apply Tailwind CSS. Unprocessed `@tailwind` directives appeared in served CSS, while direct Tailwind CLI builds worked. This pointed to an issue in the Next.js CSS pipeline on the specific machine.
 - **Resolution:**
-    1.  Standard troubleshooting (config verification, cache clearing, Node.js version check).
-    2.  **Key Fix - PostCSS Configuration Adjustment:**
-        - Renamed `postcss.config.mjs` (ESM) to `postcss.config.js` (CommonJS).
-        - Explicitly added `tailwindcss: {}` and `autoprefixer: {}` to `plugins` in `postcss.config.js`.
-        - Installed `autoprefixer` as a dev dependency.
-    3.  This resolved the issue, and styles loaded correctly after clearing `.next` and restarting the dev server.
+  1.  Standard troubleshooting (config verification, cache clearing, Node.js version check).
+  2.  **Key Fix - PostCSS Configuration Adjustment:**
+      - Renamed `postcss.config.mjs` (ESM) to `postcss.config.js` (CommonJS).
+      - Explicitly added `tailwindcss: {}` and `autoprefixer: {}` to `plugins` in `postcss.config.js`.
+      - Installed `autoprefixer` as a dev dependency.
+  3.  This resolved the issue, and styles loaded correctly after clearing `.next` and restarting the dev server.
 - **Suspected Cause:** Conflict or misinterpretation of the ESM `postcss.config.mjs` or Tailwind's implicit autoprefixer within the local Next.js dev setup.
 - **Preventative Measure:**
-    - Added `tests/check-tailwind-build.js` script.
-    - This script runs a production build (`npm run build`) and checks the output CSS in `.next/static/css` for unprocessed `@tailwind` directives, aiming to catch similar issues early.
+  - Added `tests/check-tailwind-build.js` script.
+  - This script runs a production build (`npm run build`) and checks the output CSS in `.next/static/css` for unprocessed `@tailwind` directives, aiming to catch similar issues early.
 
 ### Previous Changes
+
 // ... existing code ...
 
 ## AKOOL Avatar Integration - Phase 1: Backend and Service Setup
@@ -191,7 +205,7 @@ Build Process:
 
 ## AKOOL Avatar Integration - Phase 2: Isolated Test Page Implementation
 
-- **Avatar Listing & Session Creation:** 
+- **Avatar Listing & Session Creation:**
   - Modified `src/app/akool-test/page.tsx` to use `ApiService` to fetch and display a list of available AKOOL avatars.
   - Implemented functionality to create a live avatar session with a selected avatar, retrieving Agora credentials (`appId`, `channel`, `token`, `uid`).
 - **Agora RTC Integration for Video/Audio:**
@@ -215,7 +229,7 @@ Build Process:
 ## UI Refinements and Basic Scripted Checks
 
 - **Fractional Star Rating:** Modified the `StarRating` component in `src/components/ChatModal.tsx` to accurately display fractional star ratings (e.g., 4.4 stars will show the 5th star 40% filled) using a foreground/background star clipping technique.
-- **Consistent ChatModal Sizing:** 
+- **Consistent ChatModal Sizing:**
   - Removed `scale-[0.9]` transform from `ChatModal.tsx` to ensure it renders at its natural size.
   - Adjusted the `ChatModal` width to `w-[360px]` and set a fixed height of `h-[600px]` to ensure consistent sizing across environments and prevent layout issues caused by short initial content.
 - **Introduced Script-Based Source Code Checks:**
@@ -265,28 +279,31 @@ Build Process:
 
 ## Chat Loading Sequence and Avatar Handling of Session Timeouts
 
-*   **Improved Chat Loading Sequence & Visual Transitions:**
-    *   Addressed issues causing infinite loading screens or jarring intermediate visual states (e.g., white/black screen flashes) when loading the Akool video avatar.
-    *   Iteratively refined state management for loading screens between `ChatLauncher.tsx` and `ChatModal.tsx`.
-    *   The final approach involves `ChatLauncher.tsx` handling the initial session creation loading. Once a session is established, `ChatModal.tsx` renders and manages its own full-modal loading screen (`AvatarLoadingScreen` controlled by the `isAvatarBuffering` state).
-    *   This internal `ChatModal.tsx` loading screen persists until the Agora video track's 'first-frame-decoded' event fires, ensuring a direct and smooth transition from loading to the visible video avatar.
+- **Improved Chat Loading Sequence & Visual Transitions:**
 
-*   **Graceful Handling of Avatar Session Timeouts:**
-    *   Implemented a "Session Ended" overlay in `ChatModal.tsx` to address the avatar video feed going black after a period of inactivity (due to Akool session timeout, e.g., 5 minutes).
-    *   A new state, `showSessionEndedOverlay`, controls the visibility of this overlay.
-    *   The overlay is triggered when the Agora video track is unpublished (`handleUserUnpublished` event for video).
-    *   It informs the user that the session has ended (e.g., due to inactivity) and provides a "Close Chat" button to allow them to restart the session by reopening the chat.
-    *   The overlay is reset when a new session starts or when a video track successfully begins playing.
+  - Addressed issues causing infinite loading screens or jarring intermediate visual states (e.g., white/black screen flashes) when loading the Akool video avatar.
+  - Iteratively refined state management for loading screens between `ChatLauncher.tsx` and `ChatModal.tsx`.
+  - The final approach involves `ChatLauncher.tsx` handling the initial session creation loading. Once a session is established, `ChatModal.tsx` renders and manages its own full-modal loading screen (`AvatarLoadingScreen` controlled by the `isAvatarBuffering` state).
+  - This internal `ChatModal.tsx` loading screen persists until the Agora video track's 'first-frame-decoded' event fires, ensuring a direct and smooth transition from loading to the visible video avatar.
 
+- **Graceful Handling of Avatar Session Timeouts:**
+  - Implemented a "Session Ended" overlay in `ChatModal.tsx` to address the avatar video feed going black after a period of inactivity (due to Akool session timeout, e.g., 5 minutes).
+  - A new state, `showSessionEndedOverlay`, controls the visibility of this overlay.
+  - The overlay is triggered when the Agora video track is unpublished (`handleUserUnpublished` event for video).
+  - It informs the user that the session has ended (e.g., due to inactivity) and provides a "Close Chat" button to allow them to restart the session by reopening the chat.
+  - The overlay is reset when a new session starts or when a video track successfully begins playing.
 
 ## Exponential Backoff Introduced for Error Handling
+
 - Implemented exponential backoff retry mechanism in ApiService for handling AKOOL API errors
 - Added automatic retries with increasing delays (1s, 2s, 4s, 8s, 16s) when avatars are busy or network errors occur
 
 ## Media Page Implementation
 
 ### Components Created
+
 1. **MediaUpload Component** (`src/app/dashboard/knowledge/media/components/MediaUpload.tsx`)
+
    - Drag-and-drop file upload interface
    - File browser button
    - Preview of uploaded files with hover effects
@@ -297,6 +314,7 @@ Build Process:
    - Supported formats: PNG, JPG, GIF
 
 2. **MediaGallery Component** (`src/app/dashboard/knowledge/media/components/MediaGallery.tsx`)
+
    - Grid layout for images
    - Search functionality
    - File type filtering (PNG, JPEG, GIF)
@@ -318,6 +336,7 @@ Build Process:
    - Full gallery integration
 
 ### Features
+
 - Responsive grid layout
 - Image hover effects with metadata
 - File size formatting
@@ -329,6 +348,7 @@ Build Process:
 - File type validation
 
 ### UI/UX Elements
+
 - Clean typography
 - Consistent spacing
 - Intuitive interactions
@@ -339,6 +359,7 @@ Build Process:
 - Progress indicators
 
 ### File Structure
+
 ```
 src/
   └── app/
@@ -350,7 +371,6 @@ src/
                   │   └── MediaGallery.tsx
                   └── page.tsx
 ```
-
 
 ## Added Calendar, Tasks and Contacts View
 
@@ -365,41 +385,42 @@ src/
 ## Data Centralization & Code Cleanup
 
 - **Centralized Dummy Data (`src/lib/dummy-data.ts`):**
-    - Created a new file `src/lib/dummy-data.ts` to consolidate all dummy data used across the dashboard.
-    - Defined interfaces: `DummyAgent`, `DummyProspect`, `DummyTour`, `DummyTask`.
-    - Exported arrays of standardized dummy data: `dummyAgents`, `dummyProspects`, `dummyTours`, `dummyTasks` with consistent details and dynamic dates.
+  - Created a new file `src/lib/dummy-data.ts` to consolidate all dummy data used across the dashboard.
+  - Defined interfaces: `DummyAgent`, `DummyProspect`, `DummyTour`, `DummyTask`.
+  - Exported arrays of standardized dummy data: `dummyAgents`, `dummyProspects`, `dummyTours`, `dummyTasks` with consistent details and dynamic dates.
 - **Dashboard Pages Refactored to Use Centralized Data:**
-    - Updated the following pages to import and use data from `src/lib/dummy-data.ts` for their initial state, replacing local hardcoded data:
-        - `src/app/dashboard/calendar/page.tsx` (using `dummyTours`)
-        - `src/app/dashboard/contacts/page.tsx` (using `dummyProspects`, `dummyTours`)
-        - `src/app/dashboard/tasks/page.tsx` (using `dummyTasks`)
-        - `src/app/dashboard/specials/page.tsx` (using `dummyProspects`)
-    - Updated components within the main Dashboard and Deep Insights sections to use centralized dummy data where names were previously hardcoded:
-        - `src/app/dashboard/activity/page.tsx` (Active Agents list now uses `dummyAgents`).
-        - `src/app/dashboard/components/DeepInsightsTable.tsx` (User names now from `dummyProspects`).
-        - `src/app/dashboard/deep-insights/ClientRecordModal.tsx` (User names now from `dummyProspects`).
-        - `src/app/dashboard/components/PreleaseTabs.tsx` (User names now from `dummyProspects`, filtered for 'leased' status).
+  - Updated the following pages to import and use data from `src/lib/dummy-data.ts` for their initial state, replacing local hardcoded data:
+    - `src/app/dashboard/calendar/page.tsx` (using `dummyTours`)
+    - `src/app/dashboard/contacts/page.tsx` (using `dummyProspects`, `dummyTours`)
+    - `src/app/dashboard/tasks/page.tsx` (using `dummyTasks`)
+    - `src/app/dashboard/specials/page.tsx` (using `dummyProspects`)
+  - Updated components within the main Dashboard and Deep Insights sections to use centralized dummy data where names were previously hardcoded:
+    - `src/app/dashboard/activity/page.tsx` (Active Agents list now uses `dummyAgents`).
+    - `src/app/dashboard/components/DeepInsightsTable.tsx` (User names now from `dummyProspects`).
+    - `src/app/dashboard/deep-insights/ClientRecordModal.tsx` (User names now from `dummyProspects`).
+    - `src/app/dashboard/components/PreleaseTabs.tsx` (User names now from `dummyProspects`, filtered for 'leased' status).
 - **Navigation Highlighting Fix & File Structure Adjustment:**
-    - Addressed an issue where multiple navigation links under "Knowledge" were highlighted simultaneously.
-    - Changed the route for "Knowledge Base" from `/dashboard/knowledge` to `/dashboard/knowledge/base` in `src/lib/routes.ts`.
-    - Updated the `NavItem` component in `src/app/dashboard/layout.tsx` to use a strict path match (`pathname === href`) for determining active link state.
-    - Moved the "Knowledge Base" page from `src/app/dashboard/knowledge/page.tsx` to `src/app/dashboard/knowledge/base/page.tsx` to align with the new route.
-    - Corrected a broken import path for `KnowledgeForm` in `src/app/dashboard/knowledge/base/page.tsx` that occurred due to the file move.
+  - Addressed an issue where multiple navigation links under "Knowledge" were highlighted simultaneously.
+  - Changed the route for "Knowledge Base" from `/dashboard/knowledge` to `/dashboard/knowledge/base` in `src/lib/routes.ts`.
+  - Updated the `NavItem` component in `src/app/dashboard/layout.tsx` to use a strict path match (`pathname === href`) for determining active link state.
+  - Moved the "Knowledge Base" page from `src/app/dashboard/knowledge/page.tsx` to `src/app/dashboard/knowledge/base/page.tsx` to align with the new route.
+  - Corrected a broken import path for `KnowledgeForm` in `src/app/dashboard/knowledge/base/page.tsx` that occurred due to the file move.
 - **Unused Component Cleanup:**
-    - Identified and deleted the following unused UI components to maintain a cleaner repository:
-        - `src/components/ui/BalloonRain.tsx`
-        - `src/components/ui/ConfettiRain.tsx`
-        - `src/components/ChatBox.tsx`
-        - `src/components/ui/progress.tsx`
-        - `src/components/ui/input.tsx`
-        - `src/components/ui/dropdown-menu.tsx`
-    - Verification was done by searching for imports or usages of these components across the codebase.
+  - Identified and deleted the following unused UI components to maintain a cleaner repository:
+    - `src/components/ui/BalloonRain.tsx`
+    - `src/components/ui/ConfettiRain.tsx`
+    - `src/components/ChatBox.tsx`
+    - `src/components/ui/progress.tsx`
+    - `src/components/ui/input.tsx`
+    - `src/components/ui/dropdown-menu.tsx`
+  - Verification was done by searching for imports or usages of these components across the codebase.
 
 ---
 
 ## 🚀 **SUMMARY OF MAJOR CHANGES**
 
 ### **Core Features Implemented:**
+
 - **🎯 AKOOL Avatar Integration:** Live video chat with TTS using Agora RTC SDK (`ChatModal.tsx`, `apiService.ts`)
 - **🧪 Testing Infrastructure:** 30 comprehensive tests (28 Jest + 2 validation scripts) organized in `tests/` directory
 - **🎨 Enhanced Chat UI:** Modular components with 180px avatar clear zone, quick replies, countdown offers
@@ -407,20 +428,24 @@ src/
 - **📊 Dashboard System:** Complete property management with Calendar, Tasks, Contacts, Media Library
 
 ### **Critical Fixes:**
+
 - **Avatar Echoing Issue:** Set dialogue mode (mode: 2) to prevent message repetition - 13 regression tests added
 - **Session Management:** Graceful timeout handling with recovery overlay
 - **Performance:** Exponential backoff for API retries, enhanced error boundaries
 - **Build Issues:** Fixed `__dirname` errors and Tailwind CSS processing
 
 ### **Code Quality:**
+
 - Removed 6 unused components, centralized dummy data (`src/lib/dummy-data.ts`)
 - Fixed navigation highlighting, moved Knowledge Base to `/knowledge/base`
 - Added comprehensive commenting and type definitions per team protocols
 
 ### **Production Ready:**
+
 ✅ 30/30 tests passing | ✅ Widget deployable to CDN | ✅ Robust error handling | ✅ Avatar echoing resolved
 
 ### **Key Files Modified:**
+
 - `src/components/ChatModal.tsx` - Core chat interface with avatar integration
 - `src/services/apiService.ts` - AKOOL API service with error handling
 - `tests/` directory - Complete testing infrastructure
@@ -466,6 +491,7 @@ src/
 - **Deployment Readiness Assessment:** Estimated 4-7 days additional development needed for full production readiness (currently 70% ready)
 
 ### Files Modified:
+
 - `src/app/api/upload-media/route.ts` - New file upload endpoint with filesystem storage
 - `src/app/api/media-metadata/route.ts` - Metadata management with orphan file recovery
 - `src/app/api/delete-media/route.ts` - File deletion with cleanup
@@ -477,6 +503,7 @@ src/
 - `.gitignore` - Added uploads directory exclusion rules
 
 ### Key Improvements:
+
 ✅ **Media Library:** Images now persist across all navigation and browser sessions
 ✅ **Chat Sessions:** Fresh Alinna sessions on every page refresh
 ✅ **Lead Management:** Cross-tab data persistence confirmed working
@@ -486,11 +513,12 @@ src/
 ## ChatModal UI Cleanup & Analytics Implementation Verification
 
 [Cursor Log]
+
 - File: src/components/ChatModal.tsx
 - Line 3: Removed `Minus, Maximize2` icons from lucide-react imports.
 - Reason: Clean up chat header layout by removing minimize button per user request.
 
-- File: src/components/ChatModal.tsx  
+- File: src/components/ChatModal.tsx
 - Line 153-165: Removed `onMinimize`, `onMaximize`, `isMinimized` props from ChatHeaderProps interface.
 - Reason: Simplify component interface after removing minimize/maximize functionality.
 
@@ -503,6 +531,7 @@ src/
 - Reason: Remove unused state management for minimize/maximize functionality.
 
 ### Analytics Implementation Status Verified:
+
 - **Confirmed Complete:** 16/18 Amplitude analytics events implemented (89% coverage)
 - **Business Value:** All critical user journey events tracked including:
   - Contact capture, tour booking, CTA clicks, session management
@@ -512,6 +541,7 @@ src/
 - **Intentionally Removed:** 2 events (widget_minimized, widget_maximized) due to UI layout cleanup
 
 ### Technical Impact:
+
 ✅ **Cleaner Header Layout:** Chat header now shows only essential actions  
 ✅ **Maintained Analytics:** All business-critical tracking remains functional  
 ✅ **Session Management:** Advanced tracking (conversation stages, abandonment) still active  
@@ -521,6 +551,7 @@ src/
 ## Lead Analytics & Activity Dashboard Enhancement - Comprehensive Amplitude Integration
 
 ### Lead Summary Modal System Implementation
+
 - **Created LeadSummaryModal Component** (`src/app/dashboard/activity/components/LeadSummaryModal.tsx`)
   - **Dual-tab Interface:** Analytics Overview + Activity Timeline in single modal
   - **18 Amplitude Variables Display:** Complete analytics coverage in 6 color-coded sections (Core Engagement, Contact & Tours, CTA Interactions, Incentive Tracking, Advanced Session, Qualification Status)
@@ -528,6 +559,7 @@ src/
   - **Visual Indicators:** Checkmarks/X marks for boolean values, N/A handling for missing data
 
 ### Enhanced Lead Data Structure & Interactive Overview
+
 - **Expanded Lead Interface** (`src/lib/dummy-data.ts`) with comprehensive `amplitudeData` object
 - **Realistic Test Data:** 10 leads with varied patterns (A+ signed leads, abandoned conversations, missing data scenarios)
 - **Created LeadOverview Component** with interactive pie chart and dynamic lead explorer
@@ -535,18 +567,21 @@ src/
 - **Space-Efficient Design:** Direct on-chart labeling, removed separate legend rows
 
 ### Activity Page Restructure & UX Enhancements
+
 - **Streamlined Layout:** Three-tier architecture (Distribution Overview → Pipeline Funnel → Modal Details)
 - **Removed Redundant Components:** Eliminated separate Individual Lead Timeline section
 - **Progressive Information Disclosure:** Overview → Pipeline → Detailed analytics in modal
 - **Action-Oriented Design:** AI Summary at top with priority CTAs for qualified leads
 
 ### Technical Implementation
+
 - **Type-Safe Architecture:** Comprehensive TypeScript interfaces for all amplitude data
 - **Recharts Integration:** Professional pie chart with custom tooltips and interactive features
 - **Responsive Design:** Mobile-friendly layouts with graceful error handling
 - **Reusable Components:** Modular design with clean props and state management
 
 ### Files Modified/Created:
+
 - `src/app/dashboard/activity/components/LeadSummaryModal.tsx` - Dual-tab modal
 - `src/app/dashboard/activity/components/LeadOverview.tsx` - Interactive pie chart
 - `src/app/dashboard/activity/components/LeadFunnel.tsx` - Updated to use summary modal
@@ -554,6 +589,7 @@ src/
 - `src/lib/dummy-data.ts` - Enhanced with comprehensive amplitude data
 
 ### Business Value & Production Impact:
+
 ✅ **18/18 Amplitude Variables:** Complete analytics coverage achieved  
 ✅ **Lead Intelligence:** AI summaries + priority scoring system operational  
 ✅ **Interactive Analytics:** Pie chart drill-down with real-time insights  
@@ -564,32 +600,38 @@ src/
 ## Final Amplitude Analytics & UI Consistency - 18/18 Events Complete
 
 ### Analytics Implementation Completion
+
 - **Final 4 Events Added:** answer_button_clicked, fallback_occurred, phone_call_clicked, incentive_accepted
 - **Complete Coverage:** 18/18 Amplitude events now implemented with proper session_id stitching
 - **Event Properties:** Snake_case naming (option_id, option_text, cta_location, incentive_type)
 
 ### Technical Implementation
+
 - **CountdownOffer Component:** Added "Claim $25" button with incentive_accepted tracking
-- **CTAButtons Component:** Added phone call button with tel: link and phone_call_clicked tracking  
+- **CTAButtons Component:** Added phone call button with tel: link and phone_call_clicked tracking
 - **ChatModal:** Enhanced fallback detection for gibberish input patterns + compact input field design
 - **QuickReplyButtons:** answer_button_clicked already implemented via existing tracking system
 
 ### UI Color Scheme Consistency
+
 - **Blue-Purple Gradient Theme:** Applied across CountdownOffer, CTAButtons, and progress elements
 - **Replaced Colors:** Orange/red countdown → blue gradient, green tour button → blue-purple gradient
 - **Maintained:** Blue primary actions, improved visual cohesion with chat interface styling
 
 ### Space Optimization
+
 - **Input Field:** Reduced padding (p-4 → p-3) and height (py-2 → py-1.5) for compact design
 - **CTA Alignment:** Added 360px width constraint to prevent button overflow beyond modal edge
 - **3-Button Layout:** Get In Touch (blue) + Schedule Tour (gradient) + Call Now (purple)
 
 ### Files Modified:
+
 - `src/components/ui/CountdownOffer.tsx` - Incentive tracking + theme consistency
-- `src/components/ui/CTAButtons.tsx` - Phone tracking + gradient styling  
+- `src/components/ui/CTAButtons.tsx` - Phone tracking + gradient styling
 - `src/components/ChatModal.tsx` - Fallback detection + layout optimization
 
 ### Production Impact:
+
 ✅ **Complete Analytics:** 100% event coverage for comprehensive user journey tracking  
 ✅ **Visual Consistency:** Cohesive blue-purple theme across all chat components  
 ✅ **Space Efficiency:** Compact layout with properly aligned elements  
@@ -600,24 +642,28 @@ src/
 ## AKOOL Session Management Crisis Resolution & Dashboard Data Integration
 
 ### Critical AKOOL Session Bug Fix
+
 - **Root Cause:** Token API returning `data.token` but cleanup code accessing `data.data.token` causing undefined errors
 - **Fixed Token Path:** Updated `src/app/api/avatar/session/close/route.ts` to correctly access token from response
 - **Session ID Tracking:** Enhanced ChatLauncher to store real session IDs in `akool-last-session-id` for targeted cleanup
 - **Eliminated Complex Retries:** Replaced infinite retry loops with simple 2-attempt limit (2s/4s delays)
 
 ### Simplified Force Close System
+
 - **Created** `src/lib/akool-force-close.ts` - Lightweight cleanup focused on localStorage clearing + specific session closure
 - **Removed Complex Manager:** Deleted overcomplicated `akool-session-manager.ts` with exponential backoff and emergency controls
 - **Targeted Cleanup:** Close specific problematic sessions instead of generic force-close operations
 - **Page Refresh Strategy:** Aggressive session ID clearing on page load to prevent carryover issues
 
 ### Professional Loading Screen Enhancement
+
 - **Grand Oaks Branded Interface:** Created luxury apartment loading screen with "GO" logo and professional messaging
 - **Feature Preview Dots:** Animated indicators for Live Video Chat, Instant Answers, Tour Scheduling
 - **Clean Design:** Blue-purple gradient theme matching chat interface with single spinner (removed dual loading elements)
 - **Connecting Messaging:** "Connecting you with Alinna" with professional leasing context
 
 ### Amplitude Dashboard Data Aggregation
+
 - **Missing KPI Issue:** 4 Amplitude metrics (`answer_button_clicked`, `fallback_occurred`, `phone_call_clicked`, `incentive_accepted`) missing from dashboard
 - **Root Cause:** Dashboard used dummy data instead of real Amplitude events
 - **Solution:** Created `src/lib/amplitude-data-service.ts` to fetch and aggregate real Amplitude events
@@ -625,6 +671,7 @@ src/
 - **Refresh Functionality:** Enhanced `LeadContext` with manual "🔄 Refresh Data" button and loading states
 
 ### Files Modified:
+
 - `src/app/api/avatar/session/close/route.ts` - Fixed token access path
 - `src/lib/akool-force-close.ts` - Simplified session cleanup
 - `src/components/ChatLauncher.tsx` - Enhanced loading screen + session tracking
@@ -633,6 +680,7 @@ src/
 - `src/lib/lead-context.tsx` - Added refresh functionality
 
 ### Production Impact:
+
 ✅ **Session Management:** Reliable AKOOL avatar sessions with proper cleanup  
 ✅ **User Experience:** Professional loading screen matching luxury apartment branding  
 ✅ **Data Accuracy:** Dashboard now shows real Amplitude analytics instead of dummy data  
@@ -677,40 +725,45 @@ src/
 ## Widget Build Configuration Fix - SVG Asset Preservation
 
 ### Critical Build Issue Resolution
+
 **Problem:** `npm run build:widget` command was deleting SVG files and other assets from the `public` directory during the build process, causing broken social icons and other visual elements.
 
 **Root Cause Analysis:**
+
 - **File:** `src/lib/widget/build.config.ts`
 - **Line 9:** Build configuration had `clean: true` setting
 - **Issue:** The `clean: true` option in tsup configuration was cleaning the entire `public` directory before building
 - **Impact:** All existing assets (SVG files, fonts, uploads) were being deleted during widget compilation
 
 **Assets Affected:**
+
 - `/public/social/facebook.svg` - Referenced in ChatModal.tsx for social media buttons
 - `/public/fonts/` directory - Custom font assets
 - `/public/uploads/` directory - User uploaded media files
 - Any other static assets in the public directory
 
 **Solution Implemented:**
+
 - **File:** `src/lib/widget/build.config.ts`
 - **Line 9:** Changed `clean: true` to `clean: false`
 - **Reason:** Prevent automatic deletion of existing assets while still allowing widget file updates
 
 **Technical Details:**
+
 ```typescript
 // Before (problematic):
 export default defineConfig({
-  entry: { 'widget': 'src/lib/widget/build.ts' },
+  entry: { widget: 'src/lib/widget/build.ts' },
   outDir: 'public',
   format: ['iife'],
   minify: true,
-  clean: true,  // ❌ This was deleting all public assets
+  clean: true, // ❌ This was deleting all public assets
   // ... rest of config
 });
 
 // After (fixed):
 export default defineConfig({
-  entry: { 'widget': 'src/lib/widget/build.ts' },
+  entry: { widget: 'src/lib/widget/build.ts' },
   outDir: 'public',
   format: ['iife'],
   minify: true,
@@ -720,10 +773,12 @@ export default defineConfig({
 ```
 
 **Build Process Impact:**
+
 - **Before:** `npm run build:widget` → Clean entire public directory → Build widget.min.js → Assets lost
 - **After:** `npm run build:widget` → Preserve existing assets → Update only widget.min.js → Assets safe
 
 **Files Modified:**
+
 - `src/lib/widget/build.config.ts` - Changed clean option from true to false
 
 **Production Impact:**
@@ -734,3 +789,61 @@ export default defineConfig({
 ✅ **Development Workflow:** Developers can rebuild widget without losing project assets
 
 **Business Value:** Property managers can now safely update the chat widget without losing branding assets, uploaded media, or social media integration, ensuring consistent user experience across all deployment cycles.
+
+## ChatModal Refactoring Success - Component Extraction & Code Reduction
+
+### Critical Refactoring Recovery & Component Extraction
+
+**Problem Resolution:**
+
+- **Root Cause:** Previous refactor attempt accidentally truncated `ChatModal.tsx` from 2043 lines to 48 lines, completely removing the main component definition
+- **Recovery Method:** Used `git restore src/components/ChatModal.tsx` to recover the original working version
+- **Lesson Learned:** Always test functionality immediately after large refactoring changes
+
+### Successful Component Extraction Implementation
+
+**Files Created/Enhanced:**
+
+- `src/components/chat/ChatComponents.tsx` (478 lines) - Extracted reusable components
+- `src/components/chat/types.ts` (30 lines) - Shared type definitions and constants
+- **Components Extracted:** ChatHeader, ChatBody, TimerSection, MessagingInput, SparkleBurst, TypingIndicator, LiveAgentBadge, StarRating
+
+**ChatModal.tsx Refactoring Results:**
+
+- **Before:** 2043 lines with duplicated internal component definitions
+- **After:** 1592 lines using imported extracted components
+- **Reduction:** 451 lines removed (22% size reduction)
+- **Functionality:** 100% preserved - all tests passing
+
+### Type System Enhancement
+
+**Extracted Types (`src/components/chat/types.ts`):**
+
+- **ChatMessageForDisplay Interface** - Standardized message structure across components
+- **ChatAnalytics Interface** - Comprehensive analytics tracking (expanded from 4 to 12 methods)
+- **AKOOL_PLAYER_ID Constant** - Video player element identifier for consistency
+
+### UI Styling Fix - Input Background Color
+
+**Problem:** Input area appeared light grey instead of white in production
+
+- **Root Cause:** MessagingInput component used `bg-white/80` (semi-transparent)
+- **Solution:** Changed to `bg-white` (fully opaque) in `ChatComponents.tsx` line 431
+- **Impact:** Clean white background matching design specifications
+
+### Files Modified:
+
+- `src/components/ChatModal.tsx` - Reduced from 2043 to 1592 lines, removed duplicated components
+- `src/components/chat/ChatComponents.tsx` - Line 431 background color fix (`bg-white/80` → `bg-white`)
+- All extracted components now reusable across the application
+
+### Production Impact:
+
+✅ **Code Maintainability:** 22% reduction in ChatModal complexity  
+✅ **Component Reusability:** Extracted components available for other parts of application  
+✅ **Type Safety:** Centralized type definitions prevent inconsistencies  
+✅ **UI Consistency:** Fixed input background color for proper white appearance  
+✅ **Zero Regression:** All functionality preserved with comprehensive test coverage  
+✅ **Future Development:** Modular architecture enables easier feature additions
+
+**Business Value:** Refactored codebase is now more maintainable for future development while preserving all existing functionality. The extracted components can be reused in other parts of the application, reducing development time for new features. The styling fix ensures consistent visual appearance across all environments.

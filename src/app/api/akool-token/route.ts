@@ -7,7 +7,7 @@ export async function GET() {
   if (!clientId || !clientSecret) {
     return NextResponse.json(
       { error: 'Missing Akool Client ID or Client Secret' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -28,33 +28,37 @@ export async function GET() {
     if (!response.ok || responseData.code !== 1000) {
       console.error('Akool API error:', responseData);
       return NextResponse.json(
-        { 
-          error: responseData.message || 'Failed to fetch Akool access token', 
-          details: responseData 
+        {
+          error: responseData.message || 'Failed to fetch Akool access token',
+          details: responseData,
         },
-        { status: response.status } // Or a more specific error code based on responseData.code if available
+        { status: response.status }, // Or a more specific error code based on responseData.code if available
       );
     }
-    
+
     // According to new docs, token is directly in responseData.token
-    return NextResponse.json({ 
-      code: responseData.code, 
-      token: responseData.token 
+    return NextResponse.json({
+      code: responseData.code,
+      token: responseData.token,
       // Add other fields from responseData if needed, like expiry if it exists
     });
-
   } catch (error: any) {
     console.error('Error fetching Akool token:', error);
     // Check if it's a fetch error (e.g., DNS resolution, network issue)
     if (error.cause && error.cause.code === 'ENOTFOUND') {
       return NextResponse.json(
-        { error: `DNS lookup failed for ${error.cause.hostname}. Please check network connectivity and domain name.` },
-        { status: 500 }
+        {
+          error: `DNS lookup failed for ${error.cause.hostname}. Please check network connectivity and domain name.`,
+        },
+        { status: 500 },
       );
     }
     return NextResponse.json(
-      { error: 'Internal server error while fetching Akool token', details: error.message },
-      { status: 500 }
+      {
+        error: 'Internal server error while fetching Akool token',
+        details: error.message,
+      },
+      { status: 500 },
     );
   }
-} 
+}

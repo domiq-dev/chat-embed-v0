@@ -1,20 +1,18 @@
 'use client';
 
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { dashboardRoutes } from "@/lib/routes";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { LeadProvider } from "@/lib/lead-context";
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { dashboardRoutes } from '@/lib/routes';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import { LeadProvider } from '@/lib/lead-context';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [expandedGroups, setExpandedGroups] = useState<string[]>(['/dashboard/knowledge']);
 
   const toggleGroup = (path: string) => {
-    setExpandedGroups(prev => 
-      prev.includes(path) 
-        ? prev.filter(p => p !== path)
-        : [...prev, path]
+    setExpandedGroups((prev) =>
+      prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path],
     );
   };
 
@@ -37,15 +35,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <button
                       onClick={() => toggleGroup(route.path)}
                       className={cn(
-                        "w-full flex items-center justify-between px-4 py-2 rounded text-sm transition-colors text-center md:text-left",
-                        "hover:bg-purple-700 hover:text-white text-gray-300"
+                        'w-full flex items-center justify-between px-4 py-2 rounded text-sm transition-colors text-center md:text-left',
+                        'hover:bg-purple-700 hover:text-white text-gray-300',
                       )}
                     >
                       <span>{route.label}</span>
-                      <span className={cn(
-                        "transition-transform",
-                        expandedGroups.includes(route.path) ? "rotate-180" : ""
-                      )}>
+                      <span
+                        className={cn(
+                          'transition-transform',
+                          expandedGroups.includes(route.path) ? 'rotate-180' : '',
+                        )}
+                      >
                         ▼
                       </span>
                     </button>
@@ -63,10 +63,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     )}
                   </div>
                 ) : (
-                  <NavItem
-                    href={route.path}
-                    label={route.label}
-                  />
+                  <NavItem href={route.path} label={route.label} />
                 )}
               </div>
             ))}
@@ -88,11 +85,11 @@ function NavItem({ href, label, className }: { href: string; label: string; clas
     <Link
       href={href}
       className={cn(
-        "block px-4 py-2 rounded text-sm transition-colors text-center md:text-left",
-        isActive 
-          ? "bg-purple-700 text-white" 
-          : "hover:bg-purple-700 hover:text-white text-gray-300",
-        className
+        'block px-4 py-2 rounded text-sm transition-colors text-center md:text-left',
+        isActive
+          ? 'bg-purple-700 text-white'
+          : 'hover:bg-purple-700 hover:text-white text-gray-300',
+        className,
       )}
     >
       {label}

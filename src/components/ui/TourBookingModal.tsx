@@ -4,9 +4,9 @@ import { X, Calendar, Clock, MapPin, User } from 'lucide-react';
 interface TourBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (tourData: { 
-    name: string; 
-    email: string; 
+  onSubmit: (tourData: {
+    name: string;
+    email: string;
     tourType: 'in_person' | 'self_guided' | 'virtual';
     preferredDate?: string;
     preferredTime?: string;
@@ -16,20 +16,20 @@ interface TourBookingModalProps {
   };
 }
 
-const TourBookingModal: React.FC<TourBookingModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  analytics 
+const TourBookingModal: React.FC<TourBookingModalProps> = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  analytics,
 }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     tourType: 'in_person' as 'in_person' | 'self_guided' | 'virtual',
     preferredDate: '',
-    preferredTime: ''
+    preferredTime: '',
   });
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const tourOptions = [
@@ -38,82 +38,89 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
       title: 'In-Person Tour',
       description: 'Meet with our leasing team for a guided tour',
       icon: User,
-      duration: '30-45 minutes'
+      duration: '30-45 minutes',
     },
     {
       type: 'self_guided' as const,
       title: 'Self-Guided Tour',
       description: 'Explore at your own pace with digital access',
       icon: MapPin,
-      duration: '15-30 minutes'
+      duration: '15-30 minutes',
     },
     {
       type: 'virtual' as const,
       title: 'Virtual Tour',
       description: 'Live video tour with our leasing specialist',
       icon: Calendar,
-      duration: '20-30 minutes'
-    }
+      duration: '20-30 minutes',
+    },
   ];
 
   const timeSlots = [
-    '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-    '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
+    '9:00 AM',
+    '10:00 AM',
+    '11:00 AM',
+    '12:00 PM',
+    '1:00 PM',
+    '2:00 PM',
+    '3:00 PM',
+    '4:00 PM',
+    '5:00 PM',
   ];
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email';
     }
-    
+
     if (formData.tourType !== 'virtual' && !formData.preferredDate) {
       newErrors.preferredDate = 'Please select a preferred date';
     }
-    
+
     if (formData.tourType !== 'virtual' && !formData.preferredTime) {
       newErrors.preferredTime = 'Please select a preferred time';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     // Track tour booking with analytics (with error handling)
     try {
       analytics.trackTourBooked(formData.tourType);
     } catch (error) {
       console.warn('Tour booking analytics error:', error);
     }
-    
+
     // Submit form data
     onSubmit({
       name: formData.name,
       email: formData.email,
       tourType: formData.tourType,
       preferredDate: formData.preferredDate || undefined,
-      preferredTime: formData.preferredTime || undefined
+      preferredTime: formData.preferredTime || undefined,
     });
-    
+
     // Reset form
     setFormData({
       name: '',
       email: '',
       tourType: 'in_person',
       preferredDate: '',
-      preferredTime: ''
+      preferredTime: '',
     });
     setErrors({});
     onClose();
@@ -131,24 +138,17 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
       <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Schedule Your Tour</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
-        
-        <p className="text-gray-600 mb-6">
-          Choose the type of tour that works best for you!
-        </p>
+
+        <p className="text-gray-600 mb-6">Choose the type of tour that works best for you!</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Tour Type Selection */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Select Tour Type
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Select Tour Type</label>
             <div className="space-y-3">
               {tourOptions.map((option) => {
                 const IconComponent = option.icon;
@@ -165,7 +165,12 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
                       type="radio"
                       value={option.type}
                       checked={formData.tourType === option.type}
-                      onChange={(e) => setFormData({ ...formData, tourType: e.target.value as typeof formData.tourType })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          tourType: e.target.value as typeof formData.tourType,
+                        })
+                      }
                       className="sr-only"
                     />
                     <IconComponent className="w-5 h-5 text-blue-600 mr-3" />
@@ -234,7 +239,9 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
                     errors.preferredDate ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
-                {errors.preferredDate && <p className="text-red-500 text-xs mt-1">{errors.preferredDate}</p>}
+                {errors.preferredDate && (
+                  <p className="text-red-500 text-xs mt-1">{errors.preferredDate}</p>
+                )}
               </div>
 
               <div>
@@ -255,7 +262,9 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
                     </option>
                   ))}
                 </select>
-                {errors.preferredTime && <p className="text-red-500 text-xs mt-1">{errors.preferredTime}</p>}
+                {errors.preferredTime && (
+                  <p className="text-red-500 text-xs mt-1">{errors.preferredTime}</p>
+                )}
               </div>
             </div>
           )}
@@ -268,7 +277,8 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
                 <div>
                   <h4 className="font-medium text-blue-900">Virtual Tour</h4>
                   <p className="text-sm text-blue-700 mt-1">
-                    We'll contact you within 24 hours to schedule your live virtual tour at a time that works for you.
+                    We'll contact you within 24 hours to schedule your live virtual tour at a time
+                    that works for you.
                   </p>
                 </div>
               </div>
@@ -296,4 +306,4 @@ const TourBookingModal: React.FC<TourBookingModalProps> = ({
   );
 };
 
-export default TourBookingModal; 
+export default TourBookingModal;

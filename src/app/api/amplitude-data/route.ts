@@ -21,44 +21,37 @@ export async function GET(request: NextRequest) {
       clearTimeout(timeoutId);
       return NextResponse.json(
         { error: 'Must provide leadId, userId, or deviceId' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     let amplitudeData;
-    
+
     if (leadId) {
       amplitudeData = await amplitudeDataService.getLeadAmplitudeData(leadId);
     } else {
       amplitudeData = await amplitudeDataService.getUserData(
-        userId || undefined, 
-        deviceId || undefined, 
-        days
+        userId || undefined,
+        deviceId || undefined,
+        days,
       );
     }
 
     clearTimeout(timeoutId);
-    return NextResponse.json({ 
-      success: true, 
-      data: amplitudeData 
+    return NextResponse.json({
+      success: true,
+      data: amplitudeData,
     });
-
   } catch (error) {
     clearTimeout(timeoutId);
-    
+
     if (error instanceof Error && error.name === 'AbortError') {
       console.error('Amplitude API request timed out');
-      return NextResponse.json(
-        { error: 'Request timed out' },
-        { status: 408 }
-      );
+      return NextResponse.json({ error: 'Request timed out' }, { status: 408 });
     }
-    
+
     console.error('Amplitude API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch Amplitude data' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch Amplitude data' }, { status: 500 });
   }
 }
 
@@ -75,10 +68,7 @@ export async function POST(request: NextRequest) {
 
     if (!Array.isArray(leadIds)) {
       clearTimeout(timeoutId);
-      return NextResponse.json(
-        { error: 'leadIds must be an array' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'leadIds must be an array' }, { status: 400 });
     }
 
     // Limit concurrent requests to prevent overwhelming the API
@@ -92,16 +82,15 @@ export async function POST(request: NextRequest) {
 
     // Process chunks sequentially to avoid rate limiting
     for (const chunk of chunks) {
-      const promises = chunk.map((leadId: string) => 
-        amplitudeDataService.getLeadAmplitudeData(leadId)
-          .catch(error => {
-            console.warn(`Failed to fetch data for lead ${leadId}:`, error);
-            return {}; // Return empty object for failed leads
-          })
+      const promises = chunk.map((leadId: string) =>
+        amplitudeDataService.getLeadAmplitudeData(leadId).catch((error) => {
+          console.warn(`Failed to fetch data for lead ${leadId}:`, error);
+          return {}; // Return empty object for failed leads
+        }),
       );
 
       const results = await Promise.allSettled(promises);
-      
+
       chunk.forEach((leadId: string, index: number) => {
         const result = results[index];
         if (result.status === 'fulfilled') {
@@ -114,28 +103,21 @@ export async function POST(request: NextRequest) {
     }
 
     clearTimeout(timeoutId);
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       data: aggregatedData,
       processed: leadIds.length,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     clearTimeout(timeoutId);
-    
+
     if (error instanceof Error && error.name === 'AbortError') {
       console.error('Bulk Amplitude API request timed out');
-      return NextResponse.json(
-        { error: 'Bulk request timed out' },
-        { status: 408 }
-      );
+      return NextResponse.json({ error: 'Bulk request timed out' }, { status: 408 });
     }
-    
+
     console.error('Bulk Amplitude API error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch bulk Amplitude data' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch bulk Amplitude data' }, { status: 500 });
   }
-} 
+}

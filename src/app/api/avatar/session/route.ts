@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 
 // Environment variables for API credentials
 // Store these securely in your .env.local file
-const AKOOL_CLIENT_ID = process.env.AKOOL_CLIENT_ID
-const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY
+const AKOOL_CLIENT_ID = process.env.AKOOL_CLIENT_ID;
+const AKOOL_SECRET_KEY = process.env.AKOOL_SECRET_KEY;
 
 // Types for API responses
 interface AvatarSessionResponse {
@@ -32,10 +32,7 @@ export async function POST(request: Request) {
     const { avatarId } = body;
 
     if (!avatarId) {
-      return NextResponse.json(
-        { error: 'Avatar ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Avatar ID is required' }, { status: 400 });
     }
 
     // Create Akool avatar session
@@ -44,7 +41,7 @@ export async function POST(request: Request) {
     if (sessionResponse.code !== 1000) {
       return NextResponse.json(
         { error: sessionResponse.msg || 'Failed to create avatar session' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -55,10 +52,7 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error('Error creating avatar session:', error);
-    return NextResponse.json(
-      { error: error.message || 'Unknown error occurred' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || 'Unknown error occurred' }, { status: 500 });
   }
 }
 
@@ -68,7 +62,7 @@ async function createAvatarSession(avatarId: string): Promise<AvatarSessionRespo
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${AKOOL_CLIENT_ID}:${AKOOL_SECRET_KEY}`,
+      Authorization: `Bearer ${AKOOL_CLIENT_ID}:${AKOOL_SECRET_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -90,10 +84,7 @@ export async function DELETE(request: Request) {
     const sessionId = searchParams.get('sessionId');
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: 'Session ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Session ID is required' }, { status: 400 });
     }
 
     const closeResponse = await closeAvatarSession(sessionId);
@@ -101,17 +92,14 @@ export async function DELETE(request: Request) {
     if (closeResponse.code !== 1000) {
       return NextResponse.json(
         { error: closeResponse.msg || 'Failed to close avatar session' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Error closing avatar session:', error);
-    return NextResponse.json(
-      { error: error.message || 'Unknown error occurred' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message || 'Unknown error occurred' }, { status: 500 });
   }
 }
 
@@ -121,7 +109,7 @@ async function closeAvatarSession(sessionId: string): Promise<any> {
   const response = await fetch(url, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${AKOOL_CLIENT_ID}:${AKOOL_SECRET_KEY}`,
+      Authorization: `Bearer ${AKOOL_CLIENT_ID}:${AKOOL_SECRET_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useState } from 'react';
 
 interface LeadData {
@@ -10,7 +10,7 @@ interface LeadData {
     phone?: string;
     lead_source: string;
   };
-  
+
   // Maps to your 'conversation' table
   conversation: {
     chatbot_id: string;
@@ -27,7 +27,7 @@ interface LeadData {
     kb_pending?: any;
     ai_intent_summary?: string;
   };
-  
+
   // Maps to your 'message' table
   messages: Array<{
     sender_type: 'user' | 'bot';
@@ -39,29 +39,29 @@ interface LeadData {
 export const useLeadDataCollection = (chatbotId: string) => {
   const [leadData, setLeadData] = useState<LeadData>({
     user: {
-      lead_source: 'chat'
+      lead_source: 'chat',
     },
     conversation: {
       chatbot_id: chatbotId,
       start_time: new Date(),
-      is_book_tour: false
+      is_book_tour: false,
     },
-    messages: []
+    messages: [],
   });
 
   // Update user information
   const updateUser = (userData: Partial<LeadData['user']>) => {
-    setLeadData(prev => ({
+    setLeadData((prev) => ({
       ...prev,
-      user: { ...prev.user, ...userData }
+      user: { ...prev.user, ...userData },
     }));
   };
 
   // Update conversation data
   const updateConversation = (convData: Partial<LeadData['conversation']>) => {
-    setLeadData(prev => ({
+    setLeadData((prev) => ({
       ...prev,
-      conversation: { ...prev.conversation, ...convData }
+      conversation: { ...prev.conversation, ...convData },
     }));
   };
 
@@ -70,12 +70,12 @@ export const useLeadDataCollection = (chatbotId: string) => {
     const newMessage = {
       sender_type: sender,
       message_text: text,
-      timestamp: new Date()
+      timestamp: new Date(),
     };
-    
-    setLeadData(prev => ({
+
+    setLeadData((prev) => ({
       ...prev,
-      messages: [...prev.messages, newMessage]
+      messages: [...prev.messages, newMessage],
     }));
   };
 
@@ -84,8 +84,8 @@ export const useLeadDataCollection = (chatbotId: string) => {
       ...leadData,
       conversation: {
         ...leadData.conversation,
-        end_time: new Date()
-      }
+        end_time: new Date(),
+      },
     };
 
     try {
@@ -94,7 +94,7 @@ export const useLeadDataCollection = (chatbotId: string) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(finalData)
+        body: JSON.stringify(finalData),
       });
 
       if (!response.ok) {
@@ -113,6 +113,6 @@ export const useLeadDataCollection = (chatbotId: string) => {
     updateUser,
     updateConversation,
     addMessage,
-    sendLeadData
+    sendLeadData,
   };
-}; 
+};

@@ -7,8 +7,8 @@ export default function WidgetDemo() {
     // Set up widget config
     (window as any).domIQChat = {
       config: {
-        propertyId: 'demo'
-      }
+        propertyId: 'demo',
+      },
     };
 
     // Load widget script
@@ -28,11 +28,13 @@ export default function WidgetDemo() {
     <div className="p-8">
       <h1 className="text-3xl font-bold mb-4">Widget Test</h1>
       <p>Simple test page. Widget should appear in bottom-right corner.</p>
-      
+
       <div className="mt-8 p-4 bg-gray-100 rounded">
-        <h2 className="text-xl font-semibold mb-2">For apartment websites, add these script tags:</h2>
+        <h2 className="text-xl font-semibold mb-2">
+          For apartment websites, add these script tags:
+        </h2>
         <pre className="bg-black text-green-400 p-4 rounded text-sm">
-{`<script>
+          {`<script>
   window.domIQChat = {
     config: {
       propertyId: 'YOUR_PROPERTY_ID'
@@ -44,4 +46,4 @@ export default function WidgetDemo() {
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,7 @@
-"use client";
-import React, {FC, useState, useCallback} from "react";
-import { Pen } from "lucide-react";
-import confetti from "canvas-confetti";
+'use client';
+import React, { FC, useState, useCallback } from 'react';
+import { Pen } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 interface FloatingBannerProps {
   onClickCTA: () => void;
@@ -12,7 +12,7 @@ interface FloatingBannerProps {
 const FloatingBanner: React.FC<FloatingBannerProps> = ({
   onClickCTA,
   isPrequalified = false,
-  userName = "",
+  userName = '',
 }) => {
   const [showCongrats, setShowCongrats] = useState(false);
 
@@ -20,15 +20,15 @@ const FloatingBanner: React.FC<FloatingBannerProps> = ({
     const duration = 1.5 * 1000;
     const element = document.querySelector('.qualification-banner-container');
     if (!element) return;
-    
+
     const rect = element.getBoundingClientRect();
     const elementWidth = rect.width;
     const windowWidth = window.innerWidth;
-    
+
     const leftEdge = rect.left / windowWidth;
     const rightEdge = (rect.left + elementWidth) / windowWidth;
     const centerX = (leftEdge + rightEdge) / 2;
-    
+
     // Initial burst
     confetti({
       particleCount: 25,
@@ -41,7 +41,7 @@ const FloatingBanner: React.FC<FloatingBannerProps> = ({
       decay: 0.94,
       gravity: 1,
     });
-    
+
     // Additional bursts with delays
     setTimeout(() => {
       confetti({
@@ -56,7 +56,7 @@ const FloatingBanner: React.FC<FloatingBannerProps> = ({
         gravity: 1,
       });
     }, 150);
-    
+
     setTimeout(() => {
       confetti({
         particleCount: 15,
@@ -70,7 +70,7 @@ const FloatingBanner: React.FC<FloatingBannerProps> = ({
         gravity: 1,
       });
     }, 300);
-    
+
     setTimeout(() => {
       confetti({
         particleCount: 20,
@@ -105,12 +105,14 @@ const FloatingBanner: React.FC<FloatingBannerProps> = ({
     <div className="qualification-banner-container w-full">
       {showCongrats ? (
         <div className="bg-white border border-green-300 text-green-800 px-4 py-2 rounded-lg shadow-sm">
-          <span className="font-semibold text-sm">🎉 Congratulations {userName}! You are prequalified and your form has been downloaded.</span>
+          <span className="font-semibold text-sm">
+            🎉 Congratulations {userName}! You are prequalified and your form has been downloaded.
+          </span>
         </div>
       ) : (
         <div className="bg-white border border-gray-200 text-gray-800 px-4 py-2 rounded-lg shadow-sm flex items-center justify-between">
           <span className="font-semibold text-sm">🎯 You are prequalified!</span>
-          
+
           <button onClick={handleClick} className="flex items-center gap-2 group">
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition transform hover:scale-105 active:scale-95 shadow-sm">
               <Pen size={14} className="text-white" />

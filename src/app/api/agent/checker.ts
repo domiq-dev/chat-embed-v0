@@ -9,10 +9,10 @@ const evaluationModel = new ChatTogetherAI({
 });
 
 export async function evaluateConversationState(state: ConversationState): Promise<{
-  missingBasicInfo: string[],
-  missingQualInfo: string[],
-  isQualified: boolean,
-  currentQuestion: string | null
+  missingBasicInfo: string[];
+  missingQualInfo: string[];
+  isQualified: boolean;
+  currentQuestion: string | null;
 }> {
   const prompt = `
   Analyze this conversation state and determine:
@@ -33,40 +33,42 @@ export async function evaluateConversationState(state: ConversationState): Promi
     const result = JSON.parse(response.content.toString());
     return result;
   } catch (error) {
-    console.error("Error evaluating conversation state:", error);
+    console.error('Error evaluating conversation state:', error);
 
     // Fallback to basic logic if LLM evaluation fails
-    const missingBasicInfo = ["full_name", "preferred_name", "apt_size", "move_in_date"]
-      .filter(key => !state.basicInfo[key] || state.basicInfo[key].trim() === '');
+    const missingBasicInfo = ['full_name', 'preferred_name', 'apt_size', 'move_in_date'].filter(
+      (key) => !state.basicInfo[key] || state.basicInfo[key].trim() === '',
+    );
 
     const missingQualInfo = [];
-    if (state.qualificationStatus.age === null) missingQualInfo.push("age");
-    if (state.qualificationStatus.income === null) missingQualInfo.push("income");
-    if (state.qualificationStatus.eviction === null) missingQualInfo.push("eviction");
+    if (state.qualificationStatus.age === null) missingQualInfo.push('age');
+    if (state.qualificationStatus.income === null) missingQualInfo.push('income');
+    if (state.qualificationStatus.eviction === null) missingQualInfo.push('eviction');
 
-    const isQualified = state.qualificationStatus.age === true &&
-                        state.qualificationStatus.income === true &&
-                        state.qualificationStatus.eviction === false;
+    const isQualified =
+      state.qualificationStatus.age === true &&
+      state.qualificationStatus.income === true &&
+      state.qualificationStatus.eviction === false;
 
     // Determine next question
     let currentQuestion = null;
     if (missingBasicInfo.length > 0) {
       const questionMap: Record<string, string> = {
-        "full_name": "full_name",
-        "preferred_name": "preferred_name",
-        "apt_size": "bedroom_size",
-        "move_in_date": "move_in_date"
+        full_name: 'full_name',
+        preferred_name: 'preferred_name',
+        apt_size: 'bedroom_size',
+        move_in_date: 'move_in_date',
       };
       currentQuestion = questionMap[missingBasicInfo[0]];
     } else if (missingQualInfo.length > 0) {
       const questionMap: Record<string, string> = {
-        "age": "over_20",
-        "income": "income_requirement",
-        "eviction": "eviction"
+        age: 'over_20',
+        income: 'income_requirement',
+        eviction: 'eviction',
       };
       currentQuestion = questionMap[missingQualInfo[0]];
     } else if (isQualified) {
-      currentQuestion = "next_steps";
+      currentQuestion = 'next_steps';
     }
 
     return { missingBasicInfo, missingQualInfo, isQualified, currentQuestion };

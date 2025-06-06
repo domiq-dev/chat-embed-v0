@@ -32,10 +32,11 @@ async function ensureMetadataFile() {
 async function recoverOrphanedFiles() {
   try {
     const files = await readdir(UPLOADS_DIR);
-    const imageFiles = files.filter(file => 
-      file.match(/\.(jpg|jpeg|png|gif|webp)$/i) && 
-      file !== '.gitkeep' && 
-      file !== 'metadata.json'
+    const imageFiles = files.filter(
+      (file) =>
+        file.match(/\.(jpg|jpeg|png|gif|webp)$/i) &&
+        file !== '.gitkeep' &&
+        file !== 'metadata.json',
     );
 
     if (imageFiles.length === 0) return [];
@@ -45,10 +46,10 @@ async function recoverOrphanedFiles() {
     for (const filename of imageFiles) {
       const filePath = path.join(UPLOADS_DIR, filename);
       const stats = await stat(filePath);
-      
+
       // Extract original name (remove timestamp prefix)
       const originalName = filename.replace(/^\d+_[a-z0-9]+_/, '') || filename;
-      
+
       recoveredMetadata.push({
         id: filename.split('.')[0], // Use filename as ID
         url: `/uploads/${filename}`,
@@ -72,7 +73,7 @@ export async function GET() {
     await ensureMetadataFile();
     const data = await readFile(METADATA_FILE, 'utf-8');
     let metadata: MediaMetadata[] = JSON.parse(data);
-    
+
     // If metadata is empty but there are files, try to recover
     if (metadata.length === 0) {
       const recovered = await recoverOrphanedFiles();
@@ -80,10 +81,9 @@ export async function GET() {
         metadata = recovered;
         // Save the recovered metadata
         await writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2));
-        ;
       }
     }
-    
+
     return NextResponse.json({ success: true, metadata });
   } catch (error) {
     console.error('Error reading metadata:', error);
@@ -95,16 +95,19 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const { metadata }: { metadata: MediaMetadata[] } = await req.json();
-    
+
     await ensureMetadataFile();
     await writeFile(METADATA_FILE, JSON.stringify(metadata, null, 2));
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error saving metadata:', error);
-    return NextResponse.json({ 
-      error: 'Failed to save metadata' 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to save metadata',
+      },
+      { status: 500 },
+    );
   }
 }
 
@@ -112,19 +115,22 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const { id } = await req.json();
-    
+
     await ensureMetadataFile();
     const data = await readFile(METADATA_FILE, 'utf-8');
     const metadata: MediaMetadata[] = JSON.parse(data);
-    
-    const filteredMetadata = metadata.filter(item => item.id !== id);
+
+    const filteredMetadata = metadata.filter((item) => item.id !== id);
     await writeFile(METADATA_FILE, JSON.stringify(filteredMetadata, null, 2));
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting metadata:', error);
-    return NextResponse.json({ 
-      error: 'Failed to delete metadata' 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to delete metadata',
+      },
+      { status: 500 },
+    );
   }
-} 
+}

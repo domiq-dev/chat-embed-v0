@@ -10,21 +10,26 @@ import { leads as dummyLeads } from '@/lib/dummy-data';
 function ActivityPageContent() {
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { refreshAmplitudeData, isLoadingAmplitudeData, forceCloseSession, isLoading, refresh, leads, setLeads } = useLeadContext();
+  const {
+    refreshAmplitudeData,
+    isLoadingAmplitudeData,
+    forceCloseSession,
+    isLoading,
+    refresh,
+    leads,
+    setLeads,
+  } = useLeadContext();
 
   // Function to force fallback to dummy data for testing
   const forceFallback = () => {
-    ;
     setLeads(dummyLeads);
   };
 
   // Enhanced refresh function with loading state
   const handleRefresh = async () => {
-    ;
     setIsRefreshing(true);
     try {
       await refresh();
-      ;
     } catch (error) {
       console.error('❌ Refresh failed:', error);
     } finally {
@@ -40,20 +45,20 @@ function ActivityPageContent() {
           <button className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50">
             Last 7 Days ▼
           </button>
-          <button 
+          <button
             onClick={() => setIsNewLeadModalOpen(true)}
             className="px-4 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700"
           >
             New Lead
           </button>
-          <button 
+          <button
             onClick={handleRefresh}
             disabled={isRefreshing}
             className={`px-4 py-2 text-sm text-white rounded-md ${isRefreshing ? 'bg-blue-400' : 'bg-blue-500 hover:bg-blue-600'}`}
           >
             {isRefreshing ? 'Refreshing...' : 'Refresh'}
           </button>
-          <button 
+          <button
             onClick={forceFallback}
             className="px-4 py-2 text-sm bg-amber-500 text-white rounded-md hover:bg-amber-600"
           >
@@ -61,7 +66,7 @@ function ActivityPageContent() {
           </button>
         </div>
       </div>
-      
+
       {isLoading && (
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
           <div className="flex items-center gap-2">
@@ -70,11 +75,13 @@ function ActivityPageContent() {
           </div>
         </div>
       )}
-      
+
       {!isLoading && leads.length === 0 && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
           <div className="flex items-center gap-2">
-            <span className="text-yellow-800">No leads found. Try using the "Use Dummy Data" button for testing.</span>
+            <span className="text-yellow-800">
+              No leads found. Try using the "Use Dummy Data" button for testing.
+            </span>
           </div>
         </div>
       )}
@@ -91,16 +98,13 @@ function ActivityPageContent() {
       <div className="grid grid-cols-1 gap-6">
         {/* Lead Distribution Overview */}
         <LeadOverview />
-        
+
         {/* Lead Funnel */}
         <LeadFunnel />
       </div>
 
       {/* New Lead Modal */}
-      <NewLeadModal 
-        isOpen={isNewLeadModalOpen} 
-        onClose={() => setIsNewLeadModalOpen(false)} 
-      />
+      <NewLeadModal isOpen={isNewLeadModalOpen} onClose={() => setIsNewLeadModalOpen(false)} />
     </div>
   );
 }
@@ -111,4 +115,4 @@ export default function ActivityPage() {
       <ActivityPageContent />
     </LeadProvider>
   );
-} 
+}

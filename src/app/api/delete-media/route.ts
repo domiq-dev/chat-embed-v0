@@ -24,11 +24,13 @@ export async function DELETE(req: NextRequest) {
       }
       throw error;
     }
-
   } catch (error: any) {
     console.error('Error deleting file:', error);
-    return NextResponse.json({ 
-      error: 'Failed to delete file' 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Failed to delete file',
+      },
+      { status: 500 },
+    );
   }
-} 
+}

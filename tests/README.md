@@ -15,6 +15,7 @@ tests/
 ## 🚀 Commands
 
 ### **Main Commands**
+
 ```bash
 npm run test:all                 # All tests (30 total)
 npm run test:components          # Jest tests only (28)
@@ -22,12 +23,14 @@ npm run test:validation          # File validation only (2)
 ```
 
 ### **Development**
+
 ```bash
 npm run test:components:watch    # Watch mode
 npm run test:all:no-build        # Skip build checks
 ```
 
 ### **Specific Tests**
+
 ```bash
 npm run test:dialogue-mode       # Dialogue mode only (13)
 npm run test:structure           # Structure only (15)
@@ -71,4 +74,4 @@ npm run test:all
 
 ## 🚨 Critical
 
-**Dialogue mode tests prevent avatar echoing** - if these fail, the avatar will repeat user messages instead of responding conversationally. Always ensure `mode: 2` is set in AKOOL setup. 
+**Dialogue mode tests prevent avatar echoing** - if these fail, the avatar will repeat user messages instead of responding conversationally. Always ensure `mode: 2` is set in AKOOL setup.

@@ -1,14 +1,17 @@
 // lib/supabaseClient.ts
 import { createClient } from '@supabase/supabase-js';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import {ConversationState} from "@/app/api/agent/stateManager";
+import { ConversationState } from '@/app/api/agent/stateManager';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 // Create a dummy client if credentials are missing (during build)
 const createDummyClient = () => {
-  const dummyResponse = { data: null, error: new Error('Supabase not configured') };
+  const dummyResponse = {
+    data: null,
+    error: new Error('Supabase not configured'),
+  };
   const dummyPromise = Promise.resolve(dummyResponse);
 
   return {
@@ -23,20 +26,19 @@ const createDummyClient = () => {
 };
 
 // Export either real client or dummy client
-export const supabase = supabaseUrl && supabaseKey
-  ? createClient(supabaseUrl, supabaseKey)
-  : createDummyClient();
+export const supabase =
+  supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : createDummyClient();
 
 // Types for database - updated to match your actual schema
 export interface UserData {
   id: string;
   full_name: string;
   preferred_name: string;
-  apartment_size: string;  // Changed from apt_size
+  apartment_size: string; // Changed from apt_size
   move_in_date: string;
-  over_20: boolean | null;  // Changed from age
-  income_requirement: boolean | null;  // Changed from income
-  eviction_history: boolean | null;  // Changed from eviction
+  over_20: boolean | null; // Changed from age
+  income_requirement: boolean | null; // Changed from income
+  eviction_history: boolean | null; // Changed from eviction
   is_qualified: boolean;
   created_at: string;
   updated_at: string;
@@ -45,7 +47,7 @@ export interface UserData {
 export interface ConversationData {
   id: string;
   user_id: string;
-  messages: Array<{role: string, content: string}>;
+  messages: Array<{ role: string; content: string }>;
   faq_shown: boolean;
   booking_shown: boolean;
   conversation_state?: ConversationState; // ← Add this
@@ -53,15 +55,12 @@ export interface ConversationData {
   updated_at: string;
 }
 
-
 // User functions - updated to match schema
-export async function getOrCreateUser(userId?: string): Promise<{userData: UserData, isNew: boolean}> {
+export async function getOrCreateUser(
+  userId?: string,
+): Promise<{ userData: UserData; isNew: boolean }> {
   if (userId) {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
 
     if (!error && data) {
       return { userData: data, isNew: false };
@@ -74,12 +73,12 @@ export async function getOrCreateUser(userId?: string): Promise<{userData: UserD
     .insert({
       full_name: '',
       preferred_name: '',
-      apartment_size: '',  // Changed from apt_size
+      apartment_size: '', // Changed from apt_size
       move_in_date: '',
-      over_20: null,  // Changed from age
-      income_requirement: null,  // Changed from income
-      eviction_history: null,  // Changed from eviction
-      is_qualified: false
+      over_20: null, // Changed from age
+      income_requirement: null, // Changed from income
+      eviction_history: null, // Changed from eviction
+      is_qualified: false,
     })
     .select()
     .single();
@@ -94,19 +93,19 @@ export async function userDataToState(userData: UserData): Promise<ConversationS
 
   return {
     basicInfo: {
-      full_name: userData.full_name || "",
-      preferred_name: userData.preferred_name || "",
-      apt_size: userData.apartment_size || "",  // Map from DB field to state field
-      move_in_date: userData.move_in_date || ""
+      full_name: userData.full_name || '',
+      preferred_name: userData.preferred_name || '',
+      apt_size: userData.apartment_size || '', // Map from DB field to state field
+      move_in_date: userData.move_in_date || '',
     },
     qualificationStatus: {
-      age: userData.over_20,  // Map from DB field to state field
+      age: userData.over_20, // Map from DB field to state field
       income: userData.income_requirement, // Map from DB field to state field
-      eviction: userData.eviction_history  // Map from DB field to state field
+      eviction: userData.eviction_history, // Map from DB field to state field
     },
     shownFAQ: conversation?.faq_shown || false,
     shownBooking: conversation?.booking_shown || false,
-    version: "2.0.0"
+    version: '2.0.0',
   };
 }
 
@@ -140,7 +139,7 @@ export async function updateUser(userId: string, updates: any): Promise<UserData
     .from('users')
     .update({
       ...dbUpdates,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     })
     .eq('id', userId)
     .select()
@@ -153,10 +152,10 @@ export async function updateUser(userId: string, updates: any): Promise<UserData
 // Conversation functions remain the same
 export async function saveMessage(
   userId: string,
-  message: {role: string, content: string},
+  message: { role: string; content: string },
   faqShown?: boolean,
-  bookingShown?: boolean
-): Promise<{conversationId: string}> {
+  bookingShown?: boolean,
+): Promise<{ conversationId: string }> {
   // First check if user has a conversation
   const { data: existingConvo, error } = await supabase
     .from('conversations')
@@ -170,16 +169,13 @@ export async function saveMessage(
 
     const updates: any = {
       messages: updatedMessages,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     };
 
     if (faqShown !== undefined) updates.faq_shown = faqShown;
     if (bookingShown !== undefined) updates.booking_shown = bookingShown;
 
-    await supabase
-      .from('conversations')
-      .update(updates)
-      .eq('id', existingConvo.id);
+    await supabase.from('conversations').update(updates).eq('id', existingConvo.id);
 
     return { conversationId: existingConvo.id };
   }
@@ -191,7 +187,7 @@ export async function saveMessage(
       user_id: userId,
       messages: [message],
       faq_shown: !!faqShown,
-      booking_shown: !!bookingShown
+      booking_shown: !!bookingShown,
     })
     .select('id')
     .single();

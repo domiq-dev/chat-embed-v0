@@ -44,17 +44,14 @@ import pdfParse from 'pdf-parse';
 export const runtime = 'nodejs';
 
 async function generateEmbedding(text: string): Promise<number[]> {
-  const cleanedText = text
-    .trim()
-    .replace(/\s+/g, ' ')
-    .slice(0, 8000);
+  const cleanedText = text.trim().replace(/\s+/g, ' ').slice(0, 8000);
 
   const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
   });
 
   const response = await openai.embeddings.create({
-    model: "text-embedding-ada-002",
+    model: 'text-embedding-ada-002',
     input: cleanedText,
   });
 
@@ -106,9 +103,9 @@ export async function POST(req: NextRequest) {
           filename: file.name,
           fileType: file.type,
           fileSize: file.size,
-          uploadDate: new Date().toISOString()
+          uploadDate: new Date().toISOString(),
         },
-        embedding
+        embedding,
       })
       .select();
 

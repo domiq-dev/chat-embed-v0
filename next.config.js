@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
-  
+
   webpack: (config, { isServer }) => {
     // Handle Node.js specific modules
     if (!isServer) {
@@ -24,9 +24,9 @@ const nextConfig = {
         ...config.module.rules,
         {
           test: /\.(pdf|node)$/,
-          use: 'null-loader'
-        }
-      ]
+          use: 'null-loader',
+        },
+      ],
     };
 
     return config;
@@ -39,9 +39,9 @@ const nextConfig = {
       'pdf-text-extract',
       'pdfjs',
       'pdfkit',
-      'fs-extra'
-    ]
-  }
+      'fs-extra',
+    ],
+  },
 };
 
-module.exports = nextConfig; 
+module.exports = nextConfig;

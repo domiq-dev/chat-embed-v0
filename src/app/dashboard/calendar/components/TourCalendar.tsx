@@ -31,29 +31,33 @@ interface TourCalendarProps {
   onDeleteTour: (tourId: string) => void;
 }
 
-export default function TourCalendar({ 
-  tours, 
-  onTourClick, 
-  onSelectSlot, 
+export default function TourCalendar({
+  tours,
+  onTourClick,
+  onSelectSlot,
   selectedTour,
   onCancelTour,
   onCompleteTour,
-  onDeleteTour
+  onDeleteTour,
 }: TourCalendarProps) {
   const [view, setView] = useState<'timeGridWeek' | 'timeGridDay'>('timeGridWeek');
 
   // Convert tours to FullCalendar event format
-  const events = tours.map(tour => ({
+  const events = tours.map((tour) => ({
     id: tour.id,
     title: tour.title,
     start: tour.start,
     end: tour.end,
-    backgroundColor: tour.status === 'scheduled' ? '#7c3aed' : // Purple
-                    tour.status === 'completed' ? '#16a34a' : // Green
-                    tour.status === 'cancelled' ? '#dc2626' : // Red
-                    '#6b7280', // Gray for no_show
+    backgroundColor:
+      tour.status === 'scheduled'
+        ? '#7c3aed' // Purple
+        : tour.status === 'completed'
+          ? '#16a34a' // Green
+          : tour.status === 'cancelled'
+            ? '#dc2626' // Red
+            : '#6b7280', // Gray for no_show
     opacity: tour.status === 'cancelled' || tour.status === 'no_show' ? 0.7 : 1,
-    extendedProps: tour
+    extendedProps: tour,
   }));
 
   return (
@@ -122,7 +126,7 @@ export default function TourCalendar({
               border-radius: 6px;
             }
 
-            .fc-theme-standard td, 
+            .fc-theme-standard td,
             .fc-theme-standard th {
               border-color: var(--fc-border-color);
             }
@@ -134,7 +138,7 @@ export default function TourCalendar({
             headerToolbar={{
               left: 'prev,next today',
               center: 'title',
-              right: 'timeGridWeek,timeGridDay'
+              right: 'timeGridWeek,timeGridDay',
             }}
             slotMinTime="08:00:00"
             slotMaxTime="20:00:00"
@@ -145,16 +149,16 @@ export default function TourCalendar({
             selectable={true}
             select={(info: DateSelectArg) => {
               // Only allow if user dragged for at least 30 minutes
-              if ((info.end.getTime() - info.start.getTime()) > (30 * 60 * 1000)) {
+              if (info.end.getTime() - info.start.getTime() > 30 * 60 * 1000) {
                 onSelectSlot({
                   start: info.start,
-                  end: info.end
+                  end: info.end,
                 });
               }
             }}
             selectAllow={(selectInfo) => {
               // Only allow selection if duration is at least 30 minutes
-              return (selectInfo.end.getTime() - selectInfo.start.getTime()) > (30 * 60 * 1000);
+              return selectInfo.end.getTime() - selectInfo.start.getTime() > 30 * 60 * 1000;
             }}
             slotDuration="00:30:00"
             allDaySlot={false}
@@ -163,7 +167,9 @@ export default function TourCalendar({
             dayMaxEvents={true}
             expandRows={true}
             stickyHeaderDates={true}
-            viewDidMount={(info: ViewMountArg) => setView(info.view.type as 'timeGridWeek' | 'timeGridDay')}
+            viewDidMount={(info: ViewMountArg) =>
+              setView(info.view.type as 'timeGridWeek' | 'timeGridDay')
+            }
           />
         </div>
       </div>
@@ -189,9 +195,9 @@ export default function TourCalendar({
                   <p className="text-sm text-gray-500">Date & Time</p>
                   <p className="font-medium">
                     {selectedTour.start.toLocaleDateString()} at{' '}
-                    {selectedTour.start.toLocaleTimeString([], { 
-                      hour: 'numeric', 
-                      minute: '2-digit' 
+                    {selectedTour.start.toLocaleTimeString([], {
+                      hour: 'numeric',
+                      minute: '2-digit',
                     })}
                   </p>
                 </div>
@@ -226,33 +232,46 @@ export default function TourCalendar({
 
             <div className="border-t pt-4">
               <div className="flex gap-2 mb-4">
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  selectedTour.status === 'scheduled' ? 'bg-purple-100 text-purple-700' : 
-                  selectedTour.status === 'completed' ? 'bg-green-100 text-green-700' : 
-                  selectedTour.status === 'cancelled' ? 'bg-red-100 text-red-700' : 
-                  'bg-gray-100 text-gray-700'
-                }`}>
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${
+                    selectedTour.status === 'scheduled'
+                      ? 'bg-purple-100 text-purple-700'
+                      : selectedTour.status === 'completed'
+                        ? 'bg-green-100 text-green-700'
+                        : selectedTour.status === 'cancelled'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
                   {selectedTour.status.charAt(0).toUpperCase() + selectedTour.status.slice(1)}
                 </span>
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  selectedTour.source === 'chat' ? 'bg-blue-100 text-blue-700' : 
-                  selectedTour.source === 'resman' ? 'bg-green-100 text-green-700' : 
-                  'bg-gray-100 text-gray-700'
-                }`}>
-                  {selectedTour.source === 'chat' ? 'AI Chat' : selectedTour.source === 'resman' ? 'ResMan' : 'Manual'}
+                <span
+                  className={`px-2 py-1 text-xs rounded-full ${
+                    selectedTour.source === 'chat'
+                      ? 'bg-blue-100 text-blue-700'
+                      : selectedTour.source === 'resman'
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  {selectedTour.source === 'chat'
+                    ? 'AI Chat'
+                    : selectedTour.source === 'resman'
+                      ? 'ResMan'
+                      : 'Manual'}
                 </span>
               </div>
 
               <div className="space-y-2">
                 {selectedTour.status === 'scheduled' && (
                   <>
-                    <button 
+                    <button
                       onClick={() => onCompleteTour(selectedTour.id)}
                       className="w-full px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
                     >
                       Mark as Completed
                     </button>
-                    <button 
+                    <button
                       onClick={() => onCancelTour(selectedTour.id)}
                       className="w-full px-4 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50"
                     >
@@ -260,7 +279,7 @@ export default function TourCalendar({
                     </button>
                   </>
                 )}
-                <button 
+                <button
                   onClick={() => onDeleteTour(selectedTour.id)}
                   className="w-full px-4 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
                 >
@@ -273,4 +292,4 @@ export default function TourCalendar({
       )}
     </div>
   );
-} 
+}
