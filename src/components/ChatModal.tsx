@@ -784,7 +784,7 @@ const ChatModal: FC<ChatModalProps> = ({
       if (currentActiveClient && typeof (currentActiveClient as any).sendStreamMessage === 'function') {
         try {
           // Define voice and language settings
-          const voiceId = "Xb7hH8MSUJpSbSDYk0k2"; // Alice voice
+          const voiceId = "EXAVITQu4vr4xnSDxMaL"; // Alice voice
           const language = "en"; // English
           
           // Initial setup with dialogue mode
