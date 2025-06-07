@@ -847,3 +847,10 @@ export default defineConfig({
 ✅ **Future Development:** Modular architecture enables easier feature additions
 
 **Business Value:** Refactored codebase is now more maintainable for future development while preserving all existing functionality. The extracted components can be reused in other parts of the application, reducing development time for new features. The styling fix ensures consistent visual appearance across all environments.
+
+## Fixed Routing and Logo Links
+
+- Clicking DomIQ logo now leads to the homepage, which is now activity
+- Removed unsued embed/ directory, and migrated radial-test over to old dashboard/ directory
+- Changed radial-test to be agent, and now shows up in the navigation bar
+- Got rid of dashboard directory in URL by using Next.js route groups, so root URLs now show up

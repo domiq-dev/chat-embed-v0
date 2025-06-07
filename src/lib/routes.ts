@@ -7,45 +7,45 @@ export interface Route {
 
 export const dashboardRoutes: Route[] = [
   {
-    path: '/dashboard/activity',
+    path: '/activity',
     label: 'Activity',
   },
   {
-    path: '/dashboard/tasks',
+    path: '/tasks',
     label: 'Tasks',
   },
   {
-    path: '/dashboard/calendar',
+    path: '/calendar',
     label: 'Calendar',
   },
   {
-    path: '/dashboard/contacts',
+    path: '/contacts',
     label: 'Contacts',
   },
   {
-    path: '/dashboard/knowledge',
+    path: '/knowledge',
     label: 'Knowledge',
     children: [
       {
-        path: '/dashboard/knowledge/base',
+        path: '/knowledge/base',
         label: 'Knowledge Base',
       },
       {
-        path: '/dashboard/knowledge/community',
+        path: '/knowledge/community',
         label: 'Community Info',
       },
       {
-        path: '/dashboard/knowledge/media',
+        path: '/knowledge/media',
         label: 'Media',
       },
     ],
   },
   {
-    path: '/dashboard/specials',
+    path: '/specials',
     label: 'Specials',
   },
   {
-    path: '/embed/radial-test',
+    path: '/agent',
     label: 'Chat Interface',
   },
 ];

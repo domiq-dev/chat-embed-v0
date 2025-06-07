@@ -255,7 +255,7 @@ export default function TasksPage() {
       if (lead) {
         setSelectedLead(lead);
         // Navigate to activity page - in a real app you'd use router
-        window.location.href = '/dashboard/activity';
+        window.location.href = '/activity';
       }
     }
   };

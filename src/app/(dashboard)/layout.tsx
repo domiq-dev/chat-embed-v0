@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { LeadProvider } from '@/lib/lead-context';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [expandedGroups, setExpandedGroups] = useState<string[]>(['/dashboard/knowledge']);
+  const [expandedGroups, setExpandedGroups] = useState<string[]>(['/knowledge']);
 
   const toggleGroup = (path: string) => {
     setExpandedGroups((prev) =>
@@ -22,10 +22,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar */}
         <aside className="w-full md:w-56 bg-black text-white p-4 space-y-4 flex md:block items-center justify-between md:items-start md:justify-start">
           {/* DomIQ AI Header */}
-          <div className="text-2xl font-bold tracking-tight mb-2 md:mb-6">
+          <Link
+            href="/activity"
+            className="text-2xl font-bold tracking-tight mb-2 md:mb-6 hover:opacity-80 transition-opacity"
+          >
             <span className="text-white">DomIQ</span>
             <span className="text-xs align-top text-purple-400 ml-1">AI</span>
-          </div>
+          </Link>
 
           <div className="flex md:flex-col gap-2">
             {dashboardRoutes.map((route) => (
